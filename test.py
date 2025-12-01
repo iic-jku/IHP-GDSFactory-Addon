@@ -221,30 +221,31 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # passives test
 
-c = gf.Component()
-
-c.add_ref(ihp.cells.esd(model="diodevdd_2kv"))
-
-c.move((0,5))
-c.add_ref(ihp.cells.ptap1())
-
-c.move((0,5))
-c.add_ref(ihp.cells.ntap1())
-
-c.move((200,200))
-c.add_ref(ihp.cells.sealring())
-c.show()
-
-# -----------------------------------------------------------------
-
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon"))
+# c.add_ref(ihp.cells.esd(model="diodevdd_2kv"))
+
+# c.move((0,5))
+# c.add_ref(ihp.cells.ptap1())
+
+# c.move((0,5))
+# c.add_ref(ihp.cells.ntap1())
+
+# c.move((200,200))
+# c.add_ref(ihp.cells.sealring())
 # c.show()
 
-# c.move((0,100))
-# c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
-# c.show()
+# -----------------------------------------------------------------
+# bondpad test
+
+c = gf.Component()
+
+c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon"))
+c.show()
+
+c.move((0,100))
+c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
+c.show()
 
 # -----------------------------------------------------------------
 

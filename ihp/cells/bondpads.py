@@ -3,31 +3,32 @@
 import sys
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
-from sg13g2_pycell_lib.ihp.bondpad_code import bondpad as bondpadIHP
-from cni.tech import Tech
 
-from cni.dlo import PCellWrapper
-import pya
+from sg13g2_pycell_lib.ihp.bondpad_code import bondpad as bondpadIHP
+
+
 import gdsfactory as gf
-from gdsfactory import Component
-import os
+
+from .utils import *
+from functools import partial
+from .. import tech
 
 
 
 @gf.cell
 def bondpad(
-    shape: str = "octagon",
-    stack_metals: str = 't',
-    fill_metals: str = 'nil',
-    flip_chip: str = 'no',
+    padType: str = "bondpad",
     diameter: float = 80.0,
-    top_metal: str = "TM2",
-    bottom_metal: str = "3",
-    pad_type: str = "bondpad",
-    pass_encl: float = 2.1,
-    hw_quota: float = 1,
-    add_filler_ex: str = 'nil',
-) -> Component:
+    passEncl: float = 2.1,
+    hwQuota: float = 1,
+    shape: str = "octagon",
+    topMetal: str = "TM2",
+    bottomMetal: str = "3",
+    stack: str = 't',
+    fill: str = 'nil',
+    flipChip: str = 'no',
+    addFillerEx: str = 'nil',
+) -> gf.Component:
     """Create a bondpad for wire bonding or flip-chip connection.
 
     Args:
@@ -42,65 +43,29 @@ def bondpad(
     Returns:
         Component with bondpad layout.
     """
-    # ----------------------------------------------------------------
-    # Step 1: Get the technology object
-    # ----------------------------------------------------------------
-    tech = Tech.get("SG13_dev")  # Must match the name registered in SG13_Tech
-
-    # ----------------------------------------------------------------
-    # Step 2: Create a layout and a cell
-    # ----------------------------------------------------------------
-    layout = pya.Layout()                # new empty layout
-    cell = layout.create_cell("BONDPAD_1")  # new cell for your transistor
-
-    # ----------------------------------------------------------------
-    # Step 3: Wrap the PyCell
-    # ----------------------------------------------------------------
-    # PCellWrapper acts like the 'specs' object in KLayout
-    # It handles parameter declarations and calls defineParamSpecs internally
-    device = PCellWrapper(impl=bondpadIHP(), tech=tech)
-
-    # ----------------------------------------------------------------
-    # Step 4: Define parameters
-    # ----------------------------------------------------------------
+    
     params = {
         'cdf_version': 8, 
-        'model': "bondpad",
+        'model': "bondpad", # hardcoded for bondpad
         'Display': 'Selected',
         'shape': shape,
-        'stack': stack_metals,
-        'fill': fill_metals,
-        'FlipChip': flip_chip,
+        'stack': stack,
+        'fill': fill,
+        'FlipChip': flipChip,
         'diameter': diameter*1e-6,
-        'hwquota': hw_quota,
-        'topMetal': top_metal,
-        'bottomMetal': bottom_metal,
-        'addFillerEx': add_filler_ex,
-        'passEncl': pass_encl*1e-6,
-        'padType' : pad_type,
+        'hwquota': hwQuota,
+        'topMetal': topMetal,
+        'bottomMetal': bottomMetal,
+        'addFillerEx': addFillerEx,
+        'passEncl': passEncl*1e-6,
+        'padType' : padType,
         'padPin': 'PAD'   
     }
 
-    # Convert params into a list in the order of device.param_decls
-    param_values = [params[p.name] for p in device.param_decls]
-
-    # ----------------------------------------------------------------
-    # Step 5: Produce the layout
-    # ----------------------------------------------------------------
-    device.produce(layout=layout,
-                layers={},        # can pass layer map if needed
-                parameters=param_values,
-                cell=cell)
-
-    # ----------------------------------------------------------------
-    # Step 6: Save GDS
-    # ----------------------------------------------------------------
-    layout.write("temp.gds")
-    print("✅ Bondpad PyCell placed successfully and GDS written.")
-    # ----------------------------------------------------------------
-    c = gf.read.import_gds(gdspath="temp.gds")
-    
-    os.remove("temp.gds")
+    c = generate_gf_from_ihp(cell_name="bondpad", cell_params=params, function_name=bondpadIHP())
+    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # for i, port in enumerate(c.ports):
+    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
 
@@ -111,7 +76,7 @@ def bondpad_array(
     pad_diameter: float = 68.0,
     shape: str = "octagon",
     stack_metals: bool = True,
-) -> Component:
+) -> gf.Component:
     """Create an array of bondpads.
 
     Args:
@@ -124,12 +89,12 @@ def bondpad_array(
     Returns:
         Component with bondpad array.
     """
-    c = Component()
+    c = gf.Component()
 
     for i in range(n_pads):
         pad = bondpad(
             shape=shape,
-            stack_metals=stack_metals,
+            stack=stack_metals,
             diameter=pad_diameter,
         )
         pad_ref = c.add_ref(pad)
