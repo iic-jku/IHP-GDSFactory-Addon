@@ -3,7 +3,7 @@ import sys
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
-from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float
+from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbResCalc, CbResCurrent
 
 from sg13g2_pycell_lib.ihp.rhigh_code import rhigh as rhighIHP
 from sg13g2_pycell_lib.ihp.rppd_code import rppd as rppdIHP
@@ -22,7 +22,7 @@ def rhigh(
     length = 0.96,
     width = 0.5,
     bends = 0,
-    poly_space = 0.18,
+    polySpace = 0.18,
     numberOfSegments = 1,
     segmentConnection = 'Serial',
     segmentSpacing = 2,
@@ -47,12 +47,12 @@ def rhigh(
         'Calculate': 'l',       # TODO check what to do
         'Recommendation': "No",
         'model': tech.techParams['rhigh_model'],
-        'R': 3.16*1e3,
+        'R': CbResCalc('R', 0, length*1e-6, width*1e-6, bends, polySpace*1e-6, 'rhigh'),    # TODO Is this used?
         'w': width*1e-6,    # Length in μm
         'l': length*1e-6,   # Length in μm
         'b': bends,
-        'ps': poly_space*1e-6,
-        'Imax': 0.3*1e-3, #TODO check imax value
+        'ps': polySpace*1e-6,
+        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rhighG2'), # TODO Is this used?
         'bn': "sub!",
         'Wmin': eng_string_to_float(tech.techParams['rhigh_minW'])*1e-6,
         'Lmin': eng_string_to_float(tech.techParams['rhigh_minL'])*1e-6,
@@ -84,7 +84,7 @@ def rppd(
     length = 0.5,
     width = 0.5,
     bends = 0,
-    poly_space = 0.18,
+    polySpace = 0.18,
     numberOfSegments = 1,
     segmentConnection = 'Serial',
     segmentSpacing = 2,
@@ -109,12 +109,12 @@ def rppd(
         'Calculate': 'l',       # TODO check what to do
         'Recommendation': "No",
         'model': tech.techParams['rppd_model'],
-        'R': 3.16*1e3,
+        'R': CbResCalc('R', 0, length*1e-6, width*1e-6, bends, polySpace*1e-6, 'rppd'),    # TODO Is this used?
         'w': width*1e-6,    # Length in μm
         'l': length*1e-6,   # Length in μm
         'b': bends,
-        'ps': poly_space*1e-6,
-        'Imax': 0.6*1e-3, #TODO check imax value
+        'ps': polySpace*1e-6,
+        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rppdG2'), # TODO Is this used?
         'bn': "sub!",
         'Wmin': eng_string_to_float(tech.techParams['rppd_minW'])*1e-6,
         'Lmin': eng_string_to_float(tech.techParams['rppd_minL'])*1e-6,
@@ -145,7 +145,7 @@ def rppd(
 def rsil(
     length = 0.5,
     width = 0.5,
-    poly_space = 0.18,
+    polySpace = 0.18,
     resistance = 24.9,
     numberOfSegments = 1,
     segmentConnection = 'Serial',
@@ -161,11 +161,11 @@ def rsil(
         'Calculate': 'l',       # TODO check what to do
         'Recommendation': "No",
         'model': tech.techParams['rsil_model'],
-        'R': resistance,
+        'R': resistance,    # TODO IHP function defines it as user parameter but also calculates it
         'w': width*1e-6,    # Length in μm
         'l': length*1e-6,   # Length in μm
-        'ps': poly_space*1e-6,
-        'Imax': 0.6*1e-3, #TODO check imax value
+        'ps': polySpace*1e-6,
+        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rsilG2'), # TODO Is this used?
         'bn': "sub!",
         'Wmin': eng_string_to_float(tech.techParams['rsil_minW'])*1e-6,
         'Lmin': eng_string_to_float(tech.techParams['rsil_minL'])*1e-6,
