@@ -189,30 +189,34 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # capacitor test
 
-c = gf.Component()
-
-c.add_ref(ihp.cells.cmim(width=10, length=10))
-c.move((40,0))
-c.add_ref(ihp.cells.cmim(width=20, length=20))
-
-
-c.move((-40,35))
-c.add_ref(ihp.cells.rfcmim(width=10, length=10))
-c.move((40,0))
-c.add_ref(ihp.cells.rfcmim(width=20, length=20))
-
-c.move((-40,35))
-c.add_ref(ihp.cells.svaricap(Nx=1))
-c.move((40,0))
-c.add_ref(ihp.cells.svaricap(Nx=10))
-c.show()
-
-# -----------------------------------------------------------------
-
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
+# c.add_ref(ihp.cells.cmim(width=10, length=10))
+# c.move((40,0))
+# c.add_ref(ihp.cells.cmim(width=20, length=20))
+
+
+# c.move((-40,35))
+# c.add_ref(ihp.cells.rfcmim(width=10, length=10))
+# c.move((40,0))
+# c.add_ref(ihp.cells.rfcmim(width=20, length=20))
+
+# c.move((-40,35))
+# c.add_ref(ihp.cells.svaricap(Nx=1))
+# c.move((40,0))
+# c.add_ref(ihp.cells.svaricap(Nx=10))
 # c.show()
+
+# -----------------------------------------------------------------
+# stack test
+
+c = gf.Component()
+
+c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
+
+c.move((5,15))
+c.add_ref(ihp.cells.via_stacks.no_filler_stack())
+c.show()
 
 # -----------------------------------------------------------------
 
@@ -243,14 +247,6 @@ c.show()
 
 # c.move((0,100))
 # c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
-# c.show()
-
-
-# -----------------------------------------------------------------
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.via_stacks.no_filler_stack())
 # c.show()
 
 # -----------------------------------------------------------------
