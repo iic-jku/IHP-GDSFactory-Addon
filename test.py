@@ -137,7 +137,7 @@ ihp.PDK.activate()
 # c.show()
 
 # ----------------------------------------------------------------
-#bjt transistors test
+# bjt transistors test
 
 # c = gf.Component()
 
@@ -168,42 +168,44 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # resistor test
 
-c = gf.Component()
+# c = gf.Component()
 
-c.add_ref(ihp.cells.rhigh(length=10))
-c.move((5,0))
-c.add_ref(ihp.cells.rhigh(length=20, width=1))
+# c.add_ref(ihp.cells.rhigh(length=10))
+# c.move((5,0))
+# c.add_ref(ihp.cells.rhigh(length=20, width=1))
 
-c.move((5,0))
-c.add_ref(ihp.cells.rppd(length=10))
-c.move((5,0))
-c.add_ref(ihp.cells.rppd(length=20, width=1))
+# c.move((5,0))
+# c.add_ref(ihp.cells.rppd(length=10))
+# c.move((5,0))
+# c.add_ref(ihp.cells.rppd(length=20, width=1))
 
-c.move((5,0))
-c.add_ref(ihp.cells.rsil(length=10))
-c.move((5,0))
-c.add_ref(ihp.cells.rsil(length=20, width=1))
-c.show()
+# c.move((5,0))
+# c.add_ref(ihp.cells.rsil(length=10))
+# c.move((5,0))
+# c.add_ref(ihp.cells.rsil(length=20, width=1))
+# c.show()
 
 
 # -----------------------------------------------------------------
-# c = gf.Component()
+# capacitor test
 
-# c.add_ref(ihp.cells.capacitors.cmim(width="10u", length="10u"))
-# c.move((40,0))
-# c.add_ref(ihp.cells.capacitors.cmim(width="20u", length="20u"))
+c = gf.Component()
+
+c.add_ref(ihp.cells.cmim(width=10, length=10))
+c.move((40,0))
+c.add_ref(ihp.cells.cmim(width=20, length=20))
 
 
-# c.move((-40,35))
-# c.add_ref(ihp.cells.capacitors.rfcmim(width="10u", length="10u"))
-# c.move((40,0))
-# c.add_ref(ihp.cells.capacitors.rfcmim(width="20u", length="20u"))
+c.move((-40,35))
+c.add_ref(ihp.cells.rfcmim(width=10, length=10))
+c.move((40,0))
+c.add_ref(ihp.cells.rfcmim(width=20, length=20))
 
-# c.move((-40,35))
-# c.add_ref(ihp.cells.capacitors.svaricap(Nx=1))
-# c.move((40,0))
-# c.add_ref(ihp.cells.capacitors.svaricap(Nx=10))
-# c.show()
+c.move((-40,35))
+c.add_ref(ihp.cells.svaricap(Nx=1))
+c.move((40,0))
+c.add_ref(ihp.cells.svaricap(Nx=10))
+c.show()
 
 # -----------------------------------------------------------------
 
