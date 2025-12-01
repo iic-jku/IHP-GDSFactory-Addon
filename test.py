@@ -238,22 +238,21 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # bondpad test
 
-c = gf.Component()
+# c = gf.Component()
 
-c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon"))
-c.show()
+# c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon"))
 
-c.move((0,100))
-c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
-c.show()
+# c.move((0,100))
+# c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
+# c.show()
 
 # -----------------------------------------------------------------
+# antennas test
 
-# c = gf.Component()
-# c.add_ref(ihp.cells.antennas.dantenna())
-# c.show()
+c = gf.Component()
 
-# c.move((0,2))
+c.add_ref(ihp.cells.dantenna())
 
-# c.add_ref(ihp.cells.antennas.dpantenna())
-# c.show()
+c.move((0,2))
+c.add_ref(ihp.cells.dpantenna())
+c.show()
