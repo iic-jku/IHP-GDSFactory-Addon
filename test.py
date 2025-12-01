@@ -210,33 +210,30 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # stack test
 
-c = gf.Component()
-
-c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
-
-c.move((5,15))
-c.add_ref(ihp.cells.via_stacks.no_filler_stack())
-c.show()
-
-# -----------------------------------------------------------------
-
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.passives.esd(model="diodevdd_2kv"))
+# c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
+
+# c.move((5,15))
+# c.add_ref(ihp.cells.via_stacks.no_filler_stack())
 # c.show()
 
-# c.move((0,5))
-# c.add_ref(ihp.cells.passives.ptap1())
-# c.show()
+# -----------------------------------------------------------------
+# passives test
 
-# c.move((0,5))
-# c.add_ref(ihp.cells.passives.ntap1())
-# c.show()
+c = gf.Component()
 
+c.add_ref(ihp.cells.esd(model="diodevdd_2kv"))
 
-# c.move((200,200))
-# c.add_ref(ihp.cells.passives.sealring())
-# c.show()
+c.move((0,5))
+c.add_ref(ihp.cells.ptap1())
+
+c.move((0,5))
+c.add_ref(ihp.cells.ntap1())
+
+c.move((200,200))
+c.add_ref(ihp.cells.sealring())
+c.show()
 
 # -----------------------------------------------------------------
 
