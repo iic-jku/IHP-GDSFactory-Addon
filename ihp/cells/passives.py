@@ -12,6 +12,7 @@ from sg13g2_pycell_lib.ihp.sealring_code import sealring as sealringIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -21,16 +22,27 @@ from .. import tech
 
 @gf.cell
 def esd(
-    model: str = "diodevdd_2kv",
+    model: Literal['diodevdd_2kv', 'diodevss_2kv', 'diodevdd_4kv', 'diodevss_4kv', 'nmoscl_2', 'nmoscl_4'] = "diodevdd_2kv",
 ) -> gf.Component:
-    """Create an ESD protection NMOS device.
+    """Create an ESD protection device layout.
+
+    This function generates an electrostatic discharge (ESD) protection device
+    using the specified model. Available models include diodes and NMOS clamps
+    for different voltage ratings.
 
     Args:
-        model: Device model name.
+        model: Device model name. Options:
+            - 'diodevdd_2kv': Diode from VDD for 2 kV rating.
+            - 'diodevss_2kv': Diode to VSS for 2 kV rating.
+            - 'diodevdd_4kv': Diode from VDD for 4 kV rating.
+            - 'diodevss_4kv': Diode to VSS for 4 kV rating.
+            - 'nmoscl_2': NMOS clamp for 2 kV rating.
+            - 'nmoscl_4': NMOS clamp for 4 kV rating.
 
     Returns:
-        Component with ESD NMOS layout.
+        gdsfactory.Component: The generated ESD protection layout.
     """
+
 
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -48,20 +60,23 @@ def esd(
 
 @gf.cell
 def ptap1(
-    width = 0.78,
-    length = 0.78,
-    ) -> gf.Component:
-    """Create a P+ substrate tap.
+    width: float = 0.78,
+    length: float = 0.78,
+) -> gf.Component:
+    """Create a P+ substrate tap layout.
+
+    This function generates a parametric P+ substrate tap with configurable
+    width and length. It is typically used for connecting the P-substrate
+    to a reference potential.
 
     Args:
         width: Width of the tap in micrometers.
         length: Length of the tap in micrometers.
-        rows: Number of contact rows.
-        cols: Number of contact columns.
 
     Returns:
-        Component with P+ tap layout.
+        gdsfactory.Component: The generated P+ substrate tap layout.
     """
+
     area = width * length
     perimeter = 2 * (width + length)
     params = {
@@ -133,19 +148,25 @@ def ntap1(
 def sealring(
     width: float = 400.0,
     height: float = 400.0,
-    addLabel: str = "nil",
-    addSlit: str = "nil",
+    addLabel: Literal['nil', 't'] = "nil",
+    addSlit: Literal['nil', 't'] = "nil",
     edgeBox: float = 25.0,
 ) -> gf.Component:
     """Create a seal ring for die protection.
 
+    This function generates a parametric seal ring around the die with optional
+    label and slit features. The seal ring helps protect the chip from mechanical
+    stress and contamination.
+
     Args:
         width: Inner width of the seal ring in micrometers.
         height: Inner height of the seal ring in micrometers.
-        ring_width: Width of the seal ring metal in micrometers.
+        addLabel: Include label on the seal ring. Options: 'nil' (no label), 't' (add label).
+        addSlit: Include slit in the seal ring. Options: 'nil' (no slit), 't' (add slit).
+        edgeBox: Distance from die edge to the seal ring in micrometers.
 
     Returns:
-        Component with seal ring layout.
+        gdsfactory.Component: The generated seal ring layout.
     """
 
     params = {

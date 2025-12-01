@@ -11,6 +11,7 @@ from sg13g2_pycell_lib.ihp.SVaricap_code import SVaricap as SVaricapIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -18,20 +19,28 @@ from .. import tech
 
 @gf.cell
 def cmim(
-    width = 6.99,
-    length = 6.99,
-    guardRingType = 'none',
-    guardRingDistance = 1,
+    width: float = 6.99,
+    length: float = 6.99,
+    guardRingType: Literal['none', 'psub', 'nwell'] = 'none',
+    guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a MIM (Metal-Insulator-Metal) capacitor.
+
+    This function generates a layout cell for a MIM capacitor with optional
+    guard rings. The capacitor dimensions and the spacing to the guard ring
+    can be customized.
 
     Args:
         width: Width of the capacitor in micrometers.
         length: Length of the capacitor in micrometers.
-        #TODO
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring surrounding the capacitor.
+            - 'nwell': N-well guard ring surrounding the capacitor.
+        guardRingDistance: Spacing between the capacitor body and the guard ring, in micrometers.
 
     Returns:
-        Component with MIM capacitor layout.
+        gdsfactory.Component: The generated MIM capacitor layout.
     """
 
     params = {
@@ -62,23 +71,22 @@ def cmim(
 
 @gf.cell
 def rfcmim(
-    width: float = 7,
-    length: float = 7,
-    capacitance: float = 74.8,
+    width: float = 6.99,
+    length: float = 6.99,
     feed_width: float = 3,
-    guardRingType: str = 'none',
-    guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create an RF MIM capacitor with optimized layout.
+    """Create an RF MIM (Metal-Insulator-Metal) capacitor with optimized layout.
+
+    This function generates a layout for an RF MIM capacitor with a feed
+    line. The capacitor dimensions and feed width can be customized.
 
     Args:
         width: Width of the capacitor in micrometers.
         length: Length of the capacitor in micrometers.
-        capacitance: Target capacitance in fF (optional).
-        #TODO
+        feed_width: Width of the feed line connecting to the capacitor, in micrometers.
 
     Returns:
-        Component with RF MIM capacitor layout.
+        gdsfactory.Component: The generated RF MIM capacitor layout.
     """
 
     params = {
@@ -108,22 +116,28 @@ def rfcmim(
 
 @gf.cell
 def svaricap(
-    width: float = '9.74u',
-    length: float = '0.8u',
+    width: Literal['3.74u', '9.74u'] = '9.74u',
+    length: Literal['0.3u', '0.8u'] = '0.8u',
     Nx: int = 1,
-    guardRingType: str = 'none',
+    guardRingType: Literal['none', 'nwell'] = 'none',
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a MOS varicap (variable capacitor).
+    """Create a MOS varicap (variable capacitor) layout.
+
+    This function generates a parametric MOS varicap with optional n-well
+    guard rings. The device geometry and number of fingers can be customized.
 
     Args:
-        width: Width of the varicap in micrometers.
-        length: Length of the varicap in micrometers.
-        nf: Number of fingers.
-        model: Device model name.
+        width: Width of the varicap. Must be one of: '3.74u', '9.74u'.
+        length: Length of the varicap. Must be one of: '0.3u', '0.8u'.
+        Nx: Number of fingers for the varicap.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'nwell': N-well guard ring.
+        guardRingDistance: Spacing between the varicap body and the guard ring, in micrometers.
 
     Returns:
-        Component with varicap layout.
+        gdsfactory.Component: The generated varicap layout.
     """
 
     params = {

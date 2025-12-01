@@ -9,6 +9,7 @@ from sg13g2_pycell_lib.ihp.NoFillerStack_code import NoFillerStack as no_filler_
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -17,8 +18,12 @@ from .. import tech
 
 @gf.cell
 def via_stack(
-    bottom_layer: str = "Metal1",
-    top_layer: str = "Metal2",
+    bottom_layer: Literal[
+        'Activ', 'GatPoly', 'Metal1', 'Metal2', 'Metal3', 'Metal4', 'Metal5', 'TopMetal1', 'TopMetal2'
+    ] = "Metal1",
+    top_layer: Literal[
+        'Activ', 'GatPoly', 'Metal1', 'Metal2', 'Metal3', 'Metal4', 'Metal5', 'TopMetal1', 'TopMetal2'
+    ] = "Metal2",
     vn_columns: int = 2,
     vn_rows: int = 2,
     vt1_columns: int = 1,
@@ -28,19 +33,24 @@ def via_stack(
 ) -> gf.Component:
     """Create a via stack test component.
 
+    This function generates a test layout for a via stack connecting a bottom
+    layer to a top layer. The number of vias in each layer and their
+    arrangement can be configured independently.
+
     Args:
-        bottom_layer: Bottom metal layer name.
-        top_layer: Top metal layer name.
-        vn_columns: Number of columns for normal vias (Via1-Via4).
-        vn_rows: Number of rows for normal vias.
+        bottom_layer: Bottom layer name. Options: 'Activ', 'GatPoly', 'Metal1'-'Metal5', 'TopMetal1', 'TopMetal2'.
+        top_layer: Top layer name. Options: 'Activ', 'GatPoly', 'Metal1'-'Metal5', 'TopMetal1', 'TopMetal2'.
+        vn_columns: Number of columns for standard vias (Via1-Via4).
+        vn_rows: Number of rows for standard vias.
         vt1_columns: Number of columns for TopVia1.
         vt1_rows: Number of rows for TopVia1.
         vt2_columns: Number of columns for TopVia2.
         vt2_rows: Number of rows for TopVia2.
 
     Returns:
-        Component with via stack test.
+        gdsfactory.Component: The generated via stack test layout.
     """
+
 
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -66,29 +76,37 @@ def via_stack(
 def no_filler_stack(
     width: int = 10,
     length: int = 10,
-    noAct: str = "Yes",   # no active filler
-    noGP: str = "Yes",    # no GatePoly filler
-    noM1: str = "Yes",    # no M1 filler
-    noM2: str = "Yes",    # no M2 filler
-    noM3: str = "Yes",    # no M3 filler
-    noM4: str = "Yes",    # no M4 filler
-    noM5: str = "Yes",    # no M5 filler
-    noTM1: str = "Yes",   # no TM1 filler
-    noTM2: str = "Yes",   # no TM2 filler
+    noAct: Literal['Yes', 'No'] = "Yes",   # no active filler
+    noGP: Literal['Yes', 'No'] = "Yes",    # no GatePoly filler
+    noM1: Literal['Yes', 'No'] = "Yes",    # no M1 filler
+    noM2: Literal['Yes', 'No'] = "Yes",    # no M2 filler
+    noM3: Literal['Yes', 'No'] = "Yes",    # no M3 filler
+    noM4: Literal['Yes', 'No'] = "Yes",    # no M4 filler
+    noM5: Literal['Yes', 'No'] = "Yes",    # no M5 filler
+    noTM1: Literal['Yes', 'No'] = "Yes",   # no TM1 filler
+    noTM2: Literal['Yes', 'No'] = "Yes",   # no TM2 filler
 ) -> gf.Component:
     """Create a NoFiller via stack test component.
 
-    Interface mirrors the provided GUI (except minLW).
+    This function generates a via stack layout without filler structures
+    for the selected layers. Each layer can be individually excluded
+    from filler insertion using Yes/No flags.
 
     Args:
-        bottom_layer: Bottom metal layer name.
-        top_layer: Top metal layer name.
-        width: device width (string with units, e.g. '100u').
-        length: device length (string with units).
-        noAct..noTM2: booleans to enable/disable filler for each layer.
+        width: Device width in micrometers.
+        length: Device length in micrometers.
+        noAct: Exclude filler for the active layer. Options: 'Yes', 'No'.
+        noGP: Exclude filler for the GatePoly layer. Options: 'Yes', 'No'.
+        noM1: Exclude filler for Metal1. Options: 'Yes', 'No'.
+        noM2: Exclude filler for Metal2. Options: 'Yes', 'No'.
+        noM3: Exclude filler for Metal3. Options: 'Yes', 'No'.
+        noM4: Exclude filler for Metal4. Options: 'Yes', 'No'.
+        noM5: Exclude filler for Metal5. Options: 'Yes', 'No'.
+        noTM1: Exclude filler for TopMetal1. Options: 'Yes', 'No'.
+        noTM2: Exclude filler for TopMetal2. Options: 'Yes', 'No'.
 
     Returns:
-        gdsfactory.Component with NoFiller via stack.
+        gdsfactory.Component: The generated NoFiller via stack layout.
     """
 
     params = {

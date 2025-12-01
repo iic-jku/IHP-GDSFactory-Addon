@@ -9,41 +9,55 @@ from sg13g2_pycell_lib.ihp.pnpMPA_code import pnpMPA as pnpMPAIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
 from .. import tech
 
 
+@gf.cell
 def npn13G2(
-    STI = 0.44,
-    baspolyx = 0.3,
-    bipwinx = 0.07,
-    bipwiny = 0.1,
-    empolyx = 0.15,
-    empolyy = 0.18,
-    emitter_length = 0.9,
-    emitter_width = 0.7,
-    Nx = 1,
-    Ny = 1,
-    text = 'npn13G2',
-    CMetY1 = 0,
-    CMetY2 = 0,
-    ) -> gf.Component:
-    """Returns IHP npn13G2 BJT transistor as a gdsfactory Component.
+    STI: float = 0.44,
+    baspolyx: float = 0.3,
+    bipwinx: float = 0.07,
+    bipwiny: float = 0.1,
+    empolyx: float = 0.15,
+    empolyy: float = 0.18,
+    emitter_length: float = 0.9,
+    emitter_width: float = 0.7,
+    Nx: int = 1,
+    Ny: int = 1,
+    text: str = 'npn13G2',
+    CMetY1: float = 0,
+    CMetY2: float = 0,
+) -> gf.Component:
+    """Returns the IHP npn13G2 BJT transistor as a gdsfactory Component.
+
+    This function generates a parametric layout of the npn13G2 heterojunction
+    bipolar transistor (HBT) from the IHP SG13G2 process. Geometry parameters
+    control the emitter, base, and implant enclosure sizes, while Nx and Ny
+    define the emitter finger array configuration.
+
     Args:
-        model: model name
-        Nx: number of emitter fingers
-        Ny: number of emitter rows (doesnt do anything in IHP PyCell)
-        emitter_length: emitter length in um
-        emitter_width: emitter width in um
-        bn: Bulk node connection
-        m: multiplier
-        text: label text
-        #TODO
+        STI: STI enclosure around the active device, in microns.
+        baspolyx: Base poly enclosure in the x-direction, in microns.
+        bipwinx: BIP window enclosure in the x-direction, in microns.
+        bipwiny: BIP window enclosure in the y-direction, in microns.
+        empolyx: Emitter poly enclosure in the x-direction, in microns.
+        empolyy: Emitter poly enclosure in the y-direction, in microns.
+        emitter_length: Length of each emitter finger, in microns.
+        emitter_width: Width of each emitter finger, in microns.
+        Nx: Number of emitter fingers.
+        Ny: Number of emitter rows (not used by current IHP PyCell implementation).
+        text: Label text to place on the device.
+        CMetY1: Optional metal extension on the collector side (lower side), in microns.
+        CMetY2: Optional metal extension on the collector side (upper side), in microns.
+
     Returns:
-        gdsfactory Component
+        gdsfactory.Component: The generated npn13G2 transistor layout.
     """
+
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -66,8 +80,8 @@ def npn13G2(
         'm': 1,      
         'trise': '',
         'Text': text,
-        'CMetY1': 0, # hardcoded in IHP PyCell, not in techparams
-        'CMetY2': 0, # hardcoded in IHP PyCell, not in techparams
+        'CMetY1': CMetY1*1e-6, # hardcoded in IHP PyCell, not in techparams
+        'CMetY2': CMetY2*1e-6, # hardcoded in IHP PyCell, not in techparams
     }
 
     c = generate_gf_from_ihp(cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP())
@@ -76,23 +90,29 @@ def npn13G2(
     #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
+
+@gf.cell
 def npn13G2L(
-    Nx = 1,
-    emitter_length = 1,
-    emitter_width = 0.07,
-    ) -> gf.Component:
-    """Returns IHP npn13G2L BJT transistor as a gdsfactory Component.
+    Nx: int = 1,
+    emitter_length: float = 1,
+    emitter_width: float = 0.07,
+) -> gf.Component:
+    """Returns the IHP npn13G2L BJT transistor as a gdsfactory Component.
+
+    This function generates a layout for the npn13G2L heterojunction
+    bipolar transistor (HBT) from the IHP SG13G2 process. The transistor
+    geometry is defined by the number of emitter fingers and the dimensions
+    of each emitter finger.
+
     Args:
-        model: model name
-        Nx: number of emitter fingers
-        emitter_length: emitter length in um
-        emitter_width: emitter width in um
-        bn: Bulk node connection
-        m: multiplier
-        text: label text
+        Nx: Number of emitter fingers.
+        emitter_length: Length of each emitter finger, in microns.
+        emitter_width: Width of each emitter finger, in microns.
+
     Returns:
-        gdsfactory Component
+        gdsfactory.Component: The generated npn13G2L transistor layout.
     """
+
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -117,23 +137,29 @@ def npn13G2L(
     #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
+
+@gf.cell
 def npn13G2V(
-    Nx = 1,
-    emitter_length = 1,
-    emitter_width = 0.12,
-    ) -> gf.Component:
-    """Returns IHP npn13G2V BJT transistor as a gdsfactory Component.
+    Nx: int = 1,
+    emitter_length: float = 1,
+    emitter_width: float = 0.12,
+) -> gf.Component:
+    """Returns the IHP npn13G2V BJT transistor as a gdsfactory Component.
+
+    This function generates a layout for the npn13G2V heterojunction
+    bipolar transistor (HBT) from the IHP SG13G2 process. The transistor
+    geometry is defined by the number of emitter fingers and the dimensions
+    of each emitter finger.
+
     Args:
-        model: model name
-        Nx: number of emitter fingers [1, 8]
-        emitter_length: emitter length in um
-        emitter_width: emitter width in um
-        bn: Bulk node connection
-        m: multiplier
-        text: label text
+        Nx: Number of emitter fingers. Valid range: [1, 8].
+        emitter_length: Length of each emitter finger, in microns.
+        emitter_width: Width of each emitter finger, in microns.
+
     Returns:
-        gdsfactory Component
+        gdsfactory.Component: The generated npn13G2V transistor layout.
     """
+
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -158,24 +184,24 @@ def npn13G2V(
     #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
-
+@gf.cell
 def pnpMPA(
-    width = 0.7,
-    length = 2,
-    m = 1,
-    ) -> gf.Component:
-    """Returns IHP npn13G2V BJT transistor as a gdsfactory Component.
+    width: float = 0.7,
+    length: float = 2,
+) -> gf.Component:
+    """Returns the IHP pnpMPA BJT transistor as a gdsfactory Component.
+
+    This function generates a layout for a PNP transistor using the IHP process.
+    The geometry of the transistor is defined by its width and length.
+
     Args:
-        model: model name
-        Nx: number of emitter fingers [1, 8]
-        emitter_length: emitter length in um
-        emitter_width: emitter width in um
-        bn: Bulk node connection
-        m: multiplier
-        text: label text
+        width: Width of the transistor, in microns.
+        length: Length of the transistor, in microns.
+
     Returns:
-        gdsfactory Component
+        gdsfactory.Component: The generated pnpMPA transistor layout.
     """
+
     area = width * length
     perimeter = 2 * (width + length)
     params = {
@@ -189,7 +215,7 @@ def pnpMPA(
         'p': perimeter*1e-6,
         'ac': 7.524*1e-12,
         'pc': 11.16*1e-6,
-        'm': m,      # Multiplier
+        'm': 1,      # Multiplier
         'region': '',
         'trise': ''
     }

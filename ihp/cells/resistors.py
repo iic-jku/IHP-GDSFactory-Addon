@@ -11,6 +11,7 @@ from sg13g2_pycell_lib.ihp.rsil_code import rsil as rsilIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -19,27 +20,42 @@ from .. import tech
 
 @gf.cell
 def rhigh(
-    length = 0.96,
-    width = 0.5,
-    bends = 0,
-    polySpace = 0.18,
-    numberOfSegments = 1,
-    segmentConnection = 'Serial',
-    segmentSpacing = 2,
-    guardRingType = 'none',
-    guardRingDistance = 1,
+    length: float = 0.96,
+    width: float = 0.5,
+    bends: int = 0,
+    polySpace: float = 0.18,
+    numberOfSegments: int = 1,
+    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentSpacing: float = 2,
+    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a high-resistance polysilicon resistor.
+    """Create a high-resistance polysilicon resistor layout.
+
+    This function generates a parametric high-resistance polysilicon resistor
+    with configurable width, length, bends, and multiple segments. Optional
+    guard rings can be added for isolation.
 
     Args:
-        width: Width of the resistor in micrometers.
         length: Length of the resistor in micrometers.
-        #TODO
+        width: Width of the resistor in micrometers.
+        bends: Number of bends in the resistor path.
+        polySpace: Spacing between polysilicon lines in micrometers.
+        numberOfSegments: Number of resistor segments.
+        segmentConnection: Connection type between segments. Options:
+            - 'None': Segments not connected.
+            - 'Serial': Segments connected in series.
+            - 'Parallel': Segments connected in parallel.
+        segmentSpacing: Spacing between segments in micrometers.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'nwell': N-well guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Distance between the resistor and guard ring in micrometers.
 
     Returns:
-        Component with high-resistance poly resistor layout.
+        gdsfactory.Component: The generated high-resistance polysilicon resistor layout.
     """
-    
 
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -81,27 +97,42 @@ def rhigh(
 
 @gf.cell
 def rppd(
-    length = 0.5,
-    width = 0.5,
-    bends = 0,
-    polySpace = 0.18,
-    numberOfSegments = 1,
-    segmentConnection = 'Serial',
-    segmentSpacing = 2,
-    guardRingType = 'none',
-    guardRingDistance = 1, 
+    length: float = 0.5,
+    width: float = 0.5,
+    bends: int = 0,
+    polySpace: float = 0.18,
+    numberOfSegments: int = 1,
+    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentSpacing: float = 2,
+    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a high-resistance polysilicon resistor.
+    """Create a high-resistance polysilicon resistor layout.
+
+    This function generates a parametric high-resistance polysilicon resistor
+    with configurable width, length, bends, and multiple segments. Optional
+    guard rings can be added for isolation.
 
     Args:
-        width: Width of the resistor in micrometers.
         length: Length of the resistor in micrometers.
-        #TODO
+        width: Width of the resistor in micrometers.
+        bends: Number of bends in the resistor path.
+        polySpace: Spacing between polysilicon lines in micrometers.
+        numberOfSegments: Number of resistor segments.
+        segmentConnection: Connection type between segments. Options:
+            - 'None': Segments not connected.
+            - 'Serial': Segments connected in series.
+            - 'Parallel': Segments connected in parallel.
+        segmentSpacing: Spacing between segments in micrometers.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'nwell': N-well guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Distance between the resistor and guard ring in micrometers.
 
     Returns:
-        Component with high-resistance poly resistor layout.
+        gdsfactory.Component: The generated high-resistance polysilicon resistor layout.
     """
-    
 
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -143,17 +174,42 @@ def rppd(
 
 @gf.cell
 def rsil(
-    length = 0.5,
-    width = 0.5,
-    polySpace = 0.18,
-    resistance = 24.9,
-    numberOfSegments = 1,
-    segmentConnection = 'Serial',
-    segmentSpacing = 2,
-    guardRingType = 'none',
-    guardRingDistance = 1, 
+    length: float = 0.5,
+    width: float = 0.5,
+    polySpace: float = 0.18,
+    resistance: float = 24.9,
+    numberOfSegments: int = 1,
+    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentSpacing: float = 2,
+    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingDistance: float = 1,
 ) -> gf.Component:
-    
+    """Create a high-resistance polysilicon resistor layout (RSIL type).
+
+    This function generates a parametric high-resistance polysilicon resistor
+    of RSIL type with configurable width, length, target resistance, bends,
+    multiple segments, and optional guard rings for isolation.
+
+    Args:
+        length: Length of the resistor in micrometers.
+        width: Width of the resistor in micrometers.
+        polySpace: Spacing between polysilicon lines in micrometers.
+        resistance: Target resistance value in ohms.
+        numberOfSegments: Number of resistor segments.
+        segmentConnection: Connection type between segments. Options:
+            - 'None': Segments not connected.
+            - 'Serial': Segments connected in series.
+            - 'Parallel': Segments connected in parallel.
+        segmentSpacing: Spacing between segments in micrometers.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'nwell': N-well guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Distance between the resistor and guard ring in micrometers.
+
+    Returns:
+        gdsfactory.Component: The generated RSIL polysilicon resistor layout.
+    """
 
     params = {
         'cdf_version': tech.techParams['CDFVersion'],

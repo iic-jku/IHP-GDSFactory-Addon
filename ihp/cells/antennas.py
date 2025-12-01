@@ -8,6 +8,7 @@ from sg13g2_pycell_lib.ihp.dpantenna_code import dpantenna as dpantennaIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -19,18 +20,28 @@ def dantenna(
     width: float = 0.78,
     length: float = 0.78,
     addRecLayer: str = 't',
-    guardRingType: str = 'none',
+    guardRingType: Literal['none', 'psub'] = 'none',
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a 
+    """Creates a diode antenna (dantenna) structure.
 
-    
+    This function generates a layout cell containing a rectangular antenna
+    region with optional recognition layers and guard ring structures.
+    Parameters allow customization of the antenna geometry and the type
+    and spacing of guard rings.
 
     Args:
-        
+        width: Width of the antenna rectangle in microns.
+        length: Length of the antenna rectangle in microns.
+        addRecLayer: Recognition layer to add (e.g., 't' for top, 'b' for bottom,
+            or '' for none).
+        guardRingType: Type of guard ring to include. Options include:
+            - 'none': No guard ring
+            - 'psub': P-type guard ring
+        guardRingDistance: Spacing between the antenna body and guard ring in microns.
 
     Returns:
-        gdsfactory.Component 
+        gdsfactory.Component: The generated antenna component.
     """
 
     area = width*1e-6 * length*1e-6
@@ -69,19 +80,31 @@ def dantenna(
 def dpantenna(
     width: float = 0.78,
     length: float = 0.78,
-    addRecLayer: str = 't',
-    guardRingType: str = 'none',
+    addRecLayer: Literal['t', 'f'] = 't',
+    guardRingType: Literal['none', 'nwell'] = 'none',
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a 
+    """Creates a dual-polarity antenna (dpantenna) structure.
 
-    
+    Generates a layout cell containing a rectangular antenna region with an
+    optional recognition layer and an optional n-well guard ring. Parameters
+    allow customization of the antenna geometry and the spacing between the
+    antenna body and the surrounding guard ring.
 
     Args:
-        
+        width: Width of the antenna rectangle in microns.
+        length: Length of the antenna rectangle in microns.
+        addRecLayer: Whether to add a recognition layer. Valid values:
+            - 't': Add recognition layer.
+            - 'f': Do not add a recognition layer.
+        guardRingType: Type of guard ring to include. Valid values:
+            - 'none': No guard ring.
+            - 'nwell': Surrounding n-well guard ring.
+        guardRingDistance: Spacing between the antenna body and the n-well
+            guard ring, in microns.
 
     Returns:
-        gdsfactory.Component 
+        gdsfactory.Component: The generated antenna component.
     """
 
     area = width*1e-6 * length*1e-6

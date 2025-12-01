@@ -15,6 +15,7 @@ from sg13g2_pycell_lib.ihp.rfpmosHV_code import rfpmosHV as rfpmosHVIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -32,21 +33,28 @@ _add_ports = (_add_ports_metal1, _add_ports_poly)
 
 @gf.cell
 def nmos(
-    w = 0.15, 
-    l = 0.13, 
-    ng = 1,
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """Create an NMOS transistor.
+    w: float = 0.15, 
+    l: float = 0.13, 
+    ng: int = 1,
+    guardRingType: Literal['none', 'psub'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create an NMOS transistor layout.
+
+    This function generates a parametric NMOS transistor with configurable
+    width, length, number of gates/fingers, and optional P-substrate guard ring.
 
     Args:
         w: Total width of the transistor in micrometers.
         l: Length of the transistor in micrometers.
         ng: Number of gates/fingers.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Spacing between the transistor and the guard ring, in micrometers.
 
     Returns:
-        Component with NMOS transistor layout.
+        gdsfactory.Component: The generated NMOS transistor layout.
     """
    
     params = {
@@ -73,24 +81,30 @@ def nmos(
 
 @gf.cell
 def nmosHV(
-    w = 0.60, 
-    l = 0.45, 
-    ng = 1, 
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """Create an PMOS transistor.
+    w: float = 0.60, 
+    l: float = 0.45, 
+    ng: int = 1, 
+    guardRingType: Literal['none', 'psub'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create a high-voltage NMOS transistor layout.
+
+    This function generates a parametric high-voltage NMOS transistor with
+    configurable width, length, number of gates/fingers, and optional
+    P-substrate guard ring.
 
     Args:
         w: Total width of the transistor in micrometers.
         l: Length of the transistor in micrometers.
         ng: Number of gates/fingers.
-        guardRingType: Type of guard ring ("none", "psub").
-        #TODO
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Spacing between the transistor and the guard ring, in micrometers.
+
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated high-voltage NMOS transistor layout.
     """
-    
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -117,28 +131,28 @@ def nmosHV(
 
 @gf.cell
 def pmos(
-    w = 0.15, 
-    l = 0.13, 
-    ng = 1,
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """Create an PMOS transistor.
+    w: float = 0.15, 
+    l: float = 0.13, 
+    ng: int = 1,
+    guardRingType: Literal['none', 'nwell'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create a PMOS transistor layout.
+
+    This function generates a parametric PMOS transistor with configurable
+    width, length, number of gates/fingers, and optional guard ring.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'nwell': N-well guard ring.
+        guardRingDistance: Spacing between the transistor and the guard ring, in micrometers.
 
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated PMOS transistor layout.
     """
     
     params = {
@@ -166,28 +180,29 @@ def pmos(
 
 @gf.cell
 def pmosHV(
-    w = 0.30, 
-    l = 0.40, 
-    ng = 1,
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """Create an PMOSHV transistor.
+    w: float = 0.30, 
+    l: float = 0.40, 
+    ng: int = 1,
+    guardRingType: Literal['none', 'psub'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create a high-voltage PMOS (PMOSHV) transistor layout.
+
+    This function generates a parametric high-voltage PMOS transistor with
+    configurable width, length, number of gates/fingers, and optional
+    P-substrate guard ring.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
-        #TODO
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring.
+        guardRingDistance: Spacing between the transistor and the guard ring, in micrometers.
+
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated high-voltage PMOS transistor layout.
     """
     
     params = {
@@ -215,31 +230,35 @@ def pmosHV(
 
 @gf.cell
 def rfnmos(
-    w=1.0,
-    l=0.72,
-    ng=1,
-    cnt_rows=1,
-    Met2Cont="Yes",
-    gat_ring="Yes",
-    guard_ring="Yes",
-    ) -> gf.Component:
-    """Create an RF NMOS transistor.
+    w: float = 1.0,
+    l: float = 0.72,
+    ng: int = 1,
+    cnt_rows: int = 1,
+    Met2Cont: Literal['Yes', 'No'] = "Yes",
+    gat_ring: Literal['Yes', 'No'] = "Yes",
+    guard_ring: Literal['Yes', 'No', 'U', 'Top+Bottom'] = "Yes",
+) -> gf.Component:
+    """Create an RF NMOS transistor layout.
+
+    This function generates a parametric RF NMOS transistor with configurable
+    width, length, number of gates/fingers, number of rows, and optional
+    contacts and guard structures.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
-        # TODO: complete other params
+        cnt_rows: Number of transistor rows (vertical stacking of fingers).
+        Met2Cont: Include Metal2-to-contact connection. Options: 'Yes' or 'No'.
+        gat_ring: Include gate ring around the transistor. Options: 'Yes' or 'No'.
+        guard_ring: Include guard ring around the transistor. Options:
+            - 'U': U-shaped guard ring (One side stays open).
+            - 'Top+Bottom': Guard ring on top and bottom (North/South).
+            - 'Yes': Default guard ring.
+            - 'No': No guard ring.
 
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated RF NMOS transistor layout.
     """
     
     params = {       
@@ -271,31 +290,35 @@ def rfnmos(
 
 @gf.cell
 def rfnmosHV(
-    w=1.0,
-    l=0.72,
-    ng=1,
-    cnt_rows=1,
-    Met2Cont="Yes",
-    gat_ring="Yes",
-    guard_ring="Yes",
-    ) -> gf.Component:
-    """Create an RF NMOS transistor.
+    w: float = 1.0,
+    l: float = 0.72,
+    ng: int = 1,
+    cnt_rows: int = 1,
+    Met2Cont: Literal['Yes', 'No'] = "Yes",
+    gat_ring: Literal['Yes', 'No'] = "Yes",
+    guard_ring: Literal['Yes', 'No', 'U', 'Top+Bottom'] = "Yes",
+) -> gf.Component:
+    """Create a high-voltage RF NMOS (rfnmosHV) transistor layout.
+
+    This function generates a parametric high-voltage RF NMOS transistor with
+    configurable width, length, number of gates/fingers, number of rows, and
+    optional contacts, gate ring, and guard ring structures.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
-        # TODO: complete other params
+        cnt_rows: Number of transistor rows (vertical stacking of fingers).
+        Met2Cont: Include Metal2-to-contact connection. Options: 'Yes' or 'No'.
+        gat_ring: Include gate ring around the transistor. Options: 'Yes' or 'No'.
+        guard_ring: Include guard ring around the transistor. Options:
+            - 'U': U-shaped guard ring (One side stays open).
+            - 'Top+Bottom': Guard ring on top and bottom (North/South).
+            - 'Yes': Default guard ring.
+            - 'No': No guard ring.
 
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated high-voltage RF NMOS transistor layout.
     """
     
     params = {       
@@ -327,32 +350,37 @@ def rfnmosHV(
 
 @gf.cell
 def rfpmos(
-    w=1.0,
-    l=0.72,
-    ng=1,
-    cnt_rows=1,
-    Met2Cont="Yes",
-    gat_ring="Yes",
-    guard_ring="Yes",
-    ) -> gf.Component:
-    """Create an RF NMOS transistor.
+    w: float = 1.0,
+    l: float = 0.72,
+    ng: int = 1,
+    cnt_rows: int = 1,
+    Met2Cont: Literal['Yes', 'No'] = "Yes",
+    gat_ring: Literal['Yes', 'No'] = "Yes",
+    guard_ring: Literal['Yes', 'No', 'U', 'Top+Bottom'] = "Yes",
+) -> gf.Component:
+    """Create an RF PMOS transistor layout.
+
+    This function generates a parametric RF PMOS transistor with configurable
+    width, length, number of gates/fingers, number of rows, and optional
+    contacts, gate ring, and guard ring structures.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
-        # TODO: complete other params
+        cnt_rows: Number of transistor rows (vertical stacking of fingers).
+        Met2Cont: Include Metal2-to-contact connection. Options: 'Yes' or 'No'.
+        gat_ring: Include gate ring around the transistor. Options: 'Yes' or 'No'.
+        guard_ring: Include guard ring around the transistor. Options:
+            - 'U': U-shaped guard ring (One side stays open).
+            - 'Top+Bottom': Guard ring on top and bottom (North/South).
+            - 'Yes': Default guard ring.
+            - 'No': No guard ring.
 
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated RF PMOS transistor layout.
     """
+
     
     params = {       
         'cdf_version': tech.techParams['CDFVersion'], 
@@ -382,32 +410,37 @@ def rfpmos(
 
 @gf.cell
 def rfpmosHV(
-    w=1.0,
-    l=0.72,
-    ng=1,
-    cnt_rows=1,
-    Met2Cont="Yes",
-    gat_ring="Yes",
-    guard_ring="Yes",
-    ) -> gf.Component:
-    """Create an RF NMOS transistor.
+    w: float = 1.0,
+    l: float = 0.72,
+    ng: int = 1,
+    cnt_rows: int = 1,
+    Met2Cont: Literal['Yes', 'No'] = "Yes",
+    gat_ring: Literal['Yes', 'No'] = "Yes",
+    guard_ring: Literal['Yes', 'No', 'U', 'Top+Bottom'] = "Yes",
+) -> gf.Component:
+    """Create a high-voltage RF PMOS (rfpmosHV) transistor layout.
+
+    This function generates a parametric high-voltage RF PMOS transistor with
+    configurable width, length, number of gates/fingers, number of rows, and
+    optional contacts, gate ring, and guard ring structures.
 
     Args:
-        cdf_version: CDF version.
-        model: Device model name.
         w: Total width of the transistor in micrometers.
-        ws: Single width in nanometers.
         l: Length of the transistor in micrometers.
-        Wmin: Minimum width in micrometers.
-        Lmin: Minimum length in micrometers.
         ng: Number of gates/fingers.
-        m: Multiplier (number of parallel devices).
-        trise: Temp rise from ambient
-        # TODO: complete other params
+        cnt_rows: Number of transistor rows (vertical stacking of fingers).
+        Met2Cont: Include Metal2-to-contact connection. Options: 'Yes' or 'No'.
+        gat_ring: Include gate ring around the transistor. Options: 'Yes' or 'No'.
+        guard_ring: Include guard ring around the transistor. Options:
+            - 'U': U-shaped guard ring (One side stays open).
+            - 'Top+Bottom': Guard ring on top and bottom (North/South).
+            - 'Yes': Default guard ring.
+            - 'No': No guard ring.
 
     Returns:
-        Component with PMOS transistor layout.
+        gdsfactory.Component: The generated high-voltage RF PMOS transistor layout.
     """
+
     
     params = {       
         'cdf_version': tech.techParams['CDFVersion'], 

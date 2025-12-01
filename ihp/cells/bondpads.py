@@ -8,6 +8,7 @@ from sg13g2_pycell_lib.ihp.bondpad_code import bondpad as bondpadIHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
@@ -17,40 +18,48 @@ from .. import tech
 
 @gf.cell
 def bondpad(
-    padType: str = "bondpad",
+    shape: Literal['octagon', 'square', 'circle'] = 'octagon',
+    stack: Literal['t', 'nil'] = 't',
+    fillMetals: Literal['t', 'nil'] = 'nil',
+    flipChip: Literal['yes', 'no'] = 'no',
     diameter: float = 80.0,
-    passEncl: float = 2.1,
     hwQuota: float = 1,
-    shape: str = "octagon",
-    topMetal: str = "TM2",
-    bottomMetal: str = "3",
-    stack: str = 't',
-    fill: str = 'nil',
-    flipChip: str = 'no',
-    addFillerEx: str = 'nil',
+    topMetal: Literal['TM1', 'TM2'] = 'TM2',
+    bottomMetal: Literal['1', '2', '3', '4', '5', 'TM1'] = '3',
+    addFillerEx: Literal['t', 'nil'] = 'nil',
+    passEncl: float = 2.1,
+    padType: Literal['bondpad', 'probepad'] = 'bondpad',
 ) -> gf.Component:
     """Create a bondpad for wire bonding or flip-chip connection.
 
+    This function generates a parametric bondpad with configurable shape,
+    metal stack, size, passivation, filler, and flip-chip options.
+
     Args:
-        shape: Shape of the bondpad ("octagon", "square", or "circle").
-        stack_metals: Stack all metal layers from bottom to top.
-        fill_metals: Add metal fill patterns.
-        flip_chip: Enable flip-chip configuration.
+        shape: Shape of the bondpad. Options: 'octagon', 'square', 'circle'.
+        stack: Stack all metal layers from bottom to top ('t' or 'nil').
+        fillMetals: Add metal fill patterns ('t' for yes, 'nil' for no).
+        flipChip: Enable flip-chip configuration ('yes' or 'no').
         diameter: Diameter or size of the bondpad in micrometers.
-        top_metal: Top metal layer name.
-        bottom_metal: Bottom metal layer name.
+        hwQuota: Height/width quota for pad design rules.
+        topMetal: Name of the top metal layer. Options: 'TM1', 'TM2'.
+        bottomMetal: Name of the bottom metal layer. Options: '1', '2', '3', '4', '5', 'TM1'.
+        addFillerEx: Exclude metal filler ('t' or 'nil').
+        passEncl: Passivation enclosure around the pad, in micrometers.
+        padType: Type of pad. Options: 'bondpad', 'probepad'.
 
     Returns:
-        Component with bondpad layout.
+        gdsfactory.Component: The generated bondpad layout.
     """
+
     
     params = {
-        'cdf_version': 8, 
+        'cdf_version': tech.techParams['CDFVersion'], 
         'model': "bondpad", # hardcoded for bondpad
         'Display': 'Selected',
         'shape': shape,
         'stack': stack,
-        'fill': fill,
+        'fill': fillMetals,
         'FlipChip': flipChip,
         'diameter': diameter*1e-6,
         'hwquota': hwQuota,
@@ -74,8 +83,8 @@ def bondpad_array(
     n_pads: int = 4,
     pad_pitch: float = 100.0,
     pad_diameter: float = 68.0,
-    shape: str = "octagon",
-    stack_metals: bool = True,
+    shape: Literal['octagon', 'square', 'circle'] = "octagon",
+    stack_metals: Literal['t', 'nil'] = 't'
 ) -> gf.Component:
     """Create an array of bondpads.
 

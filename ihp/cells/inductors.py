@@ -7,32 +7,50 @@ from sg13g2_pycell_lib.ihp.inductor3_code import inductor3 as inductor3IHP
 
 
 import gdsfactory as gf
+from typing import Literal
 
 from .utils import *
 from functools import partial
 from .. import tech
 
-
+@gf.cell
 def inductor2(
-    width = 2,
-    space = 2.1,
-    distance = 15.48,
-    resistance = 1,
-    inductance = 1,
-    num_turns = 1,
-    block_qrc = True,
-    subE = False,
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """
+    width: float = 2,
+    space: float = 2.1,
+    distance: float = 15.48,
+    resistance: float = 1,
+    inductance: float = 1,
+    num_turns: int = 1,
+    block_qrc: bool = True,
+    subE: bool = False,
+    guardRingType: Literal['none', 'psub', 'nwell'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create a parametric inductor layout.
+
+    This function generates a planar inductor with customizable width,
+    spacing, number of turns, and optional guard rings. The layout can
+    also include blocking of QRC structures and substrate connections.
+
     Args:
-    
+        width: Width of the inductor trace in micrometers.
+        space: Spacing between turns of the inductor in micrometers.
+        distance: Total distance of the inductor layout in micrometers.
+        resistance: Target series resistance in Ohms.
+        inductance: Target inductance in nH (used for layout optimization).
+        num_turns: Number of turns in the inductor.
+        block_qrc: Whether to block QRC (quasi-resistor-capacitor) structures.
+        subE: Whether to connect to substrate for shielding or grounding.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring.
+            - 'nwell': N-well guard ring.
+        guardRingDistance: Spacing between the inductor and the guard ring, in micrometers.
+
     Returns:
-        gdsfactory Component
-    
-    
+        gdsfactory.Component: The generated inductor layout.
     """
+
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
@@ -63,26 +81,45 @@ def inductor2(
     #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
+@gf.cell
 def inductor3(
-    width = 2,
-    space = 2.1,
-    distance = 25.84,
-    resistance = 1,
-    inductance = 1,
-    num_turns = 1,
-    block_qrc = True,
-    subE = False,
-    guardRingType = "none",
-    guardRingDistance = 1,
-    ) -> gf.Component:
-    """
+    width: float = 2,
+    space: float = 2.1,
+    distance: float = 25.84,
+    resistance: float = 1,
+    inductance: float = 1,
+    num_turns: int = 1,
+    block_qrc: bool = True,
+    subE: bool = False,
+    guardRingType: Literal['none', 'psub', 'nwell'] = "none",
+    guardRingDistance: float = 1,
+) -> gf.Component:
+    """Create a parametric inductor layout.
+
+    This function generates a planar inductor with customizable width,
+    spacing, total distance, number of turns, and optional guard rings.
+    The layout can also include blocking of QRC structures and substrate
+    connections.
+
     Args:
-    
+        width: Width of the inductor trace in micrometers.
+        space: Spacing between turns of the inductor in micrometers.
+        distance: Total distance of the inductor layout in micrometers.
+        resistance: Target series resistance in Ohms.
+        inductance: Target inductance in nH (used for layout optimization).
+        num_turns: Number of turns in the inductor.
+        block_qrc: Whether to block QRC (quasi-resistor-capacitor) structures.
+        subE: Whether to connect to substrate for shielding or grounding.
+        guardRingType: Type of guard ring to include. Options:
+            - 'none': No guard ring.
+            - 'psub': P-substrate guard ring.
+            - 'nwell': N-well guard ring.
+        guardRingDistance: Spacing between the inductor and the guard ring, in micrometers.
+
     Returns:
-        gdsfactory Component
-    
-    
+        gdsfactory.Component: The generated inductor layout.
     """
+
     
     params = {
         'cdf_version': tech.techParams['CDFVersion'],
