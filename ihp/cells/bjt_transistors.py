@@ -84,10 +84,14 @@ def npn13G2(
         'CMetY2': CMetY2*1e-6, # hardcoded in IHP PyCell, not in techparams
     }
 
+    # add ports to the component
     c = generate_gf_from_ihp(cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "B"
+    c.ports["e2"].name = "C"
+    c.ports["e3"].name = "E"
+    
     return c
 
 
@@ -132,9 +136,14 @@ def npn13G2L(
     }
 
     c = generate_gf_from_ihp(cell_name="npn13G2L", cell_params=params, function_name=npn13G2LIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "B"
+    c.ports["e2"].name = "E"
+    c.ports["e3"].name = "C"
+    
     return c
 
 
@@ -179,9 +188,14 @@ def npn13G2V(
     }
 
     c = generate_gf_from_ihp(cell_name="npn13G2V", cell_params=params, function_name=npn13G2VIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "B"
+    c.ports["e2"].name = "C"
+    c.ports["e3"].name = "E"
+    
     return c
 
 @gf.cell
@@ -221,7 +235,11 @@ def pnpMPA(
     }
 
     c = generate_gf_from_ihp(cell_name="pnpMPA", cell_params=params, function_name=pnpMPAIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "TIE"
+    c.ports["e2"].name = "PLUS"
+    c.ports["e3"].name = "MINUS"
+    
     return c

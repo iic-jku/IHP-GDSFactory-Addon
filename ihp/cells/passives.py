@@ -51,9 +51,48 @@ def esd(
     }
 
     c = generate_gf_from_ihp(cell_name="esd", cell_params=params, function_name=esdIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    ## add ports to the component
+    # default direction should be away from the device center
+    # set port names and orientations based on model
+    
+    if model == 'diodevdd_2kv':
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+        c.ports["e1"].orientation = 270
+        c.ports["e1"].name = "VSS"
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        c.ports["e1"].orientation = 180
+        c.ports["e1"].name = "PAD"
+        c.ports["e2"].orientation = 0
+        c.ports["e2"].name = "VDD"
+        
+    elif model == 'diodevdd_4kv':
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+        c.ports["e1"].orientation = 270
+        c.ports["e1"].name = "VSS"
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        c.ports["e1"].orientation = 0
+        c.ports["e1"].name = "VDD"
+        c.ports["e2"].orientation = 180
+        c.ports["e2"].name = "PAD"
+        
+    elif model in ['diodevss_2kv', 'diodevss_4kv']:
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+        c.ports["e1"].orientation = 90
+        c.ports["e1"].name = "VDD"
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        c.ports["e1"].orientation = 180
+        c.ports["e1"].name = "PAD"
+        c.ports["e2"].orientation = 0
+        c.ports["e2"].name = "VSS"
+    
+    else:  # NMOS clamp
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal3pin), port_type="electrical", ports_on_short_side=True)
+        c.ports["e1"].orientation = 270
+        c.ports["e1"].name = "VSS"
+        c.ports["e2"].orientation = 90
+        c.ports["e2"].name = "VDD"
+        
     return c
 
 
@@ -96,9 +135,10 @@ def ptap1(
     }
 
     c = generate_gf_from_ihp(cell_name="ptap1", cell_params=params, function_name=ptap1IHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    
     return c
 
 
@@ -137,9 +177,10 @@ def ntap1(
     }
 
     c = generate_gf_from_ihp(cell_name="ntap1", cell_params=params, function_name=ntap1IHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    
     return c
 
 
@@ -182,9 +223,10 @@ def sealring(
     }
 
     c = generate_gf_from_ihp(cell_name="sealring", cell_params=params, function_name=sealringIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    # ports should be added manually if needed
+    
     return c
 
 

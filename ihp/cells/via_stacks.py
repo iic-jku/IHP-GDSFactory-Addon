@@ -1,9 +1,10 @@
 """Via stack components for IHP PDK. Also includes NoFillerStack."""
-#TODO prbably not the right place for NoFillerStack
+#TODO probably not the right place for NoFillerStack
 import sys
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
 sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
+from ihp.layer_map_ihp import LAYER
 from sg13g2_pycell_lib.ihp.via_stack_code import via_stack as via_stackIHP
 from sg13g2_pycell_lib.ihp.NoFillerStack_code import NoFillerStack as no_filler_stackIHP
 
@@ -31,11 +32,11 @@ def via_stack(
     vt2_columns: int = 1,
     vt2_rows: int = 1,
 ) -> gf.Component:
-    """Create a via stack test component.
+    """Create a via stack component.
 
-    This function generates a test layout for a via stack connecting a bottom
-    layer to a top layer. The number of vias in each layer and their
-    arrangement can be configured independently.
+    This function generates a layout for a via stack connecting a bottom
+    layer to a top layer. The number of columns and rows for standard vias
+    (Via1-Via4) and top vias (TopVia1, TopVia2) can be specified.
 
     Args:
         bottom_layer: Bottom layer name. Options: 'Activ', 'GatPoly', 'Metal1'-'Metal5', 'TopMetal1', 'TopMetal2'.
@@ -66,9 +67,25 @@ def via_stack(
     }
 
     c = generate_gf_from_ihp(cell_name="via_stack", cell_params=params, function_name=via_stackIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    layer_map = { # necessary for mapping layer names to tech layers
+    "Activ": tech.LAYER.Activdrawing,
+    "GatPoly": tech.LAYER.GatPolydrawing,
+    "Metal1": tech.LAYER.Metal1drawing,
+    "Metal2": tech.LAYER.Metal2drawing,
+    "Metal3": tech.LAYER.Metal3drawing,
+    "Metal4": tech.LAYER.Metal4drawing,
+    "Metal5": tech.LAYER.Metal5drawing,
+    "TopMetal1": tech.LAYER.TopMetal1drawing,
+    "TopMetal2": tech.LAYER.TopMetal2drawing,
+}
+
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[bottom_layer]), port_type="electrical", ports_on_short_side=False)
+    c.ports["e1"].name = "bottom"
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[top_layer]), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+    c.ports["e1"].name = "top"
+    
     return c
 
 
