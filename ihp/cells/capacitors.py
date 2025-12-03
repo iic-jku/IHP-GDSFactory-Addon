@@ -63,9 +63,16 @@ def cmim(
     }
 
     c = generate_gf_from_ihp(cell_name="cmim", cell_params=params, function_name=cmimIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    # no pin layers for cmim, so we use drawing layers
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5drawing), port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "B"
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+    c.ports["e1"].name = "T"
+    c.ports["B"].orientation = 0
+    c.ports["T"].orientation = 180
+    
     return c
 
 
@@ -108,9 +115,15 @@ def rfcmim(
     }
 
     c = generate_gf_from_ihp(cell_name="rfcmim", cell_params=params, function_name=rfcmimIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5pin), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+    c.ports["e1"].name = "MINUS"
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1pin), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+    c.ports["e1"].name = "PLUS"
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+    c.ports["e1"].name = "TIE"
+    
     return c
 
 
@@ -154,9 +167,13 @@ def svaricap(
     }
 
     c = generate_gf_from_ihp(cell_name="svaricap", cell_params=params, function_name=SVaricapIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].orientation = 90
+    c.ports["e2"].orientation = 270
+    c.ports["e3"].orientation = 180
+    
     return c
 
 
