@@ -54,3 +54,66 @@ def generate_gf_from_ihp(
     # ----------------------------------------------------------------
     
     return c
+
+
+def add_port_group(c: gf.component, ref, ports: list, prefix: str = ""):
+    """
+    Add a group of ports from a reference component to a target component, 
+    optionally renaming them with a prefix.
+
+    Parameters
+    ----------
+    c : gf.Component
+        The component to which the ports will be added.
+    ref : gf.ComponentReference or similar
+        The referenced component from which ports are copied.
+    ports : list of str
+        A list of port names to copy from `ref` to `c`.
+    prefix : str, optional
+        A string to prepend to each added port's name, by default "".
+
+    Returns
+    -------
+    gf.Component
+        The updated component `c` with the copied ports added.
+
+    Notes
+    -----
+    - Each port in `ports` must exist in `ref.ports`.
+    - Port objects are not deep-copied; the function attaches the same
+      `ref.ports[p]` objects to `c` under new names.
+    """
+    for p in ports:
+        c.add_port(name=prefix + p, port=ref.ports[p])
+        
+    return c
+
+
+def change_port_orientation(c: gf.component, ports, orientation: int):
+    """
+    Change the orientation value of one or more ports in a component.
+
+    Parameters
+    ----------
+    c : gf.Component
+        The component whose port orientations will be modified.
+    ports : iterable of str
+        Names of the ports in `c` whose orientation should be updated.
+    orientation : int
+        The new orientation angle (in degrees) to assign to each port.
+
+    Returns
+    -------
+    gf.Component
+        The updated component `c` with modified port orientations.
+
+    Notes
+    -----
+    - Each port name in `ports` must exist in `c.ports`.
+    - Orientation is typically one of {0, 90, 180, 270} in gdsfactory
+      conventions, but arbitrary integer angles are allowed.
+    """
+    for p in ports:
+        c.ports[p].orientation = orientation
+        
+    return c

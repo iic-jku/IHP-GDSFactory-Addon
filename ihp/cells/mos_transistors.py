@@ -22,15 +22,6 @@ from functools import partial
 from .. import tech
 
 
-
-_add_ports_metal1 = partial(
-    gf.add_ports.add_ports_from_boxes, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False
-)
-_add_ports_poly = partial(
-    gf.add_ports.add_ports_from_boxes, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False
-)
-_add_ports = (_add_ports_metal1, _add_ports_poly)
-
 @gf.cell
 def nmos(
     w: float = 0.15, 
@@ -74,9 +65,14 @@ def nmos(
     }
 
     c = generate_gf_from_ihp(cell_name="nmos", cell_params=params, function_name=nmosIHP())
+    
+    # add ports
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False)
     # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    for i, port in enumerate(c.ports):
+        port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
     return c
 
 @gf.cell
@@ -123,10 +119,17 @@ def nmosHV(
     }
 
     c = generate_gf_from_ihp(cell_name="nmosHV", cell_params=params, function_name=nmosHVIHP())
+    
+    # add ports
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False)
     # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    for i, port in enumerate(c.ports):
+        port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    
     return c
+
 
 
 @gf.cell
@@ -172,9 +175,14 @@ def pmos(
     }
 
     c = generate_gf_from_ihp(cell_name="pmos", cell_params=params, function_name=pmosIHP())
+    
+    # add ports
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False)
     # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    for i, port in enumerate(c.ports):
+        port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
     return c
 
 
@@ -222,10 +230,15 @@ def pmosHV(
     }
 
     c = generate_gf_from_ihp(cell_name="pmosHV", cell_params=params, function_name=pmosHVIHP())
+    
+    # add ports
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False)
     # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
-    return c
+    for i, port in enumerate(c.ports):
+        port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    return c    
 
 
 @gf.cell
@@ -282,9 +295,14 @@ def rfnmos(
     }
 
     c = generate_gf_from_ihp(cell_name="rfnmos", cell_params=params, function_name=rfnmosIHP())
+    
+    # add ports
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix='DS_', ports_on_short_side=True, auto_rename_ports=False)
     # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    for i, port in enumerate(c.ports):
+        port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
     return c
 
 

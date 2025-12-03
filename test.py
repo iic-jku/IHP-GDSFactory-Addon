@@ -108,25 +108,7 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # antennas test
 
-# c = gf.Component()
-
-# da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
-# c.add_port(name="da_e1", port=da.ports["e2"]) # when using a component with a guard ring, the port you want to add must be specified manually
-# c.pprint_ports()
-# c.draw_ports()
-
-# c.move((0,6))
-# dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-# c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
-
-# # new function add_port_group test
-# c.move((0,6))
-# dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-# add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
-
-# c.pprint_ports()
-# c.draw_ports()
-# c.show()
+k
 
 # ----------------------------------------------------------------
 # bjt transistors test
@@ -215,31 +197,39 @@ c.show()
 # c = gf.Component()
 
 # nmos = c.add_ref(ihp.cells.nmos(ng = 5, guardRingType="psub", guardRingDistance=1))
-# ps = {"e4", "e5", "e6", "e7", "e8", "e9"}
-
+# c.move((0,5))
+# # c.add_ports(nmos.ports, prefix="nmos_")
+# ps = {"DS_1", "DS_2", "DS_3", "DS_4", "DS_5", "DS_6"}
 # c = add_port_group(c, nmos, ps)
 
-# c = change_port_orientation(c, ps, 90)
+# # c = change_port_orientation(c, ps, 90)
 
-# c.add_ref(ihp.cells.pmos(ng=1, guardRingType="nwell", guardRingDistance=1))
+# pmos = c.add_ref(ihp.cells.pmos(ng=2, guardRingType="nwell", guardRingDistance=1))
+# c.add_ports(pmos.ports, prefix="pmos_")
 # c.move((0,5))
 
-# c.add_ref(ihp.cells.nmosHV(ng = 1, guardRingType="psub", guardRingDistance=1))
+# nmosHV = c.add_ref(ihp.cells.nmosHV(ng = 2, guardRingType="psub", guardRingDistance=1))
+# c.add_ports(nmosHV.ports, prefix="nmosHV_")
 # c.move((0,5))
 
-# c.add_ref(ihp.cells.pmosHV(ng=1, guardRingType="nwell", guardRingDistance=1))
+# pmosHV = c.add_ref(ihp.cells.pmosHV(ng=2, guardRingType="nwell", guardRingDistance=1))
+# c.add_ports(pmosHV.ports, prefix="pmosHV_")
 # c.move((1.5,3))
 
-# c.add_ref(ihp.cells.rfnmos(ng = 1)).rotate(-90)
+# rfnmos = c.add_ref(ihp.cells.rfnmos(ng = 2)).rotate(-90)
+# # c.add_ports(rfnmos.ports, prefix="rfnmos_")
 # c.move((0,5))
 
-# c.add_ref(ihp.cells.rfnmosHV(ng=1)).rotate(-90)
+# rfnmosHV = c.add_ref(ihp.cells.rfnmosHV(ng=2)).rotate(-90)
+# c.add_ports(rfnmosHV.ports, prefix="rfnmosHV_")
 # c.move((0,5))
 
-# c.add_ref(ihp.cells.rfpmos(ng = 1)).rotate(-90)
+# rfpmos = c.add_ref(ihp.cells.rfpmos(ng = 2)).rotate(-90)
+# c.add_ports(rfpmos.ports, prefix="rfpmos_")
 # c.move((0,5))
 
-# c.add_ref(ihp.cells.rfpmosHV(ng=1)).rotate(-90)
+# rfpmosHV = c.add_ref(ihp.cells.rfpmosHV(ng=2)).rotate(-90)
+# c.add_ports(rfpmosHV.ports, prefix="rfpmosHV_")
 # c.move((0,5))
 
 # c.pprint_ports()
