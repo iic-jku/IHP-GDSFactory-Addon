@@ -197,17 +197,17 @@ ihp.PDK.activate()
 # ----------------------------------------------------------------
 # inductor test
 
-c = gf.Component()
+# c = gf.Component()
 
-ind2 = c.add_ref(ihp.cells.inductor2(guardRingType="psub", guardRingDistance=2))
-c.add_ports(ind2.ports, prefix="ind2_")
-c.move((-100, 0))
+# ind2 = c.add_ref(ihp.cells.inductor2(guardRingType="psub", guardRingDistance=2))
+# c.add_ports(ind2.ports, prefix="ind2_")
+# c.move((-100, 0))
 
-ind3 = c.add_ref(ihp.cells.inductor3())
-c.add_ports(ind3.ports, prefix="ind3_")
-c.draw_ports()
-c.pprint_ports()
-c.show()
+# ind3 = c.add_ref(ihp.cells.inductor3())
+# c.add_ports(ind3.ports, prefix="ind3_")
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # test mos_transistors.py 
@@ -273,31 +273,31 @@ c.show()
 # -----------------------------------------------------------------
 # resistor test
 
-# c = gf.Component()
+c = gf.Component()
 
-# rhigh1 = c.add_ref(ihp.cells.rhigh(length=10))
-# c.move((5,0))
-# rhigh2 = c.add_ref(ihp.cells.rhigh(length=20, width=1))
-# c.add_ports(rhigh1.ports, prefix="rhigh1_")
-# c.add_ports(rhigh2.ports, prefix="rhigh2_")
+rhigh1 = c.add_ref(ihp.cells.rhigh(length=10, guardRingType="psub", guardRingDistance=2, bends= 2, numberOfSegments=2, segmentConnection="Parallel"))
+c.move((5,0))
+rhigh2 = c.add_ref(ihp.cells.rhigh(length=20, width=1))
+c.add_ports(rhigh1.ports, prefix="rhigh1_")
+c.add_ports(rhigh2.ports, prefix="rhigh2_")
 
-# c.move((5,0))
-# rppd1 = c.add_ref(ihp.cells.rppd(length=10))
-# c.move((5,0))
-# rppd2 = c.add_ref(ihp.cells.rppd(length=20, width=1))
-# c.add_ports(rppd1.ports, prefix="rppd1_")
-# c.add_ports(rppd2.ports, prefix="rppd2_")
+c.move((5,0))
+rppd1 = c.add_ref(ihp.cells.rppd(length=10))
+c.move((5,0))
+rppd2 = c.add_ref(ihp.cells.rppd(length=20, width=1))
+c.add_ports(rppd1.ports, prefix="rppd1_")
+c.add_ports(rppd2.ports, prefix="rppd2_")
 
-# c.move((5,0))
-# rsil1 = c.add_ref(ihp.cells.rsil(length=10))
-# c.move((5,0))
-# rsil2 = c.add_ref(ihp.cells.rsil(length=20, width=1))
-# c.add_ports(rsil1.ports, prefix="rsil1_")
-# c.add_ports(rsil2.ports, prefix="rsil2_")
+c.move((5,0))
+rsil1 = c.add_ref(ihp.cells.rsil(length=10))
+c.move((5,0))
+rsil2 = c.add_ref(ihp.cells.rsil(length=20, width=1))
+c.add_ports(rsil1.ports, prefix="rsil1_")
+c.add_ports(rsil2.ports, prefix="rsil2_")
 
-# c.draw_ports()
-# c.pprint_ports()
-# c.show()
+c.draw_ports()
+c.pprint_ports()
+c.show()
 
 # -----------------------------------------------------------------
 # stack test

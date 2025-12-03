@@ -89,9 +89,10 @@ def rhigh(
     }
 
     c = generate_gf_from_ihp(cell_name="rhigh", cell_params=params, function_name=rhighIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
+    
     return c
 
 
@@ -166,9 +167,10 @@ def rppd(
     }
 
     c = generate_gf_from_ihp(cell_name="rppd", cell_params=params, function_name=rppdIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
+    
     return c
 
 
@@ -242,9 +244,10 @@ def rsil(
     }
 
     c = generate_gf_from_ihp(cell_name="rsil", cell_params=params, function_name=rsilIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
+    
     return c
 
 
