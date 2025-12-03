@@ -76,9 +76,14 @@ def inductor2(
     }
 
     c = generate_gf_from_ihp(cell_name="inductor2", cell_params=params, function_name=inductor2IHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal2pin), port_type="electrical", ports_on_short_side=True)
+    for port in c.ports:
+        port.orientation = 270  # all ports should face downwards
+    c.ports["e1"].name = "LB"
+    c.ports["e2"].name = "LA"
+    
     return c
 
 @gf.cell
@@ -88,7 +93,7 @@ def inductor3(
     distance: float = 25.84,
     resistance: float = 1,
     inductance: float = 1,
-    num_turns: int = 1,
+    num_turns: int = 2,
     block_qrc: bool = True,
     subE: bool = False,
     guardRingType: Literal['none', 'psub', 'nwell'] = "none",
@@ -145,7 +150,15 @@ def inductor3(
     }
 
     c = generate_gf_from_ihp(cell_name="inductor3", cell_params=params, function_name=inductor3IHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1pin), port_type="electrical", ports_on_short_side=True)
+    c.ports["e1"].name = "LA"
+    c.ports["e2"].name = "LB"
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+    c.ports["e1"].name = "LC"
+    
+    for port in c.ports:
+        port.orientation = 270  # all ports should face downwards
+    
     return c

@@ -108,25 +108,25 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # antennas test
 
-c = gf.Component()
+# c = gf.Component()
 
-da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
-c.add_port(name="da_e1", port=da.ports["e2"]) # when using a component with a guard ring, the port you want to add must be specified manually
-c.pprint_ports()
-c.draw_ports()
+# da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
+# c.add_port(name="da_e1", port=da.ports["e2"]) # when using a component with a guard ring, the port you want to add must be specified manually
+# c.pprint_ports()
+# c.draw_ports()
 
-c.move((0,6))
-dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
+# c.move((0,6))
+# dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+# c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
 
-# new function add_port_group test
-c.move((0,6))
-dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
+# # new function add_port_group test
+# c.move((0,6))
+# dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+# add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
 
-c.pprint_ports()
-c.draw_ports()
-c.show()
+# c.pprint_ports()
+# c.draw_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # bjt transistors test
@@ -197,17 +197,17 @@ c.show()
 # ----------------------------------------------------------------
 # inductor test
 
-# c = gf.Component()
+c = gf.Component()
 
-# ind2 = c.add_ref(ihp.cells.inductor2())
-# c.add_ports(ind2.ports, prefix="ind2_")
-# c.move((-100, 0))
+ind2 = c.add_ref(ihp.cells.inductor2(guardRingType="psub", guardRingDistance=2))
+c.add_ports(ind2.ports, prefix="ind2_")
+c.move((-100, 0))
 
-# ind3 = c.add_ref(ihp.cells.inductor3()) # TODO broken?
-# c.add_ports(ind3.ports, prefix="ind3_")
-# c.draw_ports()
-# c.pprint_ports()
-# c.show()
+ind3 = c.add_ref(ihp.cells.inductor3())
+c.add_ports(ind3.ports, prefix="ind3_")
+c.draw_ports()
+c.pprint_ports()
+c.show()
 
 # ----------------------------------------------------------------
 # test mos_transistors.py 
