@@ -70,9 +70,10 @@ def dantenna(
     }
 
     c = generate_gf_from_ihp(cell_name="dantenna", cell_params=params, function_name=dantennaIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix="t", ports_on_short_side=True)
+    
     return c
 
 
@@ -133,7 +134,8 @@ def dpantenna(
     }
 
     c = generate_gf_from_ihp(cell_name="dpantenna", cell_params=params, function_name=dpantennaIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+    
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1drawing), port_type="electrical", port_name_prefix="DS", ports_on_short_side=True)
+    
     return c

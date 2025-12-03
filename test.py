@@ -3,6 +3,8 @@ import ihp
 import sys
 import os
 
+from ihp.cells.utils import add_port_group, change_port_orientation
+
 # paths_to_remove = [
 #     "/foss/pdks/ihp-sg13g2/libs.tech/klayout/python",
 #     "/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
@@ -103,15 +105,121 @@ ihp.PDK.activate()
 # c.show()
 
 
+# -----------------------------------------------------------------
+# antennas test
 
+c = gf.Component()
+
+da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
+c.add_port(name="da_e1", port=da.ports["e2"]) # when using a component with a guard ring, the port you want to add must be specified manually
+c.pprint_ports()
+c.draw_ports()
+
+c.move((0,6))
+dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
+
+# new function add_port_group test
+c.move((0,6))
+dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
+
+c.pprint_ports()
+c.draw_ports()
+c.show()
+
+# ----------------------------------------------------------------
+# bjt transistors test
+
+# c = gf.Component()
+
+# npn = c.add_ref(ihp.cells.npn13G2(Nx=4))
+# c.add_ports(npn.ports, prefix="npn_")
+# c.move((4,11))
+
+# npnL = c.add_ref(ihp.cells.npn13G2L(Nx=10))
+# c.add_ports(npnL.ports, prefix="npnL_")
+# c.ports["npnL_B"].orientation =270      # change port orientation
+# c.ports["npnL_B"].center = (c.ports["npnL_B"].center[0] + 5, c.ports["npnL_B"].center[1]) # change port position
+# c.move((0,8))
+
+# npnV = c.add_ref(ihp.cells.npn13G2V(Nx=15))
+# c.add_ports(npnV.ports, prefix="npnV_")
+# c.move((-3.5,4))
+
+# pnp = c.add_ref(ihp.cells.pnpMPA().copy())
+# c.add_ports(pnp.ports, prefix="pnp_")
+# c.move((3,3))
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
+
+# -----------------------------------------------------------------
+# bondpad test
+
+# c = gf.Component()
+
+# c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon", topMetal="TM1"))
+
+# c.move((0,100))
+# c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
+# c.show()
+
+# -----------------------------------------------------------------
+# capacitor test
+
+# c = gf.Component()
+
+# cmim1 = c.add_ref(ihp.cells.cmim(width=10, length=10))
+# c.move((40,0))
+# cmim2 = c.add_ref(ihp.cells.cmim(width=20, length=20))
+# c.add_ports(cmim1.ports, prefix="cmim1_")
+# c.add_ports(cmim2.ports, prefix="cmim2_")
+
+
+# c.move((-40,35))
+# rfcmim1 = c.add_ref(ihp.cells.rfcmim(width=10, length=10))
+# c.move((40,0))
+# rfcmim2 = c.add_ref(ihp.cells.rfcmim(width=20, length=20))
+# c.add_ports(rfcmim1.ports, prefix="rfcmim1_")
+# c.add_ports(rfcmim2.ports, prefix="rfcmim2_")
+
+# c.move((-40,35))
+# svaricap1 = c.add_ref(ihp.cells.svaricap(Nx=1))
+# c.move((40,0))
+# svaricap2 = c.add_ref(ihp.cells.svaricap(Nx=10))
+# c.add_ports(svaricap1.ports, prefix="svaricap1_")
+# c.add_ports(svaricap2.ports, prefix="svaricap2_")
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
+
+# ----------------------------------------------------------------
+# inductor test
+
+# c = gf.Component()
+
+# ind2 = c.add_ref(ihp.cells.inductor2())
+# c.add_ports(ind2.ports, prefix="ind2_")
+# c.move((-100, 0))
+
+# ind3 = c.add_ref(ihp.cells.inductor3()) # TODO broken?
+# c.add_ports(ind3.ports, prefix="ind3_")
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # test mos_transistors.py 
 
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.nmos(ng = 1, guardRingType="psub", guardRingDistance=1))
-# c.move((0,4))
+# nmos = c.add_ref(ihp.cells.nmos(ng = 5, guardRingType="psub", guardRingDistance=1))
+# ps = {"e4", "e5", "e6", "e7", "e8", "e9"}
+
+# c = add_port_group(c, nmos, ps)
+
+# c = change_port_orientation(c, ps, 90)
 
 # c.add_ref(ihp.cells.pmos(ng=1, guardRingType="nwell", guardRingDistance=1))
 # c.move((0,5))
@@ -134,88 +242,8 @@ ihp.PDK.activate()
 # c.add_ref(ihp.cells.rfpmosHV(ng=1)).rotate(-90)
 # c.move((0,5))
 
-# c.show()
-
-# ----------------------------------------------------------------
-# bjt transistors test
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.npn13G2(Nx=5).copy())
-# c.move((4,11))
-
-# c.add_ref(ihp.cells.npn13G2L(Nx=10).copy())
-# c.move((0,8))
-
-# c.add_ref(ihp.cells.npn13G2V(Nx=15).copy())
-# c.move((-3.5,4))
-
-# c.add_ref(ihp.cells.pnpMPA().copy())
-# c.move((3,3))
-# c.show()
-
-# ----------------------------------------------------------------
-# inductor test
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.inductor2())
-# c.move((-100, 0))
-
-# c.add_ref(ihp.cells.inductor3()) #broken?
-# c.show()
-
-# -----------------------------------------------------------------
-# resistor test
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.rhigh(length=10))
-# c.move((5,0))
-# c.add_ref(ihp.cells.rhigh(length=20, width=1))
-
-# c.move((5,0))
-# c.add_ref(ihp.cells.rppd(length=10))
-# c.move((5,0))
-# c.add_ref(ihp.cells.rppd(length=20, width=1))
-
-# c.move((5,0))
-# c.add_ref(ihp.cells.rsil(length=10))
-# c.move((5,0))
-# c.add_ref(ihp.cells.rsil(length=20, width=1))
-# c.show()
-
-
-# -----------------------------------------------------------------
-# capacitor test
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.cmim(width=10, length=10))
-# c.move((40,0))
-# c.add_ref(ihp.cells.cmim(width=20, length=20))
-
-
-# c.move((-40,35))
-# c.add_ref(ihp.cells.rfcmim(width=10, length=10))
-# c.move((40,0))
-# c.add_ref(ihp.cells.rfcmim(width=20, length=20))
-
-# c.move((-40,35))
-# c.add_ref(ihp.cells.svaricap(Nx=1))
-# c.move((40,0))
-# c.add_ref(ihp.cells.svaricap(Nx=10))
-# c.show()
-
-# -----------------------------------------------------------------
-# stack test
-
-# c = gf.Component()
-
-# c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
-
-# c.move((5,15))
-# c.add_ref(ihp.cells.via_stacks.no_filler_stack())
+# c.pprint_ports()
+# c.draw_ports()
 # c.show()
 
 # -----------------------------------------------------------------
@@ -223,36 +251,65 @@ ihp.PDK.activate()
 
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.esd(model="diodevdd_2kv"))
+# esd = c.add_ref(ihp.cells.esd(model="diodevss_4kv"))
+# c.add_ports(esd.ports, prefix="esd_")
 
 # c.move((0,5))
-# c.add_ref(ihp.cells.ptap1())
+# ptap1 = c.add_ref(ihp.cells.ptap1())
+# c.add_ports(ptap1.ports, prefix="ptap1_")
 
 # c.move((0,5))
-# c.add_ref(ihp.cells.ntap1())
+# ntap1 = c.add_ref(ihp.cells.ntap1())
+# c.add_ports(ntap1.ports, prefix="ntap1_")
 
 # c.move((200,200))
-# c.add_ref(ihp.cells.sealring())
+# sealring = c.add_ref(ihp.cells.sealring())
+# c.add_ports(sealring.ports, prefix="sealring_")
+
+# c.draw_ports()
+# c.pprint_ports()
 # c.show()
 
 # -----------------------------------------------------------------
-# bondpad test
+# resistor test
 
 # c = gf.Component()
 
-# c.add_ref(ihp.cells.bondpads.bondpad(shape="octagon"))
+# rhigh1 = c.add_ref(ihp.cells.rhigh(length=10))
+# c.move((5,0))
+# rhigh2 = c.add_ref(ihp.cells.rhigh(length=20, width=1))
+# c.add_ports(rhigh1.ports, prefix="rhigh1_")
+# c.add_ports(rhigh2.ports, prefix="rhigh2_")
 
-# c.move((0,100))
-# c.add_ref(ihp.cells.bondpads.bondpad_array(n_pads=4, pad_pitch=100))
+# c.move((5,0))
+# rppd1 = c.add_ref(ihp.cells.rppd(length=10))
+# c.move((5,0))
+# rppd2 = c.add_ref(ihp.cells.rppd(length=20, width=1))
+# c.add_ports(rppd1.ports, prefix="rppd1_")
+# c.add_ports(rppd2.ports, prefix="rppd2_")
+
+# c.move((5,0))
+# rsil1 = c.add_ref(ihp.cells.rsil(length=10))
+# c.move((5,0))
+# rsil2 = c.add_ref(ihp.cells.rsil(length=20, width=1))
+# c.add_ports(rsil1.ports, prefix="rsil1_")
+# c.add_ports(rsil2.ports, prefix="rsil2_")
+
+# c.draw_ports()
+# c.pprint_ports()
 # c.show()
 
 # -----------------------------------------------------------------
-# antennas test
+# stack test
 
-c = gf.Component()
+# c = gf.Component()
 
-c.add_ref(ihp.cells.dantenna())
+# vs1 = c.add_ref(ihp.cells.via_stack(top_layer="TopMetal2", bottom_layer="Metal1"))
+# c.add_ports(vs1.ports, prefix="vs1_")
 
-c.move((0,2))
-c.add_ref(ihp.cells.dpantenna())
-c.show()
+# c.move((5,15))
+# c.add_ref(ihp.cells.via_stacks.no_filler_stack())
+
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
