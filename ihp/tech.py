@@ -36,7 +36,11 @@ heater_width = 4
 
 
 ihp_filepath = "/foss/pdks/ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp"
-lyp_to_dataclass(ihp_filepath, overwrite=True, output_filepath="ihp/layer_map_ihp.py", map_name="LayerMapIHP")
+
+package_folder = os.path.dirname(os.path.abspath(__file__))
+
+output_filepath = os.path.join(package_folder, "layer_map_ihp.py")
+lyp_to_dataclass(ihp_filepath, overwrite=True, output_filepath=output_filepath, map_name="LayerMapIHP")
 
 # import after generation
 from ihp.layer_map_ihp import LAYER

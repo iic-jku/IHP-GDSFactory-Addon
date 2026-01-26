@@ -19,7 +19,7 @@ dependencies = [
 description = "IHP pdk"
 keywords = ["python"]
 license = {file = "LICENSE"}
-name = "ihp-gdsfactory"
+name = "ihp"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 version = "0.0.6"
