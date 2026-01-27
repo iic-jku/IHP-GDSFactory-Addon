@@ -399,17 +399,30 @@ def tline_bend_circular(
     
     c = gf.Component()
     
-    signal = c.add_ref(
-        gf.c.bend_circular(
-            radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+    if angle ==90 or angle==180:
+        signal = c.add_ref(
+            gf.c.bend_circular(
+                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+            )
         )
-    )
-    c.add_ports(signal.ports)
-    ground = c.add_ref(
-        gf.c.bend_circular(
-            radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+        c.add_ports(signal.ports)
+        ground = c.add_ref(
+            gf.c.bend_circular(
+                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+            )
         )
-    )
+    else:
+        signal = c.add_ref_off_grid(
+            gf.c.bend_circular_all_angle(
+                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+            )
+        )
+        c.add_ports(signal.ports)
+        ground = c.add_ref_off_grid(
+            gf.c.bend_circular_all_angle(
+                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+            )
+        )
     
     return c
 
@@ -457,17 +470,30 @@ def tline_bend_euler(
     
     c = gf.Component()
     
-    signal = c.add_ref(
-        gf.c.bend_euler(
-            radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+    if angle ==90 or angle==180:
+        signal = c.add_ref(
+            gf.c.bend_euler(
+                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+            )
         )
-    )
-    c.add_ports(signal.ports)
-    ground = c.add_ref(
-        gf.c.bend_euler(
-            radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+        c.add_ports(signal.ports)
+        ground = c.add_ref(
+            gf.c.bend_euler(
+                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+            )
         )
-    )
+    else:
+        signal = c.add_ref_off_grid(
+            gf.c.bend_euler_all_angle(
+                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+            )
+        )
+        c.add_ports(signal.ports)
+        ground = c.add_ref_off_grid(
+            gf.c.bend_euler_all_angle(
+                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+            )
+        )
     
     return c
 
