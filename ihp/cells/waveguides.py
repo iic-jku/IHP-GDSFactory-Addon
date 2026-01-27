@@ -470,3 +470,58 @@ def tline_bend_euler(
     )
     
     return c
+
+@gf.cell
+def tline_bend_s(
+    size: Size = (11, 1.8),
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    width: float | None = None,
+    Z0: float | None = None,
+) -> gf.Component:
+    """Returns an S bend coplanar transmission line.
+
+    Creates a signal bend and a wider ground bend aligned around it.
+    
+    Args:
+        size: in x and y direction.
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        width: Line width (µm). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
+    """
+    
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )   
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+        
+    c = gf.Component()
+    
+    signal = c.add_ref(
+        gf.c.bend_s(
+            size=size, cross_section=signal_cross_section, width=width
+        )
+    )
+    c.add_ports(signal.ports)
+    ground = c.add_ref(
+        gf.c.bend_s(
+            size=(size), cross_section=ground_cross_section, width=7*width
+        )
+    )
+    
+    return c
