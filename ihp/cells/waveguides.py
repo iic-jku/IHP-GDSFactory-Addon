@@ -1,9 +1,95 @@
 """Primitives."""
 
+
 import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
+from math import exp, log, sqrt
+from .. import tech
 
+def _calculate_width_from_Z0(
+    Z0: float, 
+    ground_cross_section: CrossSectionSpec, 
+    signal_cross_section: CrossSectionSpec
+) -> float:
+    """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
+
+    Args:
+        Z0: Target characteristic impedance (ohms).
+        ground_cross_section: CrossSectionSpec for the ground layer.
+        signal_cross_section: CrossSectionSpec for the signal layer.
+
+    Returns:
+        Calculated width (um).
+    """
+    # extract layer stack information
+    layers = gf.get_active_pdk().get_layer_stack().layers
+    
+    # get indices of ground and signal layers
+    keys = list(layers.keys())
+    start = keys.index(ground_cross_section.split("_")[0])
+    end = keys.index(signal_cross_section.split("_")[0])
+    
+    # calculate stack height between ground and signal layers
+    stack_height = 0
+    for k in keys[start + 1:end]:
+        stack_height += layers[k].thickness
+    
+    signal_layer_thickness = layers[keys[end]].thickness
+    
+    # calculate width from Z0
+    width = (exp(-Z0 * sqrt(4.1 + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+    width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
+    print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
+    
+    return width
+
+def _calculate_Z0_from_width(
+    width: float,
+    ground_cross_section: CrossSectionSpec, 
+    signal_cross_section: CrossSectionSpec
+) -> None:
+    """Estimates the characteristic impedance Z0 from a given signal width.
+
+    Computes the vertical stack height between the ground and signal layers
+    using the active PDK layer stack, then applies an approximate closed-form
+    formula to estimate Z0.
+
+    Args:
+        width: Signal line width (um).
+        ground_cross_section: Cross-section spec for the ground layer.
+        signal_cross_section: Cross-section spec for the signal layer.
+
+    Returns:
+        None. Prints intermediate layer information and the estimated Z0.
+    """
+    # extract layer stack information
+    layers = gf.get_active_pdk().get_layer_stack().layers
+    
+    # get indices of ground and signal layers
+    keys = list(layers.keys())
+    start = keys.index(ground_cross_section.split("_")[0])
+    end = keys.index(signal_cross_section.split("_")[0])
+    
+    # calculate stack height between ground and signal layers
+    # print("Ground level: ", layers[keys[start]].layer)
+    stack_height = 0
+    for k in keys[start + 1:end]:
+        stack_height += layers[k].thickness
+    #     print(layers[k].layer, " thickness: ", layers[k].thickness, "um")
+    # print("Signal level: ", layers[keys[end]].layer)
+    # print("")
+    
+    signal_layer_thickness = layers[keys[end]].thickness
+    # print("Total stack height from ground to signal:", stack_height, "um")
+    # print(str(layers[keys[end]].layer) + " thickness: " + str(signal_layer_thickness) + " um")
+    
+    Z0 = 87.0/sqrt(4.1+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
+    print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
+
+    
+    return Z0
+        
 
 @gf.cell
 def straight(
@@ -210,8 +296,9 @@ def bend_s_metal(
 def tline(
     length: float = 10,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
-    ground_cross_section: CrossSectionSpec = "metal3_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
     width: float | None = None,
+    Z0: float | None = None,
     npoints: int = 2,
 ) -> gf.Component:
     """Returns a straight coplanar transmission line.
@@ -222,12 +309,32 @@ def tline(
         length: Length of the signal line (um).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Base width used for signal and ground geometry.
+        width: Line width (µm). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
         npoints: Number of points used to draw the straights.
         
     Returns:
         A Component containing signal and ground lines.
     """
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )   
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+        
     
     c = gf.Component()
     
@@ -236,6 +343,7 @@ def tline(
             length=length, cross_section=signal_cross_section, width=width, npoints=npoints
         )
     )
+    c.add_ports(signal.ports)
     ground = c.add_ref(
         gf.c.straight(
             length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
@@ -245,3 +353,63 @@ def tline(
     ground.move(( -3*width, 0))
     
     return c
+
+
+@gf.cell
+def tline_bend_circular(
+    radius: float = 10,
+    angle: float = 90,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    width: float | None = None,
+    Z0: float | None = None,
+) -> gf.Component:
+    """Returns a circular bend coplanar transmission line.
+
+    Creates a signal bend and a wider ground bend aligned around it.
+    
+    Args:
+        radius: Bend radius (um).
+        angle: Bend angle (degrees).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        width: Line width (µm). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
+    """
+    
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )   
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+        
+    
+    c = gf.Component()
+    
+    signal = c.add_ref(
+        gf.c.bend_circular(
+            radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+        )
+    )
+    c.add_ports(signal.ports)
+    ground = c.add_ref(
+        gf.c.bend_circular(
+            radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+        )
+    )
+    
+    return c
+
