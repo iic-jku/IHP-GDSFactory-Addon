@@ -202,3 +202,46 @@ def bend_s_metal(
         allow_min_radius_violation=allow_min_radius_violation,
         width=width,
     )
+    
+    
+# ------------------------------------------------------
+
+@gf.cell
+def tline(
+    length: float = 10,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal3_routing",
+    width: float | None = None,
+    npoints: int = 2,
+) -> gf.Component:
+    """Returns a straight coplanar transmission line.
+
+    Creates a signal straight and a wider ground straight aligned around it.
+    
+    Args:
+        length: Length of the signal line (um).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        width: Base width used for signal and ground geometry.
+        npoints: Number of points used to draw the straights.
+        
+    Returns:
+        A Component containing signal and ground lines.
+    """
+    
+    c = gf.Component()
+    
+    signal = c.add_ref(
+        gf.c.straight(
+            length=length, cross_section=signal_cross_section, width=width, npoints=npoints
+        )
+    )
+    ground = c.add_ref(
+        gf.c.straight(
+            length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
+        )
+    )
+    
+    ground.move(( -3*width, 0))
+    
+    return c
