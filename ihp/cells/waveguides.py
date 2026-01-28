@@ -551,3 +551,206 @@ def tline_bend_s(
     )
     
     return c
+
+
+@gf.cell
+def branch_line_coupler(
+    connection_length: float = 100,
+    frequency: float = 10e9,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    Z0: float | None = None,
+) -> gf.Component:
+    """Returns a branch line coupler coplanar transmission line.
+
+    Creates signal and ground lines for a branch line coupler.
+    
+    Args:
+        length: Length of the signal line (um).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        width: Line width (µm). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
+    """
+    wave_length = 3e8 / frequency * 1e6 / 3.5  # in um, assuming effective index of 3.5
+    quater_wave_length = wave_length / 4
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+
+    c = gf.Component()
+
+    corner = gf.Component()
+
+    width_Z0 = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section
+    )
+    width_Z0_sqrt2 = _calculate_width_from_Z0(
+        Z0=Z0/sqrt(2), 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section
+    )
+
+
+    print("Quarter Wavelength minus width_Z0 is", quater_wave_length - width_Z0, "um")
+
+    corner.add_polygon(
+        points=[
+            (0, 0),
+            (0, width_Z0),
+            (width_Z0, width_Z0_sqrt2),
+            (width_Z0, 0)
+        ],
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    corner.add_port(
+        name="e1",
+        center=(width_Z0/2, 0),
+        width=width_Z0,
+        orientation=270,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    corner.add_port(
+        name="e2",
+        center=(width_Z0, width_Z0_sqrt2/2),
+        width=width_Z0_sqrt2,
+        orientation=0,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    corner.add_port(
+        name="e3",
+        center=(0, width_Z0/2),
+        width=width_Z0,
+        orientation=180,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+
+    corner_nw = c.add_ref(corner)
+    # c.add_ports(corner_nw.ports, prefix="corner_nw_")
+    # c.pprint_ports()
+
+    tline_top = c.add_ref(tline(
+        length=quater_wave_length - width_Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,
+    ))
+    # c.add_ports(tline_top.ports, prefix="tl_top_")
+
+    
+    
+    tline_top.connect(
+        "e1", corner_nw.ports["e2"]
+    )
+    
+    corner_ne = c.add_ref(corner).mirror(p1=(0,0), p2=(0,1))
+    # c.add_ports(corner_ne.ports)
+
+    corner_ne.connect(
+        "e2", tline_top.ports["e2"]
+    )
+
+    tline_left = c.add_ref(tline(
+        length=quater_wave_length - width_Z0_sqrt2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    tline_left.connect(
+        "e1", corner_nw.ports["e1"]
+    )
+
+    corner_sw = c.add_ref(corner).mirror(p1=(0,0), p2=(1,0))
+
+    corner_sw.connect(
+        "e1", tline_left.ports["e2"]
+    )
+
+    tline_bottom = c.add_ref(tline(
+        length=quater_wave_length - width_Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,
+    ))
+
+    tline_bottom.connect(
+        "e1", corner_sw.ports["e2"]
+    )
+
+    corner_se = c.add_ref(corner).mirror(p1=(0,0), p2=(1,0)).mirror(p1=(0,0), p2=(0,1))
+
+    corner_se.connect(
+        "e2", tline_bottom.ports["e2"]
+    )
+
+    tline_right = c.add_ref(tline(
+        length=quater_wave_length - width_Z0_sqrt2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    tline_right.connect(
+        "e1", corner_ne.ports["e1"]
+    )
+
+    connection1 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    connection1.connect(
+        "e1", corner_nw.ports["e3"]
+    )
+
+    connection2 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    connection2.connect(
+        "e1", corner_ne.ports["e3"]
+    )
+
+    connection3 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    connection3.connect(
+        "e1", corner_se.ports["e3"]
+    )
+
+    connection4 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+
+    connection4.connect(
+        "e1", corner_sw.ports["e3"]
+    )
+
+    c.add_port(name = "e1", port=connection1.ports["e2"])
+    c.add_port(name = "e2", port=connection2.ports["e2"])
+    c.add_port(name = "e3", port=connection3.ports["e2"])
+    c.add_port(name = "e4", port=connection4.ports["e2"])
+
+    # center = c.center
+    # print("Component bbox:")
+    # gp = c.add_ref(straight(length=c.dxsize, width=c.dysize, cross_section=ground_cross_section))
+    print(c.dxsize, c.dysize)
+    # gp.center = center
+
+    return c
