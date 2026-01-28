@@ -334,6 +334,7 @@ ihp.PDK.activate()
 # 
 
 # ------------------------------------------------------
+# waveguide test
 
 # c = gf.Component()
 
@@ -354,13 +355,14 @@ ihp.PDK.activate()
 # tline2.move((0, 40))
 # c.add_ports(tline2.ports)
 
-# tbend_circular = c.add_ref_off_grid(ihp.cells.tline_bend_circular(
+# tbend_circular = c.add_ref(ihp.cells.tline_bend_circular(
 #     angle=90, 
 #     Z0=50,
 #     signal_cross_section="topmetal2_routing", 
 #     ground_cross_section="metal5_routing",
 #     radius=100))
 # c.add_ports(tbend_circular.ports)
+# c.pprint_ports()
 
 # tline.connect("e2", tbend_circular.ports["e1"], allow_width_mismatch=True)
 # tline2.connect("e1", tbend_circular.ports["e2"], allow_width_mismatch=True) 
@@ -379,5 +381,24 @@ ihp.PDK.activate()
 #     Z0=50,
 #     signal_cross_section="topmetal2_routing", 
 #     ground_cross_section="metal5_routing",))
+
+# c.show()
+
+
+# ------------------------------------------------------
+# branch line coupler test
+
+# c = gf.Component()
+
+# blc = c.add_ref(ihp.cells.branch_line_coupler(
+#     connection_length=50,
+#     frequency=30e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing"))
+
+# c.add_ports(blc.ports)
+# c.pprint_ports()
+# # c.draw_ports()
 
 # c.show()
