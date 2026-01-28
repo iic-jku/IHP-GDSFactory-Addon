@@ -4,7 +4,8 @@
 import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
-from math import exp, log, sqrt
+from math import exp, log, sin, sqrt
+from ihp.cells.resistors import rsil
 from .. import tech
 
 def _calculate_width_from_Z0(
@@ -580,7 +581,7 @@ def branch_line_coupler(
 
     corner = gf.Component()
 
-    # calcolate the needed widths
+    # calculate the needed widths
     width_Z0 = _calculate_width_from_Z0(
         Z0=Z0, 
         ground_cross_section=ground_cross_section, 
@@ -750,4 +751,89 @@ def branch_line_coupler(
     c.add_port(name = "e3", port=connection3.ports["e2"])
     c.add_port(name = "e4", port=connection4.ports["e2"])
 
+    return c
+
+
+@gf.cell
+def wilkinson_power_divider(
+    connection_length: float = 50,
+    frequency: float = 30e9,
+    Z0: float = 50,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+) -> gf.Component:
+    """Returns a Wilkinson power divider coplanar transmission line.
+
+    Creates signal and ground lines for a Wilkinson power divider.
+    
+    Args:
+        connection_length: Length of the input/output lines (um).
+        frequency: Operating frequency (Hz).
+        Z0: Target characteristic impedance (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        
+    Returns:
+        A Component containing the Wilkinson power divider.
+    """
+
+    wave_length = 3e8 / frequency * 1e6 / 3.5  # in um, assuming effective index of 3.5
+    quater_wave_length = wave_length / 4
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length, "um")
+
+    c = gf.Component()
+
+    # calculate the needed widths
+    width_Z0 = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section
+    )
+    width_Z0_sqrt2 = _calculate_width_from_Z0(
+        Z0=Z0*sqrt(2), 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section
+    )
+
+    # create and connect the input line
+    connection_in = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))   
+    
+    c.add_ports(connection_in.ports)
+
+    # we set the angle to 160 degrees (can be adjusted if needed)
+    alpha = 160
+    radius = (quater_wave_length *180)/(alpha * 3.14159)
+    print("Bend radius for angle", alpha, "degrees is", radius, "um")
+    # create upper branch line
+    branch_upper = c.add_ref(tline_bend_circular(
+        radius=radius,
+        angle=alpha,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).mirror(p1=(0,0), p2=(0,1)).rotate(-90).move((connection_length,0))
+
+    branch_lower = c.add_ref(tline_bend_circular(
+        radius=radius,
+        angle=alpha,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).rotate(-90).move((connection_length,0))
+
+    opening = branch_upper.ports["e2"].center[1] - branch_lower.ports["e2"].center[1]
+    print("Opening between branches is", opening, "um")
+
+    r_square = 7
+    w = (r_square/Z0)*opening
+
+    c.add_ref(rsil(
+        length=opening-0.2,
+        width=w,
+    ))
+    
     return c
