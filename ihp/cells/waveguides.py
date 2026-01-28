@@ -566,11 +566,11 @@ def branch_line_coupler(
     Creates signal and ground lines for a branch line coupler.
     
     Args:
-        length: Length of the signal line (um).
+        connection_length: Length of the input line.
+        frequency: Operating frequency (Hz).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Line width (µm). Mutually exclusive with Z0.
-        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
+        Z0: Target characteristic impedance (ohms).
     """
     wave_length = 3e8 / frequency * 1e6 / 3.5  # in um, assuming effective index of 3.5
     quater_wave_length = wave_length / 4
@@ -580,6 +580,7 @@ def branch_line_coupler(
 
     corner = gf.Component()
 
+    # calcolate the needed widths
     width_Z0 = _calculate_width_from_Z0(
         Z0=Z0, 
         ground_cross_section=ground_cross_section, 
@@ -591,9 +592,7 @@ def branch_line_coupler(
         signal_cross_section=signal_cross_section
     )
 
-
-    print("Quarter Wavelength minus width_Z0 is", quater_wave_length - width_Z0, "um")
-
+    # create corner component for the 4 corners of the coupler
     corner.add_polygon(
         points=[
             (0, 0),
@@ -628,31 +627,29 @@ def branch_line_coupler(
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
 
+    # start with the top left corner
     corner_nw = c.add_ref(corner)
-    # c.add_ports(corner_nw.ports, prefix="corner_nw_")
-    # c.pprint_ports()
 
+    # create and connect the top Z0/sqrt(2) transmission line
     tline_top = c.add_ref(tline(
         length=quater_wave_length - width_Z0,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0_sqrt2,
-    ))
-    # c.add_ports(tline_top.ports, prefix="tl_top_")
-
-    
+    ))   
     
     tline_top.connect(
         "e1", corner_nw.ports["e2"]
     )
     
+    # create and connect the top right corner
     corner_ne = c.add_ref(corner).mirror(p1=(0,0), p2=(0,1))
-    # c.add_ports(corner_ne.ports)
 
     corner_ne.connect(
         "e2", tline_top.ports["e2"]
     )
 
+    # create and connect the left Z0 transmission line
     tline_left = c.add_ref(tline(
         length=quater_wave_length - width_Z0_sqrt2,
         signal_cross_section=signal_cross_section,
@@ -664,12 +661,14 @@ def branch_line_coupler(
         "e1", corner_nw.ports["e1"]
     )
 
+    # create and connect the bottom left corner
     corner_sw = c.add_ref(corner).mirror(p1=(0,0), p2=(1,0))
 
     corner_sw.connect(
         "e1", tline_left.ports["e2"]
     )
 
+    # create and connect the bottom Z0/sqrt(2) transmission line
     tline_bottom = c.add_ref(tline(
         length=quater_wave_length - width_Z0,
         signal_cross_section=signal_cross_section,
@@ -681,12 +680,14 @@ def branch_line_coupler(
         "e1", corner_sw.ports["e2"]
     )
 
+    # create and connect the bottom right corner
     corner_se = c.add_ref(corner).mirror(p1=(0,0), p2=(1,0)).mirror(p1=(0,0), p2=(0,1))
 
     corner_se.connect(
         "e2", tline_bottom.ports["e2"]
     )
 
+    # create and connect the right Z0 transmission line
     tline_right = c.add_ref(tline(
         length=quater_wave_length - width_Z0_sqrt2,
         signal_cross_section=signal_cross_section,
@@ -698,6 +699,7 @@ def branch_line_coupler(
         "e1", corner_ne.ports["e1"]
     )
 
+    # create and connect input/output lines
     connection1 = c.add_ref(tline(
         length=connection_length,
         signal_cross_section=signal_cross_section,
@@ -742,15 +744,10 @@ def branch_line_coupler(
         "e1", corner_sw.ports["e3"]
     )
 
+    # add ports to the component
     c.add_port(name = "e1", port=connection1.ports["e2"])
     c.add_port(name = "e2", port=connection2.ports["e2"])
     c.add_port(name = "e3", port=connection3.ports["e2"])
     c.add_port(name = "e4", port=connection4.ports["e2"])
-
-    # center = c.center
-    # print("Component bbox:")
-    # gp = c.add_ref(straight(length=c.dxsize, width=c.dysize, cross_section=ground_cross_section))
-    print(c.dxsize, c.dysize)
-    # gp.center = center
 
     return c
