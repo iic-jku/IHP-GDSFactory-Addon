@@ -108,25 +108,25 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # antennas test
 
-c = gf.Component()
+# c = gf.Component()
 
-da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
-c.add_port(name="da_e1", port=da.ports["e2"]) # when using a component with a guard ring, the port you want to add must be specified manually
-c.pprint_ports()
-c.draw_ports()
+# da = c.add_ref(ihp.cells.dantenna(width = 5, guardRingType="psub", guardRingDistance=2))
+# c.add_port(name="da_e1", port=da.ports["e3"]) # when using a component with a guard ring, the port you want to add must be specified manually
+# # c.pprint_ports()
+# # c.draw_ports()
 
-c.move((0,6))
-dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
+# c.move((0,6))
+# dpa1 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+# c.add_ports(dpa1.ports, prefix="dpa1_")   # adding all ports results in unwanted ports from the guard ring being added
 
-# new function add_port_group test
-c.move((0,6))
-dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
+# # new function add_port_group test
+# c.move((0,6))
+# dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
+# add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
 
-c.pprint_ports()
-c.draw_ports()
-c.show()
+# c.pprint_ports()
+# c.draw_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # bjt transistors test
@@ -168,31 +168,31 @@ c.show()
 # -----------------------------------------------------------------
 # capacitor test
 
-c = gf.Component()
+# c = gf.Component()
 
-cmim1 = c.add_ref(ihp.cells.cmim(width=10, length=10, guardRingType="psub", guardRingDistance=1))
-c.move((40,0))
-cmim2 = c.add_ref(ihp.cells.cmim(width=20, length=20))
-c.add_ports(cmim1.ports, prefix="cmim1_")
-c.add_ports(cmim2.ports, prefix="cmim2_")
+# cmim1 = c.add_ref(ihp.cells.cmim(width=10, length=10, guardRingType="psub", guardRingDistance=1))
+# c.move((40,0))
+# cmim2 = c.add_ref(ihp.cells.cmim(width=20, length=20))
+# c.add_ports(cmim1.ports, prefix="cmim1_")
+# c.add_ports(cmim2.ports, prefix="cmim2_")
 
 
-c.move((-40,35))
-rfcmim1 = c.add_ref(ihp.cells.rfcmim(width=10, length=10))
-c.move((40,0))
-rfcmim2 = c.add_ref(ihp.cells.rfcmim(width=20, length=20))
-c.add_ports(rfcmim1.ports, prefix="rfcmim1_")
-c.add_ports(rfcmim2.ports, prefix="rfcmim2_")
+# c.move((-40,35))
+# rfcmim1 = c.add_ref(ihp.cells.rfcmim(width=10, length=10))
+# c.move((40,0))
+# rfcmim2 = c.add_ref(ihp.cells.rfcmim(width=20, length=20))
+# c.add_ports(rfcmim1.ports, prefix="rfcmim1_")
+# c.add_ports(rfcmim2.ports, prefix="rfcmim2_")
 
-c.move((-40,35))
-svaricap1 = c.add_ref(ihp.cells.svaricap(Nx=1))
-c.move((40,0))
-svaricap2 = c.add_ref(ihp.cells.svaricap(Nx=10, guardRingType="nwell", guardRingDistance=2))
-c.add_ports(svaricap1.ports, prefix="svaricap1_")
-c.add_ports(svaricap2.ports, prefix="svaricap2_")
-c.draw_ports()
-c.pprint_ports()
-c.show()
+# c.move((-40,35))
+# svaricap1 = c.add_ref(ihp.cells.svaricap(Nx=1))
+# c.move((40,0))
+# svaricap2 = c.add_ref(ihp.cells.svaricap(Nx=10, guardRingType="nwell", guardRingDistance=2))
+# c.add_ports(svaricap1.ports, prefix="svaricap1_")
+# c.add_ports(svaricap2.ports, prefix="svaricap2_")
+# c.draw_ports()
+# c.pprint_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # inductor test
@@ -216,11 +216,12 @@ c.show()
 
 # nmos = c.add_ref(ihp.cells.nmos(ng = 5, guardRingType="psub", guardRingDistance=1))
 # c.move((0,5))
-# # c.add_ports(nmos.ports, prefix="nmos_")
+# #c.add_ports(nmos.ports, prefix="nmos_")
+
 # ps = {"DS_1", "DS_2", "DS_3", "DS_4", "DS_5", "DS_6"}
 # c = add_port_group(c, nmos, ps)
 
-# # c = change_port_orientation(c, ps, 90)
+# c = change_port_orientation(c, ps, 90)
 
 # pmos = c.add_ref(ihp.cells.pmos(ng=2, guardRingType="nwell", guardRingDistance=1))
 # c.add_ports(pmos.ports, prefix="pmos_")
@@ -235,7 +236,7 @@ c.show()
 # c.move((1.5,3))
 
 # rfnmos = c.add_ref(ihp.cells.rfnmos(ng = 2)).rotate(-90)
-# # c.add_ports(rfnmos.ports, prefix="rfnmos_")
+# c.add_ports(rfnmos.ports, prefix="rfnmos_")
 # c.move((0,5))
 
 # rfnmosHV = c.add_ref(ihp.cells.rfnmosHV(ng=2)).rotate(-90)
@@ -320,4 +321,63 @@ c.show()
 
 # c.draw_ports()
 # c.pprint_ports()
+# c.show()
+
+
+# c = gf.components.mmi2x2(width_taper=1, length_taper=10, length_mmi=5.5, width_mmi=2.5, gap_mmi=0.25, cross_section='metal1_routing').copy()
+# c.show()
+
+
+# -----------------------------------------------------------------
+# test of Tlines
+
+# 
+
+# ------------------------------------------------------
+
+# c = gf.Component()
+
+# tline = c.add_ref(ihp.cells.tline(
+#     length=500, 
+#     width=7.5,
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing"))
+
+# c.add_ports(tline.ports)
+
+# tline2 = c.add_ref(ihp.cells.tline(
+#     length=500, 
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing"))
+
+# tline2.move((0, 40))
+# c.add_ports(tline2.ports)
+
+# tbend_circular = c.add_ref_off_grid(ihp.cells.tline_bend_circular(
+#     angle=90, 
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing",
+#     radius=100))
+# c.add_ports(tbend_circular.ports)
+
+# tline.connect("e2", tbend_circular.ports["e1"], allow_width_mismatch=True)
+# tline2.connect("e1", tbend_circular.ports["e2"], allow_width_mismatch=True) 
+
+# c.add_ref(ihp.cells.bend_s_metal(width=7.5))
+
+# c.add_ref_off_grid(ihp.cells.tline_bend_euler(
+#     angle=45, 
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing",
+#     radius=100))
+
+# c.add_ref(ihp.cells.tline_bend_s(
+#     size=(100, 50),
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing",))
+
 # c.show()
