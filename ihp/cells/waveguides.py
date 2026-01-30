@@ -573,7 +573,7 @@ def branch_line_coupler(
         ground_cross_section: Cross-section for the ground line.
         Z0: Target characteristic impedance (ohms).
     """
-    wave_length = 3e8 / frequency * 1e6 / 3.5  # in um, assuming effective index of 3.5
+    wave_length = 3e8 / frequency * 1e6  # in um, assuming effective index of 3.5
     quater_wave_length = wave_length / 4
     quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
 
@@ -750,7 +750,7 @@ def branch_line_coupler(
     c.add_port(name = "e2", port=connection2.ports["e2"])
     c.add_port(name = "e3", port=connection3.ports["e2"])
     c.add_port(name = "e4", port=connection4.ports["e2"])
-
+    c.move((0,-width_Z0))
     return c
 
 

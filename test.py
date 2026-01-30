@@ -388,31 +388,31 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # branch line coupler test
 
-# c = gf.Component()
-
-# blc = c.add_ref(ihp.cells.branch_line_coupler(
-#     connection_length=50,
-#     frequency=30e9,
-#     Z0=50,
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing"))
-
-# c.add_ports(blc.ports)
-# c.pprint_ports()
-# # c.draw_ports()
-
-# c.show()
-
-# ------------------------------------------------------
-# rest wilkinson power divider test
-
 c = gf.Component()
 
-wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+blc = c.add_ref(ihp.cells.branch_line_coupler(
     connection_length=50,
-    frequency=60e9,
+    frequency=50e9,
     Z0=50,
     signal_cross_section="topmetal2_routing",
     ground_cross_section="metal5_routing"))
 
+c.add_ports(blc.ports)
+c.pprint_ports()
+# c.draw_ports()
+
 c.show()
+
+# ------------------------------------------------------
+# rest wilkinson power divider test
+
+# c = gf.Component()
+
+# wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+#     connection_length=50,
+#     frequency=60e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing"))
+
+# c.show()
