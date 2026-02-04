@@ -598,6 +598,7 @@ def branch_line_coupler(
         points=[
             (0, 0),
             (0, width_Z0),
+            (width_Z0-(width_Z0_sqrt2 - width_Z0), width_Z0),
             (width_Z0, width_Z0_sqrt2),
             (width_Z0, 0)
         ],
