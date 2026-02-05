@@ -30,9 +30,9 @@ def branch_line_coupler(
         Z0: Target characteristic impedance (ohms).
     """
     wave_length = 299792458 / frequency * 1e6  # in um, assuming effective index of 3.5
-    quater_wave_length_Z0 = wave_length / 4 / sqrt(3.096)
+    quater_wave_length_Z0 = wave_length / 4 / sqrt(3.161)
     quater_wave_length_Z0 = quater_wave_length_Z0 - quater_wave_length_Z0 % (tech.nm)  # truncate to 5 nm
-    quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(3.231)
+    quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(3.301)
     quater_wave_length_Z0_sqrt2 = quater_wave_length_Z0_sqrt2 - quater_wave_length_Z0_sqrt2 % (tech.nm)  # truncate to 5 nm
     
     
