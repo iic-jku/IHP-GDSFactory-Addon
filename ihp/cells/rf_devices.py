@@ -3,7 +3,7 @@ from gdsfactory.cross_section import port_names_electrical, port_types_electrica
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
 
 from math import exp, log, sin, sqrt
-from ihp.cells.resistors import rppd
+from ihp.cells.resistors import rppd, CbResCalc
 
 from ihp.cells.waveguides import _calculate_width_from_Z0, tline, tline_bend_circular
 from .. import tech
@@ -31,7 +31,7 @@ def branch_line_coupler(
         Z0: Target characteristic impedance (ohms).
         e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     """
-    wave_length = 299792458 / frequency * 1e6  # in um, assuming effective index of 3.5
+    wave_length = 3e8 / frequency * 1e6  
     
     c = gf.Component()
 
@@ -57,6 +57,8 @@ def branch_line_coupler(
     quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(e_eff_Z0_sqrt2)  # this is just an estimate, the actual height will depend)
     quater_wave_length_Z0_sqrt2 = quater_wave_length_Z0_sqrt2 - quater_wave_length_Z0_sqrt2 % (tech.nm)  # truncate to 5 nm
     
+    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length_Z0_sqrt2, "um")
+
     
 
     # create corner component for the 4 corners of the coupler
@@ -244,10 +246,7 @@ def wilkinson_power_divider(
         A Component containing the Wilkinson power divider.
     """
 
-    wave_length = 3e8 / frequency * 1e6 / 3.5  # in um, assuming effective index of 3.5
-    quater_wave_length = wave_length / 4
-    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
-    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length, "um")
+    
 
     c = gf.Component()
 
@@ -257,12 +256,14 @@ def wilkinson_power_divider(
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section
     )
-    width_Z0_sqrt2 = _calculate_width_from_Z0(
+    width_Z0_sqrt2, e_eff = _calculate_width_from_Z0(
         Z0=Z0*sqrt(2), 
         ground_cross_section=ground_cross_section, 
-        signal_cross_section=signal_cross_section
+        signal_cross_section=signal_cross_section,
+        e_r=4.1
     )
 
+    print(width_Z0, width_Z0_sqrt2)
     # create and connect the input line
     connection_in = c.add_ref(tline(
         length=connection_length,
@@ -272,35 +273,86 @@ def wilkinson_power_divider(
     ))   
     
     c.add_ports(connection_in.ports)
+    
+    wave_length = 3e8 / frequency * 1e6 / sqrt(e_eff)  # in um, assuming effective index of 3.5
+    quater_wave_length = wave_length / 4
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length, "um")
 
-    # we set the angle to 160 degrees (can be adjusted if needed)
-    alpha = 160
-    radius = (quater_wave_length *180)/(alpha * 3.14159)
-    print("Bend radius for angle", alpha, "degrees is", radius, "um")
+    width_R = 100
+    length_R = CbResCalc(calc="l", l=0, r = 2*Z0, w=width_R, b=0, ps=0.18, cell='rppd')
+    
+    # Calculate the circumference of the square
+    circumference = quater_wave_length * 2  + length_R
+    
+    
     # create upper branch line
-    branch_upper = c.add_ref(tline_bend_circular(
-        radius=radius,
-        angle=alpha,
+    branch_left_up = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2,  
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,)).mirror(p1=(0,0), p2=(0,1)).rotate(-90).move((connection_length,0))
+        width=width_Z0_sqrt2,))
 
-    branch_lower = c.add_ref(tline_bend_circular(
-        radius=radius,
-        angle=alpha,
+    branch_left_down = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2,  
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,)).rotate(-90).move((connection_length,0))
+        width=width_Z0_sqrt2,))
 
-    opening = branch_upper.ports["e2"].center[1] - branch_lower.ports["e2"].center[1]
-    print("Opening between branches is", opening, "um")
+    connection_in.connect(
+        "e1", branch_left_up.ports["e1"], allow_width_mismatch=True
+    )
+    branch_left_up.rotate(90)
+    
+    
+    connection_in.connect(
+        "e1", branch_left_down.ports["e1"], allow_width_mismatch=True
+    )
+    branch_left_down.rotate(-90)
 
-    r_square = 7
-    w = (r_square/Z0)*opening
-
+    branch_top = c.add_ref(tline(
+        length= circumference/4,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+    
+    branch_top.xmin = branch_left_up.xmin
+    branch_top.ymax = branch_left_up.ymax
+    
+    
+    branch_bottom = c.add_ref(tline(
+        length= circumference/4,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+    
+    branch_bottom.xmin = branch_left_down.xmin
+    branch_bottom.ymin = branch_left_down.ymin
+    
+    branch_right_down = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2 - length_R/2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).rotate(90)
+    
+    branch_right_down.xmax = branch_top.xmax
+    branch_right_down.ymax = branch_top.ymax
+    
+    branch_right_up = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2 - length_R/2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).rotate(90)
+    
+    branch_right_up.xmax = branch_bottom.xmax
+    branch_right_up.ymin = branch_bottom.ymin
+    
+    
     c.add_ref(rppd(
-        length=opening-0.2,
-        width=w,
+        length=length_R,
+        width=width_R,
+        polySpace=0.18,
+        bends=0
     ))
     
     return c

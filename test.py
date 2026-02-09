@@ -395,10 +395,11 @@ blc = c.add_ref(ihp.cells.branch_line_coupler(
     frequency=50e9,
     Z0=50,
     signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing"))
+    ground_cross_section="metal5_routing",
+    e_r = 4.1))
 
 c.add_ports(blc.ports)
-c.pprint_ports()
+# c.pprint_ports()
 # c.draw_ports()
 
 c.show()
@@ -406,13 +407,13 @@ c.show()
 # ------------------------------------------------------
 # rest wilkinson power divider test
 
-# c = gf.Component()
+c = gf.Component()
 
-# wd = c.add_ref(ihp.cells.wilkinson_power_divider(
-#     connection_length=50,
-#     frequency=60e9,
-#     Z0=50,
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing"))
+wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+    connection_length=50,
+    frequency=50e9,
+    Z0=50,
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing"))
 
-# c.show()
+c.show()
