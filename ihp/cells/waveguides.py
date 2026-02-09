@@ -12,15 +12,16 @@ from .. import tech
 def _calculate_width_from_Z0(
     Z0: float, 
     ground_cross_section: CrossSectionSpec, 
-    signal_cross_section: CrossSectionSpec
+    signal_cross_section: CrossSectionSpec,
+    e_r: float = 4.1
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
-
+    Uses an approximate closed-form formula for coplanar waveguides, which depends on the effective dielectric constant e_eff. The effective dielectric constant is estimated using a common approximation that depends on
     Args:
         Z0: Target characteristic impedance (ohms).
         ground_cross_section: CrossSectionSpec for the ground layer.
         signal_cross_section: CrossSectionSpec for the signal layer.
-
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     Returns:
         Calculated width (um).
     """
@@ -40,16 +41,23 @@ def _calculate_width_from_Z0(
     signal_layer_thickness = layers[keys[end]].thickness
     
     # calculate width from Z0
-    width = (exp(-Z0 * sqrt(4.1 + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+    width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
     width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
     print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
     
-    return width
+    if width/stack_height < 1:
+        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
+    
+    else:
+        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
+        
+    return width, e_eff
 
 def _calculate_Z0_from_width(
     width: float,
     ground_cross_section: CrossSectionSpec, 
-    signal_cross_section: CrossSectionSpec
+    signal_cross_section: CrossSectionSpec,
+    e_r: float = 4.1
 ) -> None:
     """Estimates the characteristic impedance Z0 from a given signal width.
 
@@ -61,7 +69,7 @@ def _calculate_Z0_from_width(
         width: Signal line width (um).
         ground_cross_section: Cross-section spec for the ground layer.
         signal_cross_section: Cross-section spec for the signal layer.
-
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     Returns:
         None. Prints intermediate layer information and the estimated Z0.
     """
@@ -89,8 +97,13 @@ def _calculate_Z0_from_width(
     Z0 = 87.0/sqrt(4.1+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
     print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
 
+    if width/stack_height < 1:
+        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
     
-    return Z0
+    else:
+        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
+    
+    return Z0, e_eff
         
 
 @gf.cell

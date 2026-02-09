@@ -17,6 +17,7 @@ def branch_line_coupler(
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec = "metal5_routing",
     Z0: float | None = None,
+    e_r: float = 4.1
 ) -> gf.Component:
     """Returns a branch line coupler coplanar transmission line.
 
@@ -28,29 +29,35 @@ def branch_line_coupler(
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
         Z0: Target characteristic impedance (ohms).
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     """
     wave_length = 299792458 / frequency * 1e6  # in um, assuming effective index of 3.5
-    quater_wave_length_Z0 = wave_length / 4 / sqrt(3.161)
-    quater_wave_length_Z0 = quater_wave_length_Z0 - quater_wave_length_Z0 % (tech.nm)  # truncate to 5 nm
-    quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(3.301)
-    quater_wave_length_Z0_sqrt2 = quater_wave_length_Z0_sqrt2 - quater_wave_length_Z0_sqrt2 % (tech.nm)  # truncate to 5 nm
-    
     
     c = gf.Component()
 
     corner = gf.Component()
 
     # calculate the needed widths
-    width_Z0 = _calculate_width_from_Z0(
+    width_Z0, e_eff_Z0 = _calculate_width_from_Z0(
         Z0=Z0, 
         ground_cross_section=ground_cross_section, 
-        signal_cross_section=signal_cross_section
+        signal_cross_section=signal_cross_section,
+        e_r=e_r
     )
-    width_Z0_sqrt2 = _calculate_width_from_Z0(
+    width_Z0_sqrt2, e_eff_Z0_sqrt2 = _calculate_width_from_Z0(
         Z0=Z0/sqrt(2), 
         ground_cross_section=ground_cross_section, 
-        signal_cross_section=signal_cross_section
-    )
+        signal_cross_section=signal_cross_section,
+        e_r=e_r
+    ) 
+    print("e_eff_Z0 =", e_eff_Z0)
+    print("e_eff_Z0_sqrt2 =", e_eff_Z0_sqrt2)
+    quater_wave_length_Z0 = wave_length / 4  / sqrt(e_eff_Z0)  # this is just an estimate, the actual height will depend)
+    quater_wave_length_Z0 = quater_wave_length_Z0 - quater_wave_length_Z0 % (tech.nm)  # truncate to 5 nm
+    quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(e_eff_Z0_sqrt2)  # this is just an estimate, the actual height will depend)
+    quater_wave_length_Z0_sqrt2 = quater_wave_length_Z0_sqrt2 - quater_wave_length_Z0_sqrt2 % (tech.nm)  # truncate to 5 nm
+    
+    
 
     # create corner component for the 4 corners of the coupler
     corner.add_polygon(
