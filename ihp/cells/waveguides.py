@@ -13,7 +13,7 @@ def _calculate_width_from_Z0(
     Z0: float, 
     ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
-    e_r: float = 4.1
+    e_r: float | None = None
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
     Uses an approximate closed-form formula for coplanar waveguides, which depends on the effective dielectric constant e_eff. The effective dielectric constant is estimated using a common approximation that depends on
@@ -40,24 +40,35 @@ def _calculate_width_from_Z0(
     
     signal_layer_thickness = layers[keys[end]].thickness
     
-    # calculate width from Z0
-    width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
-    width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
-    print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
     
-    if width/stack_height < 1:
-        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
     
-    else:
-        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
+    if e_r is None:
+        # calculate width from Z0
+        width = (exp(-Z0 * sqrt(4.1 + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+        width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
+        print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
         
-    return width, e_eff
+        return width
+    else:
+        # calculate width from Z0
+        width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+        width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
+        print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
+        
+        if width/stack_height < 1:
+            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
+        
+        else:
+            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
+            
+        return width, e_eff
+
 
 def _calculate_Z0_from_width(
     width: float,
     ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
-    e_r: float = 4.1
+    e_r: float | None = None
 ) -> None:
     """Estimates the characteristic impedance Z0 from a given signal width.
 
@@ -94,16 +105,22 @@ def _calculate_Z0_from_width(
     # print("Total stack height from ground to signal:", stack_height, "um")
     # print(str(layers[keys[end]].layer) + " thickness: " + str(signal_layer_thickness) + " um")
     
-    Z0 = 87.0/sqrt(4.1+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
-    print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
+    
 
-    if width/stack_height < 1:
-        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
-    
+    if e_r is None:
+        Z0 = 87.0/sqrt(4.1+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
+        print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
+        return Z0
     else:
-        e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
-    
-    return Z0, e_eff
+        Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
+        print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
+        if width/stack_height < 1:
+            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
+        
+        else:
+            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
+        
+        return Z0, e_eff
         
 
 @gf.cell
