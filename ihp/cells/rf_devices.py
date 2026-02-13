@@ -5,7 +5,7 @@ from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
 from math import exp, log, sin, sqrt
 from ihp.cells.resistors import rppd, CbResCalc
 
-from ihp.cells.waveguides import _calculate_width_from_Z0, tline, tline_bend_circular
+from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, tline
 from .. import tech
 
 
@@ -38,28 +38,27 @@ def branch_line_coupler(
     corner = gf.Component()
 
     # calculate the needed widths
-    width_Z0, e_eff_Z0 = _calculate_width_from_Z0(
+    width_Z0 = _calculate_width_from_Z0(
         Z0=Z0, 
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section,
         e_r=e_r
-    )
-    width_Z0_sqrt2, e_eff_Z0_sqrt2 = _calculate_width_from_Z0(
+    )  
+    width_Z0_sqrt2 = _calculate_width_from_Z0(
         Z0=Z0/sqrt(2), 
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section,
         e_r=e_r
     ) 
-    print("e_eff_Z0 =", e_eff_Z0)
-    print("e_eff_Z0_sqrt2 =", e_eff_Z0_sqrt2)
-    quater_wave_length_Z0 = wave_length / 4  / sqrt(e_eff_Z0)  # this is just an estimate, the actual height will depend)
-    quater_wave_length_Z0 = quater_wave_length_Z0 - quater_wave_length_Z0 % (tech.nm)  # truncate to 5 nm
-    quater_wave_length_Z0_sqrt2 = wave_length / 4 / sqrt(e_eff_Z0_sqrt2)  # this is just an estimate, the actual height will depend)
-    quater_wave_length_Z0_sqrt2 = quater_wave_length_Z0_sqrt2 - quater_wave_length_Z0_sqrt2 % (tech.nm)  # truncate to 5 nm
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r
+    )
     
-    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length_Z0_sqrt2, "um")
-
-    
+    quater_wave_length = wave_length / 4  / sqrt(e_eff)  # this is just an estimate, the actual height will depend)
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+      
 
     # create corner component for the 4 corners of the coupler
     corner.add_polygon(
@@ -102,7 +101,7 @@ def branch_line_coupler(
 
     # create and connect the top Z0/sqrt(2) transmission line
     tline_top = c.add_ref(tline(
-        length=quater_wave_length_Z0_sqrt2 - width_Z0,
+        length=quater_wave_length - width_Z0,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0_sqrt2,
@@ -121,7 +120,7 @@ def branch_line_coupler(
 
     # create and connect the left Z0 transmission line
     tline_left = c.add_ref(tline(
-        length=quater_wave_length_Z0 - width_Z0_sqrt2,
+        length=quater_wave_length - width_Z0_sqrt2,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0,
@@ -140,7 +139,7 @@ def branch_line_coupler(
 
     # create and connect the bottom Z0/sqrt(2) transmission line
     tline_bottom = c.add_ref(tline(
-        length=quater_wave_length_Z0_sqrt2 - width_Z0,
+        length=quater_wave_length - width_Z0_sqrt2,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0_sqrt2,
@@ -159,7 +158,7 @@ def branch_line_coupler(
 
     # create and connect the right Z0 transmission line
     tline_right = c.add_ref(tline(
-        length=quater_wave_length_Z0 - width_Z0_sqrt2,
+        length=quater_wave_length - width_Z0_sqrt2,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0,
