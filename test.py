@@ -1,8 +1,10 @@
 import gdsfactory as gf
+from numpy import sqrt
 import ihp
 import sys
 import os
 
+from ihp import tech
 from ihp.cells.utils import add_port_group, change_port_orientation
 
 # paths_to_remove = [
@@ -336,19 +338,32 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # waveguide test
 
-# c = gf.Component()
+c = gf.Component()
+
+e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing",
+    e_r = 4.1,
+)
+
+print("Calculated effective dielectric constant is", e_eff)
+# wave_length = 3e8 / 50e9 * 1e6 / sqrt(3.846775)  # in microns, assuming e_r = 4.1
+# quater_wave_length = wave_length / 4
+# quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm) 
+
+# print("Calculated quarter wave length for 50 GHz is", quater_wave_length, "um")
 
 # tline = c.add_ref(ihp.cells.tline(
-#     length=500, 
-#     width=7.5,
+#     length=quater_wave_length, 
+#     Z0=50,
 #     signal_cross_section="topmetal2_routing", 
 #     ground_cross_section="metal5_routing"))
 
-# c.add_ports(tline.ports)
+# # c.add_ports(tline.ports)
 
 # tline2 = c.add_ref(ihp.cells.tline(
 #     length=500, 
-#     Z0=50,
+#     width=7.2,
 #     signal_cross_section="topmetal2_routing", 
 #     ground_cross_section="metal5_routing"))
 
@@ -388,32 +403,32 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # branch line coupler test
 
-c = gf.Component()
+# c = gf.Component()
 
-blc = c.add_ref(ihp.cells.branch_line_coupler(
-    connection_length=50,
-    frequency=50e9,
-    Z0=50,
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    e_r = 4.1))
+# blc = c.add_ref(ihp.cells.branch_line_coupler(
+#     connection_length=50,
+#     frequency=50e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     e_r = 4.1))
 
-c.add_ports(blc.ports)
-# c.pprint_ports()
-# c.draw_ports()
+# c.add_ports(blc.ports)
+# # c.pprint_ports()
+# # c.draw_ports()
 
-c.show()
+# c.show()
 
-# ------------------------------------------------------
-# rest wilkinson power divider test
+# # ------------------------------------------------------
+# # rest wilkinson power divider test
 
-c = gf.Component()
+# c = gf.Component()
 
-wd = c.add_ref(ihp.cells.wilkinson_power_divider(
-    connection_length=50,
-    frequency=50e9,
-    Z0=50,
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing"))
+# wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+#     connection_length=50,
+#     frequency=50e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing"))
 
-c.show()
+# c.show()
