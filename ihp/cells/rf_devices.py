@@ -222,3 +222,136 @@ def branch_line_coupler(
     return c
 
 
+@gf.cell
+def wilkinson_power_divider(
+    connection_length: float = 50,
+    frequency: float = 30e9,
+    Z0: float = 50,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+) -> gf.Component:
+    """Returns a Wilkinson power divider coplanar transmission line.
+
+    Creates signal and ground lines for a Wilkinson power divider.
+    
+    Args:
+        connection_length: Length of the input/output lines (um).
+        frequency: Operating frequency (Hz).
+        Z0: Target characteristic impedance (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        
+    Returns:
+        A Component containing the Wilkinson power divider.
+    """
+
+    
+
+    c = gf.Component()
+
+    # calculate the needed widths
+    width_Z0 = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section
+    )
+    width_Z0_sqrt2, e_eff = _calculate_width_from_Z0(
+        Z0=Z0*sqrt(2), 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section,
+        e_r=4.1
+    )
+
+    print(width_Z0, width_Z0_sqrt2)
+    # create and connect the input line
+    connection_in = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))   
+    
+    c.add_ports(connection_in.ports)
+    
+    wave_length = 3e8 / frequency * 1e6 / sqrt(e_eff)  # in um, assuming effective index of 3.5
+    quater_wave_length = wave_length / 4
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    print("Quarter wave length at", frequency/1e9, "GHz is", quater_wave_length, "um")
+
+    width_R = 100
+    length_R = CbResCalc(calc="l", l=0, r = 2*Z0, w=width_R, b=0, ps=0.18, cell='rppd')
+    
+    # Calculate the circumference of the square
+    circumference = quater_wave_length * 2  + length_R
+    
+    
+    # create upper branch line
+    branch_left_up = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+
+    branch_left_down = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+
+    connection_in.connect(
+        "e1", branch_left_up.ports["e1"], allow_width_mismatch=True
+    )
+    branch_left_up.rotate(90)
+    
+    
+    connection_in.connect(
+        "e1", branch_left_down.ports["e1"], allow_width_mismatch=True
+    )
+    branch_left_down.rotate(-90)
+
+    branch_top = c.add_ref(tline(
+        length= circumference/4,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+    
+    branch_top.xmin = branch_left_up.xmin
+    branch_top.ymax = branch_left_up.ymax
+    
+    
+    branch_bottom = c.add_ref(tline(
+        length= circumference/4,  
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,))
+    
+    branch_bottom.xmin = branch_left_down.xmin
+    branch_bottom.ymin = branch_left_down.ymin
+    
+    branch_right_down = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2 - length_R/2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).rotate(90)
+    
+    branch_right_down.xmax = branch_top.xmax
+    branch_right_down.ymax = branch_top.ymax
+    
+    branch_right_up = c.add_ref(tline(
+        length= circumference/8 - width_Z0_sqrt2/2 - length_R/2,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0_sqrt2,)).rotate(90)
+    
+    branch_right_up.xmax = branch_bottom.xmax
+    branch_right_up.ymin = branch_bottom.ymin
+    
+    
+    c.add_ref(rppd(
+        length=length_R,
+        width=width_R,
+        polySpace=0.18,
+        bends=0
+    ))
+    
+    return c
