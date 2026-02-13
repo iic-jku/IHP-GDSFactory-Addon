@@ -9,11 +9,80 @@ from math import exp, log, sin, sqrt
 
 from .. import tech
 
+
+def _get_stack_geometry(
+    signal_cross_section: CrossSectionSpec,
+    ground_cross_section: CrossSectionSpec,
+) -> tuple[float, float]:
+    """Extract stack height and signal layer thickness from the active PDK.
+
+    Args:
+        signal_cross_section: Cross-section spec for the signal layer.
+        ground_cross_section: Cross-section spec for the ground layer.
+
+    Returns:
+        Tuple of (stack_height, signal_layer_thickness) in um.
+    """
+    layers = gf.get_active_pdk().get_layer_stack().layers
+
+    keys = list(layers.keys())
+    start = keys.index(ground_cross_section.split("_")[0])
+    end = keys.index(signal_cross_section.split("_")[0])
+
+    stack_height = 0
+    for k in keys[start + 1:end]:
+        stack_height += layers[k].thickness
+
+    signal_layer_thickness = layers[keys[end]].thickness
+
+    return stack_height, signal_layer_thickness
+
+
+def _calculate_effective_dielectric_constant(
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    e_r: float = 4.1,    
+) -> float:
+    """Calculate the effective dielectric constant for a coplanar waveguide.
+
+    Uses a common approximation that depends on the ratio of width to stack height.
+    Approximation from https://wellerpcb.com/pcb-layout-design/impedance-calculation-for-embedded-microstrip-trace-type/
+    Args:
+        e_r: Relative permittivity of the substrate.
+        signal_cross_section: Cross-section spec for the signal layer.
+        ground_cross_section: Cross-section spec for the ground layer.
+    Returns:
+        Estimated effective dielectric constant.
+    """
+    n_layers_above = 1  # number of layers above signal layer to consider for h_above calculation {1, 2}
+    
+    h_p, t = _get_stack_geometry(
+        signal_cross_section, ground_cross_section
+    )
+    
+    # calculate distance from signal layer to surface
+    signal_layer_name = signal_cross_section.split("_")[0]
+    if signal_layer_name == "topmetal2":
+        h_above = 1.5  # passivation/overcoat estimate for topmost metal
+    else:
+        layers = gf.get_active_pdk().get_layer_stack().layers
+        keys = list(layers.keys())
+        signal_idx = keys.index(signal_layer_name)
+        h_above = sum(
+            layers[keys[i]].thickness
+            for i in range(signal_idx + 1, min(signal_idx + 1 + n_layers_above, len(keys)))
+        )
+    
+    e_eff = e_r * (1-exp(-1.55*(h_p+t+h_above)/h_p))
+    
+    return e_eff
+
+
 def _calculate_width_from_Z0(
     Z0: float, 
     ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
-    e_r: float | None = None
+    e_r: float = 4.1
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
     Uses an approximate closed-form formula for coplanar waveguides, which depends on the effective dielectric constant e_eff. The effective dielectric constant is estimated using a common approximation that depends on
@@ -25,51 +94,23 @@ def _calculate_width_from_Z0(
     Returns:
         Calculated width (um).
     """
-    # extract layer stack information
-    layers = gf.get_active_pdk().get_layer_stack().layers
+    stack_height, signal_layer_thickness = _get_stack_geometry(
+        signal_cross_section, ground_cross_section
+    )
     
-    # get indices of ground and signal layers
-    keys = list(layers.keys())
-    start = keys.index(ground_cross_section.split("_")[0])
-    end = keys.index(signal_cross_section.split("_")[0])
+    # approximation from https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
+    width = (exp(-Z0 * sqrt(e_r+1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+    width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
     
-    # calculate stack height between ground and signal layers
-    stack_height = 0
-    for k in keys[start + 1:end]:
-        stack_height += layers[k].thickness
-    
-    signal_layer_thickness = layers[keys[end]].thickness
-    
-    
-    
-    if e_r is None:
-        # calculate width from Z0
-        width = (exp(-Z0 * sqrt(4.1 + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
-        width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
-        print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
-        
-        return width
-    else:
-        # calculate width from Z0
-        width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
-        width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
-        print("Used Z0 =", Z0, " Ohms, to calculate width =", width, "um")
-        
-        if width/stack_height < 1:
-            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
-        
-        else:
-            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
-            
-        return width, e_eff
+    return width
 
 
 def _calculate_Z0_from_width(
     width: float,
     ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
-    e_r: float | None = None
-) -> None:
+    e_r: float = 4.1
+) -> float:
     """Estimates the characteristic impedance Z0 from a given signal width.
 
     Computes the vertical stack height between the ground and signal layers
@@ -82,45 +123,15 @@ def _calculate_Z0_from_width(
         signal_cross_section: Cross-section spec for the signal layer.
         e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     Returns:
-        None. Prints intermediate layer information and the estimated Z0.
+        The estimated characteristic impedance Z0 (ohms).
     """
-    # extract layer stack information
-    layers = gf.get_active_pdk().get_layer_stack().layers
+    stack_height, signal_layer_thickness = _get_stack_geometry(
+        signal_cross_section, ground_cross_section
+    )
     
-    # get indices of ground and signal layers
-    keys = list(layers.keys())
-    start = keys.index(ground_cross_section.split("_")[0])
-    end = keys.index(signal_cross_section.split("_")[0])
+    Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
     
-    # calculate stack height between ground and signal layers
-    # print("Ground level: ", layers[keys[start]].layer)
-    stack_height = 0
-    for k in keys[start + 1:end]:
-        stack_height += layers[k].thickness
-    #     print(layers[k].layer, " thickness: ", layers[k].thickness, "um")
-    # print("Signal level: ", layers[keys[end]].layer)
-    # print("")
-    
-    signal_layer_thickness = layers[keys[end]].thickness
-    # print("Total stack height from ground to signal:", stack_height, "um")
-    # print(str(layers[keys[end]].layer) + " thickness: " + str(signal_layer_thickness) + " um")
-    
-    
-
-    if e_r is None:
-        Z0 = 87.0/sqrt(4.1+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
-        print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
-        return Z0
-    else:
-        Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
-        print("Used width =", width, "um, to calculate Z0 =", Z0, "Ohms")
-        if width/stack_height < 1:
-            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width)) * (1 + 0.04*(1 - width/stack_height)**2)
-        
-        else:
-            e_eff = (e_r + 1)/2 + (e_r - 1)/2 * (1/sqrt(1 + 12*stack_height/width))
-        
-        return Z0, e_eff
+    return Z0
         
 
 @gf.cell
