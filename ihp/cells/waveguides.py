@@ -29,11 +29,19 @@ def _get_stack_geometry(
     start = keys.index(ground_cross_section.split("_")[0])
     end = keys.index(signal_cross_section.split("_")[0])
 
-    stack_height = 0
-    for k in keys[start + 1:end]:
-        stack_height += layers[k].thickness
+    if start < end:
+        stack_height = 0
+        for k in keys[start + 1:end]:
+            stack_height += layers[k].thickness
 
-    signal_layer_thickness = layers[keys[end]].thickness
+        signal_layer_thickness = layers[keys[end]].thickness
+        
+    else:
+        stack_height = 0
+        for k in keys[end + 1:start]:
+            stack_height += layers[k].thickness
+
+        signal_layer_thickness = layers[keys[end]].thickness
 
     return stack_height, signal_layer_thickness
 
@@ -54,7 +62,8 @@ def _calculate_effective_dielectric_constant(
     Returns:
         Estimated effective dielectric constant.
     """
-    n_layers_above = 1  # number of layers above signal layer to consider for h_above calculation {1, 2}
+    if isinstance(ground_cross_section, list):
+        return e_r
     
     h_p, t = _get_stack_geometry(
         signal_cross_section, ground_cross_section
@@ -70,7 +79,7 @@ def _calculate_effective_dielectric_constant(
         signal_idx = keys.index(signal_layer_name)
         h_above = sum(
             layers[keys[i]].thickness
-            for i in range(signal_idx + 1, min(signal_idx + 1 + n_layers_above, len(keys)))
+            for i in range(signal_idx + 1, len(keys))
         )
     
     e_eff = e_r * (1-exp(-1.55*(h_p+t+h_above)/h_p))
@@ -80,26 +89,40 @@ def _calculate_effective_dielectric_constant(
 
 def _calculate_width_from_Z0(
     Z0: float, 
-    ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec], 
     e_r: float = 4.1
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
     Uses an approximate closed-form formula for coplanar waveguides, which depends on the effective dielectric constant e_eff. The effective dielectric constant is estimated using a common approximation that depends on
     Args:
         Z0: Target characteristic impedance (ohms).
-        ground_cross_section: CrossSectionSpec for the ground layer.
         signal_cross_section: CrossSectionSpec for the signal layer.
+        ground_cross_section: CrossSectionSpec for the ground layer. Lower layer must be listed first if multiple ground layers are provided.
         e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     Returns:
         Calculated width (um).
     """
-    stack_height, signal_layer_thickness = _get_stack_geometry(
-        signal_cross_section, ground_cross_section
-    )
+    if isinstance(ground_cross_section, list):
+        h_below, t = _get_stack_geometry(
+            signal_cross_section, ground_cross_section[0]
+        )
+        h_above, t = _get_stack_geometry(
+            signal_cross_section, ground_cross_section[1]
+        )
+        # approximation from https://www.pcbway.com/pcb_prototype/impedance_calculator.html
+        width = (1.9 * (2 * h_above + t) * exp(-Z0 * sqrt(e_r) / (80.0 * (1 - h_above / (4 * h_below)))) - t) / 0.8
+    else:
+        stack_height, signal_layer_thickness = _get_stack_geometry(
+            signal_cross_section, ground_cross_section
+        )
+        # approximation from https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
+        
+        width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
+        
+    if width < 0:
+        raise ValueError("Calculated width is negative. Check Z0 and cross-section choices.")
     
-    # approximation from https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
-    width = (exp(-Z0 * sqrt(e_r+1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
     width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
     
     return width
@@ -107,8 +130,8 @@ def _calculate_width_from_Z0(
 
 def _calculate_Z0_from_width(
     width: float,
-    ground_cross_section: CrossSectionSpec, 
     signal_cross_section: CrossSectionSpec,
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec], 
     e_r: float = 4.1
 ) -> float:
     """Estimates the characteristic impedance Z0 from a given signal width.
@@ -119,17 +142,33 @@ def _calculate_Z0_from_width(
 
     Args:
         width: Signal line width (um).
-        ground_cross_section: Cross-section spec for the ground layer.
+        ground_cross_section: Cross-section spec for the ground layer. Lower layer must be listed first if multiple ground layers are provided.
         signal_cross_section: Cross-section spec for the signal layer.
         e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     Returns:
         The estimated characteristic impedance Z0 (ohms).
     """
-    stack_height, signal_layer_thickness = _get_stack_geometry(
-        signal_cross_section, ground_cross_section
-    )
+    if isinstance(ground_cross_section, list):
+        h_below, t = _get_stack_geometry(
+            signal_cross_section, ground_cross_section[0]
+        )
+        
+        h_above, t = _get_stack_geometry(
+            signal_cross_section, ground_cross_section[1]
+        )
+        print("h_below", h_below, "h_above", h_above, "t", t)
+        Z0 = 80/sqrt(e_r) * log(1.9*(2*h_above+t)/(0.8*width+t))*(1-h_above/(4*h_below))
+        
+    else:
+        stack_height, signal_layer_thickness = _get_stack_geometry(
+            signal_cross_section, ground_cross_section
+        )
+        
+        # https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
+        Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
     
-    Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
+    if Z0 < 0:
+        raise ValueError("Calculated Z0 is negative. Check width and cross-section choices.")
     
     return Z0
         
@@ -339,7 +378,7 @@ def bend_s_metal(
 def tline(
     length: float = 10,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
-    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
     width: float | None = None,
     Z0: float | None = None,
     npoints: int = 2,
@@ -371,12 +410,14 @@ def tline(
             ground_cross_section=ground_cross_section, 
             signal_cross_section=signal_cross_section
         )   
+        print("Calculated width is", width)
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
             ground_cross_section=ground_cross_section, 
             signal_cross_section=signal_cross_section
         )
+        print("Calculated Z0 is", Z0)
         
     
     c = gf.Component()
@@ -387,13 +428,27 @@ def tline(
         )
     )
     c.add_ports(signal.ports)
-    ground = c.add_ref(
-        gf.c.straight(
-            length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
-        )
-    )
     
-    ground.move(( -3*width, 0))
+    if isinstance(ground_cross_section, list):
+        ground_low = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
+            )
+        )
+        ground_low.move(( -3*width, 0))
+        ground_high = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
+            )
+        )
+        ground_high.move(( -3*width, 0))
+    else:
+        ground = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
+            )
+        )
+        ground.move(( -3*width, 0))
     
     return c
 
