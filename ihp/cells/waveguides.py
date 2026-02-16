@@ -94,14 +94,26 @@ def _calculate_width_from_Z0(
     e_r: float = 4.1
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
-    Uses an approximate closed-form formula for coplanar waveguides, which depends on the effective dielectric constant e_eff. The effective dielectric constant is estimated using a common approximation that depends on
+
+    Uses an approximate closed-form formula for microstrip transmission lines.
+    For a single ground layer, the IPC-2141 embedded microstrip approximation is
+    used.  For a stripline configuration (two ground layers), a PCBWay-style
+    approximation is applied instead.
+
     Args:
         Z0: Target characteristic impedance (ohms).
         signal_cross_section: CrossSectionSpec for the signal layer.
-        ground_cross_section: CrossSectionSpec for the ground layer. Lower layer must be listed first if multiple ground layers are provided.
-        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
+        ground_cross_section: CrossSectionSpec for the ground layer.
+            Lower layer must be listed first if multiple ground layers
+            are provided.
+        e_r: Relative permittivity of the substrate. Defaults to 4.1
+            for silicon dioxide.
+
     Returns:
         Calculated width (um).
+
+    Raises:
+        ValueError: If the calculated width is negative.
     """
     if isinstance(ground_cross_section, list):
         h_below, t = _get_stack_geometry(
@@ -134,19 +146,28 @@ def _calculate_Z0_from_width(
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec], 
     e_r: float = 4.1
 ) -> float:
-    """Estimates the characteristic impedance Z0 from a given signal width.
+    """Estimate the characteristic impedance Z0 from a given signal width.
 
     Computes the vertical stack height between the ground and signal layers
     using the active PDK layer stack, then applies an approximate closed-form
-    formula to estimate Z0.
+    formula to estimate Z0.  For a single ground layer, the IPC-2141 embedded
+    microstrip approximation is used.  For a stripline configuration (two
+    ground layers), a PCBWay-style approximation is applied instead.
 
     Args:
         width: Signal line width (um).
-        ground_cross_section: Cross-section spec for the ground layer. Lower layer must be listed first if multiple ground layers are provided.
-        signal_cross_section: Cross-section spec for the signal layer.
-        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
+        signal_cross_section: CrossSectionSpec for the signal layer.
+        ground_cross_section: CrossSectionSpec for the ground layer.
+            Lower layer must be listed first if multiple ground layers
+            are provided.
+        e_r: Relative permittivity of the substrate. Defaults to 4.1
+            for silicon dioxide.
+
     Returns:
-        The estimated characteristic impedance Z0 (ohms).
+        Estimated characteristic impedance Z0 (ohms).
+
+    Raises:
+        ValueError: If the calculated Z0 is negative.
     """
     if isinstance(ground_cross_section, list):
         h_below, t = _get_stack_geometry(
@@ -383,20 +404,29 @@ def tline(
     Z0: float | None = None,
     npoints: int = 2,
 ) -> gf.Component:
-    """Returns a straight coplanar transmission line.
+    """Return a straight coplanar transmission line.
 
     Creates a signal straight and a wider ground straight aligned around it.
-    
+    The ground plane extends 3× the signal width beyond each end of the
+    signal line and is 7× as wide.  When two ground cross-sections are
+    provided the component produces a stripline (ground above and below).
+
     Args:
         length: Length of the signal line (um).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Line width (µm). Mutually exclusive with Z0.
-        Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
+            Accepts a single spec for microstrip or a two-element list
+            ``[lower, upper]`` for stripline.
+        width: Signal line width (um). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive
+            with width.
         npoints: Number of points used to draw the straights.
-        
+
     Returns:
         A Component containing signal and ground lines.
+
+    Raises:
+        ValueError: If neither or both of *width* and *Z0* are provided.
     """
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
