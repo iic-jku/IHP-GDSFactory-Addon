@@ -338,15 +338,15 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # waveguide test
 
-c = gf.Component()
+# c = gf.Component()
 
-e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    e_r = 4.1,
-)
+# e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
+#     signal_cross_section="metal5_routing",
+#     ground_cross_section="metal1_routing",
+#     e_r = 4.1,
+# )
 
-print("Calculated effective dielectric constant is", e_eff)
+# print("Calculated effective dielectric constant is", e_eff)
 # wave_length = 3e8 / 50e9 * 1e6 / sqrt(3.846775)  # in microns, assuming e_r = 4.1
 # quater_wave_length = wave_length / 4
 # quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm) 
@@ -422,13 +422,15 @@ print("Calculated effective dielectric constant is", e_eff)
 # # ------------------------------------------------------
 # # rest wilkinson power divider test
 
-# c = gf.Component()
+c = gf.Component()
 
-# wd = c.add_ref(ihp.cells.wilkinson_power_divider(
-#     connection_length=50,
-#     frequency=50e9,
-#     Z0=50,
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing"))
+wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+    connection_length=0,
+    frequency=50e9,
+    Z0=50,
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing"))
 
-# c.show()
+c.add_ports(wd.ports)
+c.draw_ports()
+c.show()

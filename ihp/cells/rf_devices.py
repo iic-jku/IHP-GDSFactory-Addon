@@ -255,7 +255,7 @@ def wilkinson_power_divider(
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section
     )
-    width_Z0_sqrt2, e_eff = _calculate_width_from_Z0(
+    width_Z0_sqrt2  = _calculate_width_from_Z0(
         Z0=Z0*sqrt(2), 
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section,
@@ -265,14 +265,18 @@ def wilkinson_power_divider(
     print(width_Z0, width_Z0_sqrt2)
     # create and connect the input line
     connection_in = c.add_ref(tline(
-        length=connection_length,
+        length=connection_length+width_Z0_sqrt2/2,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0,
     ))   
     
-    c.add_ports(connection_in.ports)
     
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=4.1
+    )
     wave_length = 3e8 / frequency * 1e6 / sqrt(e_eff)  # in um, assuming effective index of 3.5
     quater_wave_length = wave_length / 4
     quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
@@ -346,12 +350,15 @@ def wilkinson_power_divider(
     branch_right_up.xmax = branch_bottom.xmax
     branch_right_up.ymin = branch_bottom.ymin
     
+    c.add_port(name="e1", port=connection_in.ports["e2"])
+    c.add_port(name="e2", port=branch_right_down.ports["e1"])
+    c.add_port(name="e3", port=branch_right_up.ports["e2"])
     
-    c.add_ref(rppd(
-        length=length_R,
-        width=width_R,
-        polySpace=0.18,
-        bends=0
-    ))
+    # c.add_ref(rppd(
+    #     length=length_R,
+    #     width=width_R,
+    #     polySpace=0.18,
+    #     bends=0
+    # ))
     
     return c
