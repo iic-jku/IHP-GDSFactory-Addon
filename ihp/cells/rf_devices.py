@@ -16,7 +16,7 @@ def branch_line_coupler(
     frequency: float = 10e9,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec = "metal5_routing",
-    Z0: float | None = None,
+    Z0: float = 50,
     e_r: float = 4.1
 ) -> gf.Component:
     """Returns a branch line coupler coplanar transmission line.
@@ -139,7 +139,7 @@ def branch_line_coupler(
 
     # create and connect the bottom Z0/sqrt(2) transmission line
     tline_bottom = c.add_ref(tline(
-        length=quater_wave_length - width_Z0_sqrt2,
+        length=quater_wave_length - width_Z0,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         width=width_Z0_sqrt2,
