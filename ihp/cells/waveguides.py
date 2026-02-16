@@ -156,7 +156,7 @@ def _calculate_Z0_from_width(
         h_above, t = _get_stack_geometry(
             signal_cross_section, ground_cross_section[1]
         )
-        print("h_below", h_below, "h_above", h_above, "t", t)
+        # approximation from https://www.pcbway.com/pcb_prototype/impedance_calculator.html
         Z0 = 80/sqrt(e_r) * log(1.9*(2*h_above+t)/(0.8*width+t))*(1-h_above/(4*h_below))
         
     else:
@@ -410,14 +410,14 @@ def tline(
             ground_cross_section=ground_cross_section, 
             signal_cross_section=signal_cross_section
         )   
-        print("Calculated width is", width)
+        
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
             ground_cross_section=ground_cross_section, 
             signal_cross_section=signal_cross_section
         )
-        print("Calculated Z0 is", Z0)
+        
         
     
     c = gf.Component()
