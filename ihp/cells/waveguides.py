@@ -690,7 +690,32 @@ def coupler_tline(
     Z0: float | None = None,
     npoints: int = 2,
 ) -> gf.Component:
-    """Returns a straight coupled coplanar transmission line."""
+    """Return a straight coupled coplanar transmission line.
+
+    Creates two parallel signal lines separated by a gap, with a shared
+    ground plane underneath (and optionally above for stripline).  The
+    ground plane extends 3x the signal width beyond each end of the
+    signal lines and is wide enough to cover both lines plus margins.
+
+    Args:
+        length: Length of the signal lines (um).
+        gap: Spacing between the two signal lines (um).
+        signal_cross_section: Cross-section for the signal lines.
+        ground_cross_section: Cross-section for the ground plane.
+            Accepts a single spec for microstrip or a two-element list
+            ``[lower, upper]`` for stripline.
+        width: Signal line width (um). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive
+            with width.
+        npoints: Number of points used to draw the straights.
+
+    Returns:
+        A Component containing two coupled signal lines (with ports
+        prefixed ``top_`` and ``bot_``) and ground plane(s).
+
+    Raises:
+        ValueError: If neither or both of *width* and *Z0* are provided.
+    """
 
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
