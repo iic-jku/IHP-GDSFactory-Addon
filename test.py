@@ -420,17 +420,32 @@ ihp.PDK.activate()
 # c.show()
 
 # # ------------------------------------------------------
-# # rest wilkinson power divider test
+# # test wilkinson power divider test
+
+# c = gf.Component()
+
+# wd = c.add_ref(ihp.cells.wilkinson_power_divider(
+#     connection_length=0,
+#     frequency=50e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",))
+
+# c.add_ports(wd.ports)
+# c.draw_ports()
+# c.show()
+
+
 
 c = gf.Component()
 
-wd = c.add_ref(ihp.cells.wilkinson_power_divider(
-    connection_length=0,
+bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
     frequency=50e9,
     Z0=50,
     signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing"))
+    ground_cross_section="metal5_routing",
+    e_r = 4.1,))
 
-c.add_ports(wd.ports)
-c.draw_ports()
+# c.add_ports(bp.ports)
+# c.draw_ports()
 c.show()
