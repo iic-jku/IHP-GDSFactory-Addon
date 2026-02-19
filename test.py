@@ -437,15 +437,31 @@ ihp.PDK.activate()
 
 
 
+# c = gf.Component()
+
+# bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
+#     frequency=50e9,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     e_r = 4.1,))
+
+# # c.add_ports(bp.ports)
+# # c.draw_ports()
+# c.show()
+
+
 c = gf.Component()
 
-bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
-    frequency=50e9,
+coupled_tline = c.add_ref(ihp.cells.coupler_tline(
+    length=100,
+    gap = 5,
     Z0=50,
     signal_cross_section="topmetal2_routing",
     ground_cross_section="metal5_routing",
-    e_r = 4.1,))
+    ))
 
-# c.add_ports(bp.ports)
-# c.draw_ports()
+
+c.add_ports(coupled_tline.ports)
+c.draw_ports()
 c.show()

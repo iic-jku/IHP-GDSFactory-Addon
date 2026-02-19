@@ -407,8 +407,8 @@ def tline(
     """Return a straight coplanar transmission line.
 
     Creates a signal straight and a wider ground straight aligned around it.
-    The ground plane extends 3× the signal width beyond each end of the
-    signal line and is 7× as wide.  When two ground cross-sections are
+    The ground plane extends 3x the signal width beyond each end of the
+    signal line and is 7x as wide.  When two ground cross-sections are
     provided the component produces a stripline (ground above and below).
 
     Args:
@@ -680,3 +680,84 @@ def tline_bend_s(
     
     return c
 
+@gf.cell
+def coupler_tline(
+    length: float = 10,
+    gap: float = 0.27,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
+    width: float | None = None,
+    Z0: float | None = None,
+    npoints: int = 2,
+) -> gf.Component:
+    """Returns a straight coupled coplanar transmission line."""
+
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )   
+        
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+
+    c = gf.Component()
+
+    signal_top = c.add_ref(
+        gf.c.straight(
+            length=length, 
+            cross_section=signal_cross_section, 
+            width=width, 
+            npoints=npoints
+        )
+    )
+    signal_top.movey(gap/2 + width/2)
+    c.add_ports(signal_top.ports, prefix="top_")
+
+    signal_bot = c.add_ref(
+        gf.c.straight(
+            length=length, 
+            cross_section=signal_cross_section, 
+            width=width, 
+            npoints=npoints
+        )
+    )
+    signal_bot.movey(-gap/2 - width/2)
+    c.add_ports(signal_bot.ports, prefix="bot_")
+
+    ground_plate_center = c.center
+
+    print(ground_plate_center)
+    if isinstance(ground_cross_section, list):
+        ground_low = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section[0], width=8*width+gap, npoints=npoints
+            )
+        )
+        ground_low.center = ground_plate_center
+        ground_high = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section[1], width=8*width+gap, npoints=npoints
+            )
+        )
+        ground_high.center = ground_plate_center
+    else:
+        ground = c.add_ref(
+            gf.c.straight(
+                length=length+6*width, cross_section=ground_cross_section, width=8*width+gap, npoints=npoints
+            )
+        )
+        ground.center = ground_plate_center
+
+    return c
