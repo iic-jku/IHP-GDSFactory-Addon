@@ -1,5 +1,6 @@
 import gdsfactory as gf
 from numpy import sqrt
+import scipy
 import ihp
 import sys
 import os
@@ -338,6 +339,11 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # waveguide test
 
+frequency = 50e9  # 50 GHz
+wavelength = scipy.constants.c / 50e9 * 1e6 / sqrt(3.8)
+quater_wavelength = wavelength / 4
+quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round to DBU
+
 # c = gf.Component()
 
 # e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
@@ -449,19 +455,60 @@ ihp.PDK.activate()
 # # c.add_ports(bp.ports)
 # # c.draw_ports()
 # c.show()
+# k = 0.1
+
+# Z0e = 50 * (1 + k) / (1 - k)
+# Z0o = 50 * (1 - k) / (1 + k)
+
+# print("Calculated even mode impedance Z0e is", Z0e)
+# print("Calculated odd mode impedance Z0o is", Z0o)
+# c = gf.Component()
+
+# coupled_tline = c.add_ref(ihp.cells.coupler_tline(
+#     Z0o=Z0o,
+#     Z0e=Z0e,
+#     length=quater_wavelength,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     ))
+
+
+# c.add_ports(coupled_tline.ports)
+# c.draw_ports()
+# c.show()
+
+
+
+
+# c = gf.Component()
+# corner = c.add_ref(ihp.cells.tline_corner(
+#     Z0=50, 
+#     signal_cross_section="topmetal2_routing", 
+#     ground_cross_section="metal5_routing"
+# ))
+
+# tline = c.add_ref(ihp.cells.tline(
+#     length=quater_wavelength,
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing"
+# ))
+# tline.connect("e1", corner.ports["e1"], allow_width_mismatch=False)
+# c.add_ports(corner.ports)
+# c.draw_ports()
+# c.show()
 
 
 c = gf.Component()
 
-coupled_tline = c.add_ref(ihp.cells.coupler_tline(
-    length=100,
-    gap = 5,
-    Z0=50,
+coupler = c.add_ref(ihp.cells.directional_coupler(
+    connection_length=50,
+    frequency=50e9,
+    coupling_factor=-20,
     signal_cross_section="topmetal2_routing",
     ground_cross_section="metal5_routing",
-    ))
-
-
-c.add_ports(coupled_tline.ports)
+    Z0=50,
+))
+c.add_ports(coupler.ports)
 c.draw_ports()
 c.show()
