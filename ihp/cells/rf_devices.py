@@ -3,9 +3,11 @@ from gdsfactory.cross_section import port_names_electrical, port_types_electrica
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
 
 from math import cosh, exp, log, pi, sin, sinh, sqrt
+
+import scipy
 from ihp.cells.resistors import rppd, CbResCalc
 
-from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, _get_stack_geometry, tline
+from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, _get_stack_geometry, tline, coupler_tline, tline_corner
 from .. import tech
 
 
@@ -518,6 +520,113 @@ def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
 
     return g
 
+
+@gf.cell
+def directional_coupler(
+    connection_length: float = 100,
+    frequency: float = 10e9,
+    coupling_factor: float = 3,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    Z0: float = 50,
+    e_r: float = 4.1
+) -> gf.Component:
+    """Returns a directional coupler coplanar transmission line.
+
+    Creates signal and ground lines for a directional coupler.
+    
+    Args:
+        connection_length: Length of the input line.
+        frequency: Operating frequency (Hz).
+        coupling_factor: Coupling factor in dB.
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        Z0: Target characteristic impedance (ohms).
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
+    """
+    wave_length = scipy.constants.c / frequency * 1e6  
+    
+    c = gf.Component()
+    
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r
+    )
+    
+    quater_wave_length = wave_length / 4  / sqrt(e_eff)  
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    
+    # couping factor must be negative
+    if coupling_factor > 0:
+        coupling_factor = -coupling_factor  # enforce negative coupling factor for the formula below
+        
+    coupling_factor_linear = 10 ** (coupling_factor / 20)
+    
+    # create the first line of the coupler
+    coupled_lines = c.add_ref(coupler_tline(
+        Z0e= Z0 * (1 + coupling_factor_linear) / (1 - coupling_factor_linear),
+        Z0o= Z0 * (1 - coupling_factor_linear) / (1 + coupling_factor_linear),
+        length=quater_wave_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    # create and connect the input line
+    connection_port1 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port1.connect("e1", coupled_lines.ports["top_e1"])
+    # create and connect the through port line
+    connection_port2 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port2.connect("e1", coupled_lines.ports["top_e2"])
+    
+    corner_left = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    
+    corner_left.connect("e1", coupled_lines.ports["bot_e1"])
+    connection_port3 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    corner_right = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    connection_port3.connect("e1", corner_left.ports["e2"])
+    
+    corner_right.connect("e1", coupled_lines.ports["bot_e2"])
+    connection_port4 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port4.connect("e1", corner_right.ports["e4"])
+    
+    
+    
+    c.add_port(name="e1", port=connection_port1.ports["e2"])
+    c.add_port(name="e2", port=connection_port2.ports["e2"])
+    c.add_port(name="e3", port=connection_port3.ports["e2"])
+    c.add_port(name="e4", port=connection_port4.ports["e2"])
+    c.flatten()
+    return c
 
 @gf.cell
 def coupled_line_bandpass_filter(
