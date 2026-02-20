@@ -681,13 +681,103 @@ def tline_bend_s(
     return c
 
 @gf.cell
-def coupler_tline(
-    length: float = 10,
-    gap: float = 0.27,
+def tline_corner(length: float = 10,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
     width: float | None = None,
     Z0: float | None = None,
+    npoints: int = 2,
+) -> gf.Component:
+    """Return a straight coplanar transmission line.
+    # TODO
+    """
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )  
+        
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+        
+    c = gf.Component()
+    # signal
+    c.add_polygon(
+        points=[
+            (0, 0),
+            (0, width),
+            (width, width),
+            (width, 0)
+        ],
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    
+    
+    # ground plate
+    extension = 3 # extension over signal plate
+    c.add_polygon(
+        points=[
+            (0 - extension*width, -extension*width),
+            (0 - extension*width, width + extension*width),
+            (width + extension*width, width + extension*width),
+            (width + extension*width, 0 - extension*width)
+        ],
+        layer=gf.get_cross_section(ground_cross_section).layer,
+    )
+    
+    c.add_port(
+        name="e1",
+        center=(0, width/2),
+        width=width,
+        orientation=180,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e2",
+        center=(width/2, width),
+        width=width,
+        orientation=90,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e3",
+        center=(width, width/2),
+        width=width,
+        orientation=0,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e4",
+        center=(width/2, 0),
+        width=width,
+        orientation=270,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    return c
+
+@gf.cell
+def coupler_tline(
+    Z0e: float = 50,
+    Z0o: float = 50,
+    length: float = 10,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    e_r: float = 4.1,
     npoints: int = 2,
 ) -> gf.Component:
     """Return a straight coupled coplanar transmission line.
@@ -716,73 +806,49 @@ def coupler_tline(
     Raises:
         ValueError: If neither or both of *width* and *Z0* are provided.
     """
-
-    if width is None and Z0 is None:
-        raise ValueError("Provide either width or Z0")
-
-    if width is not None and Z0 is not None:
-        raise ValueError("Provide only one of width or Z0")
+    Z0 = sqrt(Z0e * Z0o)
     
-    if width is None:
-        width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )   
-        
-    else:
-        Z0 = _calculate_Z0_from_width(
-            width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )
+    width = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section,
+        e_r=e_r
+    )
+    
+    h, t = _get_stack_geometry(signal_cross_section, ground_cross_section)
 
+    # calculate seperation gap from even and odd mode impedances
+    # https://www.dmcrf.com/microstrip-calculators/differential-microstrip-impedance-calculator/
+    Z_d = 2 * Z0o
+    d = -h/0.98 * log(1-(Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
+    
+    
     c = gf.Component()
 
-    signal_top = c.add_ref(
-        gf.c.straight(
+    top = c.add_ref(
+        tline(
             length=length, 
-            cross_section=signal_cross_section, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
             width=width, 
             npoints=npoints
         )
     )
-    signal_top.movey(gap/2 + width/2)
-    c.add_ports(signal_top.ports, prefix="top_")
+    top.movey(d/2 + width/2)
+    c.add_ports(top.ports, prefix="top_")
 
-    signal_bot = c.add_ref(
-        gf.c.straight(
+    bot = c.add_ref(
+        tline(
             length=length, 
-            cross_section=signal_cross_section, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
             width=width, 
             npoints=npoints
         )
     )
-    signal_bot.movey(-gap/2 - width/2)
-    c.add_ports(signal_bot.ports, prefix="bot_")
+    bot.movey(-d/2 - width/2)
+    c.add_ports(bot.ports, prefix="bot_")
 
-    ground_plate_center = c.center
-
-    print(ground_plate_center)
-    if isinstance(ground_cross_section, list):
-        ground_low = c.add_ref(
-            gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[0], width=8*width+gap, npoints=npoints
-            )
-        )
-        ground_low.center = ground_plate_center
-        ground_high = c.add_ref(
-            gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[1], width=8*width+gap, npoints=npoints
-            )
-        )
-        ground_high.center = ground_plate_center
-    else:
-        ground = c.add_ref(
-            gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section, width=8*width+gap, npoints=npoints
-            )
-        )
-        ground.center = ground_plate_center
+    c.flatten()
 
     return c
