@@ -234,7 +234,7 @@ def wilkinson_power_divider(
     """Return a Wilkinson power divider coplanar transmission line.
 
     Constructs a two-way Wilkinson divider from quarter-wave transformer
-    branches (impedance $Z_0 \sqrt{2}$) arranged in a loop.  The
+    branches (impedance $Z_0 / sqrt{2}$) arranged in a loop.  The
     quarter-wave length is derived from *frequency* and the effective
     dielectric constant of the selected cross-section stack.
 
@@ -579,7 +579,7 @@ def directional_coupler(
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
     ))
-    connection_port1.connect("e1", coupled_lines.ports["top_e1"])
+    connection_port1.connect("e1", coupled_lines.ports["e1"])
     # create and connect the through port line
     connection_port2 = c.add_ref(tline(
         length=connection_length,
@@ -587,7 +587,7 @@ def directional_coupler(
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
     ))
-    connection_port2.connect("e1", coupled_lines.ports["top_e2"])
+    connection_port2.connect("e1", coupled_lines.ports["e2"])
     
     corner_left = c.add_ref(tline_corner(
         signal_cross_section=signal_cross_section,
@@ -595,8 +595,8 @@ def directional_coupler(
         Z0=Z0,
     ))
     
-    corner_left.connect("e1", coupled_lines.ports["bot_e1"])
-    connection_port3 = c.add_ref(tline(
+    corner_left.connect("e1", coupled_lines.ports["e4"])
+    connection_port4 = c.add_ref(tline(
         length=connection_length,
         Z0=Z0,
         signal_cross_section=signal_cross_section,
@@ -608,16 +608,16 @@ def directional_coupler(
         ground_cross_section=ground_cross_section,
         Z0=Z0,
     ))
-    connection_port3.connect("e1", corner_left.ports["e2"])
+    connection_port4.connect("e1", corner_left.ports["e2"])
     
-    corner_right.connect("e1", coupled_lines.ports["bot_e2"])
-    connection_port4 = c.add_ref(tline(
+    corner_right.connect("e1", coupled_lines.ports["e3"])
+    connection_port3 = c.add_ref(tline(
         length=connection_length,
         Z0=Z0,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
     ))
-    connection_port4.connect("e1", corner_right.ports["e4"])
+    connection_port3.connect("e1", corner_right.ports["e4"])
     
     
     

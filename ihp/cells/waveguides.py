@@ -686,7 +686,6 @@ def tline_corner(length: float = 10,
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
     width: float | None = None,
     Z0: float | None = None,
-    npoints: int = 2,
 ) -> gf.Component:
     """Return a straight coplanar transmission line.
     # TODO
@@ -835,7 +834,6 @@ def coupler_tline(
         )
     )
     top.movey(d/2 + width/2)
-    c.add_ports(top.ports, prefix="top_")
 
     bot = c.add_ref(
         tline(
@@ -847,8 +845,11 @@ def coupler_tline(
         )
     )
     bot.movey(-d/2 - width/2)
-    c.add_ports(bot.ports, prefix="bot_")
 
+    c.add_port(name="e1", port=top.ports["e1"])
+    c.add_port(name="e2", port=top.ports["e2"])
+    c.add_port(name="e3", port=bot.ports["e2"])
+    c.add_port(name="e4", port=bot.ports["e1"])
     c.flatten()
 
     return c
