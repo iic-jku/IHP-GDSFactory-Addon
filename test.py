@@ -7,6 +7,7 @@ import os
 
 from ihp import tech
 from ihp.cells.utils import add_port_group, change_port_orientation
+from ihp.cells.rf_devices import _butterworth_prototype, _chebyshev_prototype
 
 # paths_to_remove = [
 #     "/foss/pdks/ihp-sg13g2/libs.tech/klayout/python",
@@ -340,7 +341,7 @@ ihp.PDK.activate()
 # waveguide test
 
 frequency = 50e9  # 50 GHz
-wavelength = scipy.constants.c / 50e9 * 1e6 / sqrt(3.8)
+wavelength = scipy.constants.c / 50e9 * 1e6 / sqrt(3.85)
 quater_wavelength = wavelength / 4
 quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round to DBU
 
@@ -443,14 +444,18 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 
 
 
+# -------------------------------------------------------
+# coupler_tline test
 # c = gf.Component()
 
-# bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
-#     frequency=50e9,
+# coupled_tline = c.add_ref(ihp.cells.coupler_tline(
+#     length=100,
+#     gap = 5,
 #     Z0=50,
 #     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing",
-#     e_r = 4.1,))
+#     ))
+
 
 # # c.add_ports(bp.ports)
 # # c.draw_ports()
@@ -498,17 +503,41 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 # c.draw_ports()
 # c.show()
 
+# -------------------------------------------------------
+# directional coupler test
+
+# c = gf.Component()
+
+# coupler = c.add_ref(ihp.cells.directional_coupler(
+#     connection_length=50,
+#     frequency=50e9,
+#     coupling_factor=-20,
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     Z0=50,
+# ))
+# c.add_ports(coupler.ports)
+# c.draw_ports()
+# c.show()
+
+
+# -------------------------------------------------------
+# coupled line bandpass filter test
 
 c = gf.Component()
 
-coupler = c.add_ref(ihp.cells.directional_coupler(
+bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter2(
+    order=3,
     connection_length=50,
     frequency=50e9,
-    coupling_factor=-20,
+    bandwidth=10e9,
+    filter_type="butter",
     signal_cross_section="topmetal2_routing",
     ground_cross_section="metal5_routing",
     Z0=50,
 ))
-c.add_ports(coupler.ports)
+
+c.add_ports(bp.ports)
 c.draw_ports()
 c.show()
+
