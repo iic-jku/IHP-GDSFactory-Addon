@@ -23,7 +23,7 @@ Advantages of using GDSFactory for PDK development:
 - [x] Bondpads
 - [x] Antennas
 
-for a better overview have a look into [this](Klayout_PCell_Checklist.xlsx)
+For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
 
 ## Waveguides
 
