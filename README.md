@@ -74,4 +74,3 @@ uv sync --extra docs --extra dev
 ## Documentation
 
 - [gdsfactory docs](https://gdsfactory.github.io/gdsfactory/)
-- [IHP docs](https://gdsfactory.github.io/ihp/) and [code](https://github.com/gdsfactory/ihp)
