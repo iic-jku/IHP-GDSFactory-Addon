@@ -479,48 +479,6 @@ def wilkinson_power_divider(
     return c
 
 
-def _butterworth_prototype(N: int) -> list[float]:
-    """Return Butterworth lowpass prototype element values g_0 … g_{N+1}."""
-    g = [1.0]
-    for k in range(1, N + 1):
-        g.append(2 * sin((2 * k - 1) * pi / (2 * N)))
-    g.append(1.0)
-    return g
-
-
-def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
-    """Return Chebyshev lowpass prototype element values g_0 … g_{N+1}.
-
-    Uses the standard recursion from Pozar / Matthaei-Young-Jones.
-
-    Args:
-        N: Filter order.
-        ripple_dB: Pass-band ripple in dB (must be > 0).
-    """
-    x = ripple_dB / 17.37
-    beta = log(cosh(x) / sinh(x))  # ln(coth(x))
-    gamma = sinh(beta / (2 * N))
-
-    a = [0.0] * (N + 1)
-    b = [0.0] * (N + 1)
-    for k in range(1, N + 1):
-        a[k] = sin((2 * k - 1) * pi / (2 * N))
-        b[k] = gamma ** 2 + sin(k * pi / N) ** 2
-
-    g = [0.0] * (N + 2)
-    g[0] = 1.0
-    g[1] = 2 * a[1] / gamma
-    for k in range(2, N + 1):
-        g[k] = 4 * a[k - 1] * a[k] / (b[k - 1] * g[k - 1])
-
-    if N % 2 == 1:
-        g[N + 1] = 1.0
-    else:
-        g[N + 1] = (cosh(beta / 4) / sinh(beta / 4)) ** 2  # coth²(β/4)
-
-    return g
-
-
 @gf.cell
 def directional_coupler(
     connection_length: float = 100,
@@ -627,6 +585,51 @@ def directional_coupler(
     c.add_port(name="e4", port=connection_port4.ports["e2"])
     c.flatten()
     return c
+
+
+def _butterworth_prototype(N: int) -> list[float]:
+    """Return Butterworth lowpass prototype element values g_0 … g_{N+1}."""
+    # g = [1.0]
+    g = []
+    for k in range(1, N + 1):
+        g.append(2 * sin((2 * k - 1) * pi / (2 * N)))
+    g.append(1.0)
+    return g
+
+
+def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
+    """Return Chebyshev lowpass prototype element values g_1 … g_{N+1}.
+
+    Uses the standard recursion from Pozar / Matthaei-Young-Jones.
+
+    Args:
+        N: Filter order.
+        ripple_dB: Pass-band ripple in dB (must be > 0).
+    """
+    x = ripple_dB / 17.37
+    beta = log(cosh(x) / sinh(x))  # ln(coth(x))
+    gamma = sinh(beta / (2 * N))
+
+    a = [0.0] * (N + 1)
+    b = [0.0] * (N + 1)
+    for k in range(1, N + 1):
+        a[k] = sin((2 * k - 1) * pi / (2 * N))
+        b[k] = gamma ** 2 + sin(k * pi / N) ** 2
+
+    g = []
+    # g_1
+    g.append(2 * a[1] / gamma)
+    # g_2 ... g_N
+    for k in range(2, N + 1):
+        g.append(4 * a[k - 1] * a[k] / (b[k - 1] * g[-1]))
+    # g_{N+1}
+    if N % 2 == 1:
+        g.append(1.0)
+    else:
+        g.append((cosh(beta / 4) / sinh(beta / 4)) ** 2)  # coth²(β/4)
+
+    return g
+
 
 @gf.cell
 def coupled_line_bandpass_filter(
@@ -836,3 +839,115 @@ def coupled_line_bandpass_filter(
     c.add_port(name="e2", port=connection_out.ports["e2"])
 
     return c
+
+
+gf.cell
+def coupled_line_bandpass_filter2(
+        order: int = 3,
+        frequency: float = 10e9,
+        bandwidth: float = 0.2,
+        connection_length: float = 50,
+        Z0: float = 50,
+        signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+        ground_cross_section: CrossSectionSpec = "metal5_routing",
+        e_r: float = 4.1,
+        filter_type: str = "butter",
+        ripple_dB: float = 3,
+    ) -> gf.Component:
+    
+    c = gf.Component()
+    # get filter coefficients
+    # g = [g1 g2 ... gN gN+1] for N-th order filter
+    if filter_type == "butter":
+        g = _butterworth_prototype(order)
+    elif filter_type == "cheby":
+        g = _chebyshev_prototype(order, ripple_dB)
+
+    print(g)
+
+    fractional_bandwidth = bandwidth / frequency
+    f_2 = frequency * (1 + fractional_bandwidth / 2)
+    f_1 = frequency * (1 - fractional_bandwidth / 2)
+    print(f_1, f_2)
+    delta = fractional_bandwidth
+
+
+    # initialize lists for Z0J values
+    Z0J = [0.0] * (order + 1)
+
+    # first Z0J value
+    Z0J[0] = sqrt(pi * delta / (2 * g[0]))
+
+    # calculate Z0J values for j = 1 to N-1
+    for j in range(1, order):
+        Z0J[j] = pi * delta / (2 * sqrt(g[j-1] * g[j]))
+
+    # last Z0J value 
+    Z0J[order] = sqrt(pi * delta / (2 * g[order-1] * g[order]))
+
+
+    # initialize and calculate Z0e and Z0o values for each section
+    Z0e = [0.0] * (order + 1)
+    Z0o = [0.0] * (order + 1)
+    Z_section = [0.0] * (order + 1)
+    
+    for j in range(order + 1):
+        Z0e[j] = Z0 * (1 + Z0J[j] + Z0J[j] ** 2)
+        Z0o[j] = Z0 * (1 - Z0J[j] + Z0J[j] ** 2)
+        print(f"Section {j}: Z0e = {Z0e[j]:.2f} ohms, Z0o = {Z0o[j]:.2f} ohms")
+        Z_section[j] = sqrt(Z0e[j] * Z0o[j])
+        print(f"Section {j}: Z_section = {Z_section[j]:.2f} ohms")
+    
+    # calculate the coupling coefficient k for each section
+    g = [1.0] + g  # prepend g0 = 1.0 for easier indexing
+    k = [0.0] * (order + 1)
+    for j in range(order + 1):
+        k[j] = (f_2 - f_1) / sqrt(f_1 * f_2 * g[j] * g[j+1])
+        print(f"Section {j}: k = {k[j]:.4f}")
+
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r,
+    )
+    segment_length = scipy.constants.c / frequency * 1e6 / sqrt(e_eff) / 4
+    segment_length = segment_length - segment_length % tech.nm  # snap to grid
+    print(f"Segment length (λ/4) = {segment_length:.2f}")
+
+    connection_in = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+
+    connection_out = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+
+    previous_section = connection_in
+
+    for i in range(order + 1):
+        section_i = c.add_ref(coupler_tline(
+            Z0e=Z0e[i],
+            Z0o=Z0o[i],
+            length=segment_length, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+        ))
+        section_i.connect("e4", previous_section.ports["e2"], allow_width_mismatch=True)
+        previous_section = section_i
+
+    connection_out.connect("e1", previous_section.ports["e2"], allow_width_mismatch=True)
+    
+    c.add_port(name="e1", port=connection_in.ports["e1"])
+    c.add_port(name="e2", port=connection_out.ports["e2"])
+
+    c.flatten()
+    
+    return c
+
+    
