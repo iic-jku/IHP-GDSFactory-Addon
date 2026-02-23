@@ -355,35 +355,11 @@ def wilkinson_power_divider(
         "e1", connection_corner_ref.ports["e2"]
     )
     
-    # create the corner piece for the 4 outer corners of the coupler, which are all the same
-    corner_piece = gf.Component()
-    corner_piece.add_polygon(
-        points=[
-            (0, 0),
-            (0, width_Z0_sqrt2),
-            (width_Z0_sqrt2, width_Z0_sqrt2),
-            (width_Z0_sqrt2, 0)
-        ],
-        layer=gf.get_cross_section(signal_cross_section).layer,
-    )
-    corner_piece.add_port(
-        name="e1",
-        center=(0, width_Z0_sqrt2/2),
-        width=width_Z0_sqrt2,
-        orientation=180,
-        port_type="electrical",
-        layer=gf.get_cross_section(signal_cross_section).layer,
-    )
-    corner_piece.add_port(
-        name="e2",
-        center=(width_Z0_sqrt2/2, width_Z0_sqrt2),
-        width=width_Z0_sqrt2,
-        orientation=90,
-        port_type="electrical",
-        layer=gf.get_cross_section(signal_cross_section).layer,
-    )
-    
-    corner_piece_upper_left = c.add_ref(corner_piece)
+    corner_piece_upper_left = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     corner_piece_upper_left.connect(
         "e2", branch_left_up.ports["e2"]
     )
@@ -398,7 +374,11 @@ def wilkinson_power_divider(
         "e1", connection_corner_ref.ports["e3"]
     )
     
-    corner_piece_lower_left = c.add_ref(corner_piece)
+    corner_piece_lower_left = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     corner_piece_lower_left.connect(
         "e1", branch_left_down.ports["e2"]
     )
@@ -423,7 +403,11 @@ def wilkinson_power_divider(
         "e1", corner_piece_lower_left.ports["e2"]
     )
     
-    corner_piece_upper_right = c.add_ref(corner_piece)
+    corner_piece_upper_right = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     
     corner_piece_upper_right.connect(
         "e2", branch_top.ports["e2"]
@@ -439,7 +423,11 @@ def wilkinson_power_divider(
         "e1", corner_piece_upper_right.ports["e1"]
     )
     
-    corner_piece_lower_right = c.add_ref(corner_piece)
+    corner_piece_lower_right = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     corner_piece_lower_right.connect(
         "e1", branch_bottom.ports["e2"]
     )
@@ -454,12 +442,20 @@ def wilkinson_power_divider(
         "e1", corner_piece_lower_right.ports["e2"]
     )
     
-    corner_output_p2 = c.add_ref(corner_piece)
+    corner_output_p2 = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     corner_output_p2.connect(
         "e1", branch_right_down.ports["e2"]
     )
     
-    corner_output_p3 = c.add_ref(corner_piece)
+    corner_output_p3 = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0*sqrt(2)
+    ))
     corner_output_p3.connect(
         "e2", branch_right_up.ports["e2"]
     )
