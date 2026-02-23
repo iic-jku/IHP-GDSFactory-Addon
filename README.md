@@ -21,6 +21,7 @@ Advantages of using GDSFactory for PDK development:
 - [x] Passives (ESD diodes, PTap, NTap, Sealring)
 - [x] VIA Stack
 - [x] Bondpads
+- [x] Bondpads/Probe Pads
 - [x] Antennas
 
 For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
@@ -33,7 +34,6 @@ For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
 
 ## RF Devices
 
-- [x] Probe Pads
 - [x] Branchline Coupler
 - [x] Wilkinson Divider
 - [x] Directional Coupler
