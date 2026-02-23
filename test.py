@@ -526,7 +526,7 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 
 c = gf.Component()
 
-bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter2(
+bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
     order=3,
     connection_length=50,
     frequency=50e9,
