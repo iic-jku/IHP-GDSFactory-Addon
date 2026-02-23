@@ -269,8 +269,6 @@ def wilkinson_power_divider(
         signal_cross_section=signal_cross_section,
         e_r=4.1
     )
-
-    print(width_Z0, width_Z0_sqrt2)
     
     # create and connect the input line
     connection_in = c.add_ref(tline(
@@ -460,9 +458,33 @@ def wilkinson_power_divider(
         "e2", branch_right_up.ports["e2"]
     )
     
+    connection_out_p2 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+    
+    connection_out_p2.connect(
+        "e1", corner_output_p2.ports["e2"], allow_width_mismatch=True
+    )
+    connection_out_p2.movey(width_Z0/2 - width_Z0_sqrt2/2)
+    
+    connection_out_p3 = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        width=width_Z0,
+    ))
+    
+    connection_out_p3.connect(
+        "e1", corner_output_p3.ports["e1"], allow_width_mismatch=True
+    )
+    connection_out_p3.movey(-(width_Z0/2 - width_Z0_sqrt2/2))
+    
     c.add_port(name="e1", port=connection_in.ports["e1"])
-    c.add_port(name="e2", port=corner_output_p2.ports["e2"])
-    c.add_port(name="e3", port=corner_output_p3.ports["e1"])
+    c.add_port(name="e2", port=connection_out_p2.ports["e2"])
+    c.add_port(name="e3", port=connection_out_p3.ports["e2"])
     
     # for future use, add the resistor in the middle of the coupler
     # c.add_ref(rppd(
