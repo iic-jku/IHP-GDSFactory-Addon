@@ -524,18 +524,18 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 # -------------------------------------------------------
 # coupled line bandpass filter test
 
-c = gf.Component()
+# c = gf.Component()
 
-bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
-    order=3,
-    connection_length=50,
-    frequency=50e9,
-    bandwidth=10e9,
-    filter_type="butter",
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    Z0=50,
-))
+# bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
+#     order=3,
+#     connection_length=50,
+#     frequency=50e9,
+#     bandwidth=10e9,
+#     filter_type="butter",
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     Z0=50,
+# ))
 
 # c.show()
 
@@ -560,67 +560,32 @@ bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
 # c.draw_ports()
 # c.show()
 
-# import numpy as np
-# from scipy.signal import bessel
 
-# def bessel_g_values(N):
-#     b, a = bessel(N, 1, analog=True, norm='delay', output='ba')
+# ----------------------------------------
+# probe pad test
 
-#     num = np.poly1d(a)
-#     den = np.poly1d(b)
+# c = gf.Component()
 
-#     g = []
+# pad = c.add_ref(ihp.cells.probe_pads(
+#     config="GSG", 
+#     spacing=[100, 150], 
+#     shape=["octagon", "square", "octagon"], 
+#     length= 150, 
+#     width_signal=100, 
+#     width_ground=50))
 
-#     for k in range(N):
-#         if k % 2 == 0:
-#             # series inductor
-#             L = num.coeffs[0] / den.coeffs[0]
-#             g.append(L)
-#             num = num - L * den
-#         else:
-#             # shunt capacitor
-#             num, den = den, num
-#             C = num.coeffs[0] / den.coeffs[0]
-#             g.append(C)
-#             num = num - C * den
+# c.move((0,200))
 
-#     return np.array(g)
+# pad1 = c.add_ref(ihp.cells.probe_pads(
+#     config="GSG", 
+#     spacing=100, 
+#     shape=["octagon", "square", "octagon"], 
+#     length= 150, 
+#     width_signal=100, 
+#     width_ground=50))
 
-# print("Butterworth prototype values:")
-# for i in range(1, 11):
-#     print("N =", i, "| g = ", _butterworth_prototype(i))
-    
-    
-# print
-# for i in range(1, 11):
-#     print("N =", i, "| g = ", _chebyshev_prototype(i, ripple_dB=3))
-    
-# print("Bessel prototype values:")
-# for i in range(1, 11):
-#     print("N =", i, "| g = ", bessel_g_values(i))
+# c.move((0,200))
 
-c = gf.Component()
+# pad2 = c.add_ref(ihp.cells.probe_pads())
 
-pad = c.add_ref(ihp.cells.probe_pads(
-    config="GSG", 
-    spacing=[100, 150], 
-    shape=["octagon", "square", "octagon"], 
-    length= 150, 
-    width_signal=100, 
-    width_ground=50))
-
-c.move((0,200))
-
-pad1 = c.add_ref(ihp.cells.probe_pads(
-    config="GSG", 
-    spacing=100, 
-    shape=["octagon", "square", "octagon"], 
-    length= 150, 
-    width_signal=100, 
-    width_ground=50))
-
-c.move((0,200))
-
-pad2 = c.add_ref(ihp.cells.probe_pads())
-
-c.show()
+# c.show()
