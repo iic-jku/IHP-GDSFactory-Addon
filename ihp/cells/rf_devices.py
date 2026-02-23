@@ -2,10 +2,12 @@ import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
 
-from math import exp, log, sin, sqrt
+from math import cosh, exp, log, pi, sin, sinh, sqrt
+
+import scipy
 from ihp.cells.resistors import rppd, CbResCalc
 
-from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, tline
+from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, _get_stack_geometry, tline, coupler_tline, tline_corner
 from .. import tech
 
 
@@ -56,7 +58,7 @@ def branch_line_coupler(
         e_r=e_r
     )
     
-    quater_wave_length = wave_length / 4  / sqrt(e_eff)  # this is just an estimate, the actual height will depend)
+    quater_wave_length = wave_length / 4  / sqrt(e_eff)  
     quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
     
     # create corner component for the 4 corners of the coupler
@@ -217,7 +219,7 @@ def branch_line_coupler(
     c.add_port(name = "e2", port=connection2.ports["e2"])
     c.add_port(name = "e3", port=connection3.ports["e2"])
     c.add_port(name = "e4", port=connection4.ports["e2"])
-    c.move((0,-width_Z0))
+    
     return c
 
 
@@ -232,7 +234,7 @@ def wilkinson_power_divider(
     """Return a Wilkinson power divider coplanar transmission line.
 
     Constructs a two-way Wilkinson divider from quarter-wave transformer
-    branches (impedance $Z_0 \sqrt{2}$) arranged in a loop.  The
+    branches (impedance $Z_0 / sqrt{2}$) arranged in a loop.  The
     quarter-wave length is derived from *frequency* and the effective
     dielectric constant of the selected cross-section stack.
 
@@ -475,3 +477,290 @@ def wilkinson_power_divider(
     # ))
     
     return c
+
+
+@gf.cell
+def directional_coupler(
+    connection_length: float = 100,
+    frequency: float = 10e9,
+    coupling_factor: float = 3,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    Z0: float = 50,
+    e_r: float = 4.1
+) -> gf.Component:
+    """Returns a directional coupler coplanar transmission line.
+
+    Creates signal and ground lines for a directional coupler.
+    
+    Args:
+        connection_length: Length of the input line.
+        frequency: Operating frequency (Hz).
+        coupling_factor: Coupling factor in dB.
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        Z0: Target characteristic impedance (ohms).
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
+    """
+    wave_length = scipy.constants.c / frequency * 1e6  
+    
+    c = gf.Component()
+    
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r
+    )
+    
+    quater_wave_length = wave_length / 4  / sqrt(e_eff)  
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    
+    # couping factor must be negative
+    if coupling_factor > 0:
+        coupling_factor = -coupling_factor  # enforce negative coupling factor for the formula below
+        
+    coupling_factor_linear = 10 ** (coupling_factor / 20)
+    
+    # create the first line of the coupler
+    coupled_lines = c.add_ref(coupler_tline(
+        Z0e= Z0 * (1 + coupling_factor_linear) / (1 - coupling_factor_linear),
+        Z0o= Z0 * (1 - coupling_factor_linear) / (1 + coupling_factor_linear),
+        length=quater_wave_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    # create and connect the input line
+    connection_port1 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port1.connect("e1", coupled_lines.ports["e1"])
+    # create and connect the through port line
+    connection_port2 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port2.connect("e1", coupled_lines.ports["e2"])
+    
+    corner_left = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    
+    corner_left.connect("e1", coupled_lines.ports["e4"])
+    connection_port4 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    corner_right = c.add_ref(tline_corner(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    connection_port4.connect("e1", corner_left.ports["e2"])
+    
+    corner_right.connect("e1", coupled_lines.ports["e3"])
+    connection_port3 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    connection_port3.connect("e1", corner_right.ports["e4"])
+    
+    
+    
+    c.add_port(name="e1", port=connection_port1.ports["e2"])
+    c.add_port(name="e2", port=connection_port2.ports["e2"])
+    c.add_port(name="e3", port=connection_port3.ports["e2"])
+    c.add_port(name="e4", port=connection_port4.ports["e2"])
+    c.flatten()
+    return c
+
+
+def _butterworth_prototype(N: int) -> list[float]:
+    """Return Butterworth lowpass prototype element values g_0 … g_{N+1}."""
+    # g = [1.0]
+    g = []
+    for k in range(1, N + 1):
+        g.append(2 * sin((2 * k - 1) * pi / (2 * N)))
+    g.append(1.0)
+    return g
+
+
+def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
+    """Return Chebyshev lowpass prototype element values g_1 … g_{N+1}.
+
+    Uses the standard recursion from Pozar / Matthaei-Young-Jones.
+
+    Args:
+        N: Filter order.
+        ripple_dB: Pass-band ripple in dB (must be > 0).
+    """
+    x = ripple_dB / 17.37
+    beta = log(cosh(x) / sinh(x))  # ln(coth(x))
+    gamma = sinh(beta / (2 * N))
+
+    a = [0.0] * (N + 1)
+    b = [0.0] * (N + 1)
+    for k in range(1, N + 1):
+        a[k] = sin((2 * k - 1) * pi / (2 * N))
+        b[k] = gamma ** 2 + sin(k * pi / N) ** 2
+
+    g = []
+    # g_1
+    g.append(2 * a[1] / gamma)
+    # g_2 ... g_N
+    for k in range(2, N + 1):
+        g.append(4 * a[k - 1] * a[k] / (b[k - 1] * g[-1]))
+    # g_{N+1}
+    if N % 2 == 1:
+        g.append(1.0)
+    else:
+        g.append((cosh(beta / 4) / sinh(beta / 4)) ** 2)  # coth²(β/4)
+
+    return g
+
+
+@gf.cell
+def coupled_line_bandpass_filter(
+        order: int = 3,
+        frequency: float = 10e9,
+        bandwidth: float = 0.2,
+        connection_length: float = 50,
+        Z0: float = 50,
+        signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+        ground_cross_section: CrossSectionSpec = "metal5_routing",
+        e_r: float = 4.1,
+        filter_type: str = "butter",
+        ripple_dB: float = 3,
+    ) -> gf.Component:
+    """Return a coupled-line bandpass filter.
+
+    Synthesises an *N*-th order coupled-line bandpass filter from
+    Butterworth or Chebyshev lowpass prototype coefficients.  Each
+    section is realised as a pair of coupled coplanar transmission
+    lines whose even/odd-mode impedances are derived from the
+    prototype element values and the fractional bandwidth.
+
+    Args:
+        order: Filter order (number of resonators).
+        frequency: Centre frequency (Hz).
+        bandwidth: Absolute bandwidth (Hz).
+        connection_length: Length of the input/output feed lines (um).
+        Z0: Reference characteristic impedance (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        e_r: Relative permittivity of the substrate.
+            Defaults to 4.1 for silicon dioxide.
+        filter_type: Prototype type — ``"butter"`` for Butterworth or
+            ``"cheby"`` for Chebyshev.
+        ripple_dB: Pass-band ripple in dB (only used when
+            *filter_type* is ``"cheby"``).
+
+    Returns:
+        A Component with ports ``e1`` (input) and ``e2`` (output).
+    """
+
+    c = gf.Component()
+    # get filter coefficients
+    # g = [g1 g2 ... gN gN+1] for N-th order filter
+    if filter_type == "butter":
+        g = _butterworth_prototype(order)
+    elif filter_type == "cheby":
+        g = _chebyshev_prototype(order, ripple_dB)
+
+    
+
+    fractional_bandwidth = bandwidth / frequency
+    f_2 = frequency * (1 + fractional_bandwidth / 2)
+    f_1 = frequency * (1 - fractional_bandwidth / 2)
+    
+    delta = fractional_bandwidth
+
+
+    # initialize lists for Z0J values
+    Z0J = [0.0] * (order + 1)
+
+    # first Z0J value
+    Z0J[0] = sqrt(pi * delta / (2 * g[0]))
+
+    # calculate Z0J values for j = 1 to N-1
+    for j in range(1, order):
+        Z0J[j] = pi * delta / (2 * sqrt(g[j-1] * g[j]))
+
+    # last Z0J value 
+    Z0J[order] = sqrt(pi * delta / (2 * g[order-1] * g[order]))
+
+
+    # initialize and calculate Z0e and Z0o values for each section
+    Z0e = [0.0] * (order + 1)
+    Z0o = [0.0] * (order + 1)
+    Z_section = [0.0] * (order + 1)
+    
+    for j in range(order + 1):
+        Z0e[j] = Z0 * (1 + Z0J[j] + Z0J[j] ** 2)
+        Z0o[j] = Z0 * (1 - Z0J[j] + Z0J[j] ** 2)
+        
+        Z_section[j] = sqrt(Z0e[j] * Z0o[j])
+    
+    # calculate the coupling coefficient k for each section
+    g = [1.0] + g  # prepend g0 = 1.0 for easier indexing
+    k = [0.0] * (order + 1)
+    for j in range(order + 1):
+        k[j] = (f_2 - f_1) / sqrt(f_1 * f_2 * g[j] * g[j+1])
+
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r,
+    )
+    segment_length = scipy.constants.c / frequency * 1e6 / sqrt(e_eff) / 4
+    segment_length = segment_length - segment_length % tech.nm  # snap to grid
+
+    connection_in = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+
+    connection_out = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+
+    previous_section = connection_in
+
+    for i in range(order + 1):
+        section_i = c.add_ref(coupler_tline(
+            Z0e=Z0e[i],
+            Z0o=Z0o[i],
+            length=segment_length, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+        ))
+        section_i.connect("e4", previous_section.ports["e2"], allow_width_mismatch=True)
+        previous_section = section_i
+
+    connection_out.connect("e1", previous_section.ports["e2"], allow_width_mismatch=True)
+    
+    c.add_port(name="e1", port=connection_in.ports["e1"])
+    c.add_port(name="e2", port=connection_out.ports["e2"])
+
+    c.flatten()
+    
+    return c
+
+    

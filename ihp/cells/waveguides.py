@@ -407,8 +407,8 @@ def tline(
     """Return a straight coplanar transmission line.
 
     Creates a signal straight and a wider ground straight aligned around it.
-    The ground plane extends 3× the signal width beyond each end of the
-    signal line and is 7× as wide.  When two ground cross-sections are
+    The ground plane extends 3x the signal width beyond each end of the
+    signal line and is 7x as wide.  When two ground cross-sections are
     provided the component produces a stripline (ground above and below).
 
     Args:
@@ -680,3 +680,176 @@ def tline_bend_s(
     
     return c
 
+@gf.cell
+def tline_corner(length: float = 10,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
+    width: float | None = None,
+    Z0: float | None = None,
+) -> gf.Component:
+    """Return a straight coplanar transmission line.
+    # TODO
+    """
+    if width is None and Z0 is None:
+        raise ValueError("Provide either width or Z0")
+
+    if width is not None and Z0 is not None:
+        raise ValueError("Provide only one of width or Z0")
+    
+    if width is None:
+        width = _calculate_width_from_Z0(
+            Z0=Z0, 
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )  
+        
+    else:
+        Z0 = _calculate_Z0_from_width(
+            width=width,
+            ground_cross_section=ground_cross_section, 
+            signal_cross_section=signal_cross_section
+        )
+        
+    c = gf.Component()
+    # signal
+    c.add_polygon(
+        points=[
+            (0, 0),
+            (0, width),
+            (width, width),
+            (width, 0)
+        ],
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    
+    
+    # ground plate
+    extension = 3 # extension over signal plate
+    c.add_polygon(
+        points=[
+            (0 - extension*width, -extension*width),
+            (0 - extension*width, width + extension*width),
+            (width + extension*width, width + extension*width),
+            (width + extension*width, 0 - extension*width)
+        ],
+        layer=gf.get_cross_section(ground_cross_section).layer,
+    )
+    
+    c.add_port(
+        name="e1",
+        center=(0, width/2),
+        width=width,
+        orientation=180,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e2",
+        center=(width/2, width),
+        width=width,
+        orientation=90,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e3",
+        center=(width, width/2),
+        width=width,
+        orientation=0,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    c.add_port(
+        name="e4",
+        center=(width/2, 0),
+        width=width,
+        orientation=270,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    return c
+
+@gf.cell
+def coupler_tline(
+    Z0e: float = 50,
+    Z0o: float = 50,
+    length: float = 10,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    e_r: float = 4.1,
+    npoints: int = 2,
+) -> gf.Component:
+    """Return a straight coupled coplanar transmission line.
+
+    Creates two parallel signal lines separated by a gap, with a shared
+    ground plane underneath (and optionally above for stripline).  The
+    ground plane extends 3x the signal width beyond each end of the
+    signal lines and is wide enough to cover both lines plus margins.
+
+    Args:
+        length: Length of the signal lines (um).
+        gap: Spacing between the two signal lines (um).
+        signal_cross_section: Cross-section for the signal lines.
+        ground_cross_section: Cross-section for the ground plane.
+            Accepts a single spec for microstrip or a two-element list
+            ``[lower, upper]`` for stripline.
+        width: Signal line width (um). Mutually exclusive with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive
+            with width.
+        npoints: Number of points used to draw the straights.
+
+    Returns:
+        A Component containing two coupled signal lines (with ports
+        prefixed ``top_`` and ``bot_``) and ground plane(s).
+
+    Raises:
+        ValueError: If neither or both of *width* and *Z0* are provided.
+    """
+    Z0 = sqrt(Z0e * Z0o)
+    
+    width = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section,
+        e_r=e_r
+    )
+    
+    h, t = _get_stack_geometry(signal_cross_section, ground_cross_section)
+
+    # calculate seperation gap from even and odd mode impedances
+    # https://www.dmcrf.com/microstrip-calculators/differential-microstrip-impedance-calculator/
+    Z_d = 2 * Z0o
+    d = -h/0.98 * log(1-(Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
+    
+    
+    c = gf.Component()
+
+    top = c.add_ref(
+        tline(
+            length=length, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width, 
+            npoints=npoints
+        )
+    )
+    top.movey(d/2 + width/2)
+
+    bot = c.add_ref(
+        tline(
+            length=length, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width, 
+            npoints=npoints
+        )
+    )
+    bot.movey(-d/2 - width/2)
+
+    c.add_port(name="e1", port=top.ports["e1"])
+    c.add_port(name="e2", port=top.ports["e2"])
+    c.add_port(name="e3", port=bot.ports["e2"])
+    c.add_port(name="e4", port=bot.ports["e1"])
+    c.flatten()
+
+    return c
