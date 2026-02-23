@@ -722,18 +722,30 @@ def tline_corner(length: float = 10,
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
     
-    
-    # ground plate
     extension = 3 # extension over signal plate
-    c.add_polygon(
-        points=[
-            (0 - extension*width, -extension*width),
-            (0 - extension*width, width + extension*width),
-            (width + extension*width, width + extension*width),
-            (width + extension*width, 0 - extension*width)
-        ],
-        layer=gf.get_cross_section(ground_cross_section).layer,
-    )
+    if isinstance(ground_cross_section, list):
+        # ground planes for stripline
+        for gc in ground_cross_section:
+            c.add_polygon(
+                points=[
+                    (0 - extension*width, -extension*width),
+                    (0 - extension*width, width + extension*width),
+                    (width + extension*width, width + extension*width),
+                    (width + extension*width, 0 - extension*width)
+                ],
+                layer=gf.get_cross_section(gc).layer,
+            )
+    else:
+        # ground plate
+        c.add_polygon(
+            points=[
+                (0 - extension*width, -extension*width),
+                (0 - extension*width, width + extension*width),
+                (width + extension*width, width + extension*width),
+                (width + extension*width, 0 - extension*width)
+            ],
+            layer=gf.get_cross_section(ground_cross_section).layer,
+        )
     
     c.add_port(
         name="e1",
