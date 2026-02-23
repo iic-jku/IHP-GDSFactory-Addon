@@ -109,9 +109,93 @@ def bondpad_array(
         pad_ref = c.add_ref(pad)
         pad_ref.movex(i * pad_pitch)
 
-        
-
     
+@gf.cell
+def probe_pads(
+    width_signal: float = 85.0, 
+    width_ground: float = 85.0, 
+    length: float = 85.0,
+    spacing: float | list[float] = 125.0,
+    config: str = "GSG",
+    shape: Literal['octagon', 'square', 'circle'] | list[Literal['octagon', 'square', 'circle']] = "square",
+    signal_cross_section: str = "topmetal2_routing",
+    ground_cross_section: str = "metal5_routing"
+    ) -> gf.Component:
+    
+    
+    
+    layer_dict = {
+        tech.LAYER.TopMetal2drawing: 'TM2',
+        tech.LAYER.TopMetal1drawing: 'TM1',
+        tech.LAYER.Metal5drawing: '5',
+        tech.LAYER.Metal4drawing: '4',
+        tech.LAYER.Metal3drawing: '3',
+        tech.LAYER.Metal2drawing: '2',
+        tech.LAYER.Metal1drawing: '1',
+    }
+    
+    
+    c = gf.Component()
+    
+    for i, pad_type in enumerate(config):
+        
+        ## Preprocessing parameters
+        # Determine the width based on pad type
+        width = width_signal if pad_type == 'S' else width_ground
+        hwQuota = length / width
+        
+        # Handle shape as a list of shapes or a single shape
+        if isinstance(shape, list):
+            shape_i = shape[i]
+        else:
+            shape_i = shape
+        
+        # Handle Layers
+        if pad_type == 'S':
+            topMetal = layer_dict[tech.LAYER.TopMetal2drawing]
+            if signal_cross_section == "topmetal2_routing":
+                bottomMetal = layer_dict[tech.LAYER.TopMetal1drawing]
+            else:
+                bottomMetal = layer_dict[gf.get_cross_section(signal_cross_section).layer]
+        else:
+            topMetal = layer_dict[tech.LAYER.TopMetal2drawing]
+            bottomMetal = layer_dict[gf.get_cross_section(ground_cross_section).layer]
+            
+        # handle spacing as a list of floats
+        if isinstance(spacing, list):
+            if len(spacing)+1 != len(config):
+                raise ValueError("Spacing must be a list of length one less than the number of pads in the config.")
+            
+            pad = bondpad(
+                shape=shape_i,
+                stack='t',
+                diameter=length,
+                hwQuota=hwQuota,
+                topMetal=topMetal,
+                bottomMetal=bottomMetal,
+                padType='probepad'
+            )
+            pad_ref = c.add_ref(pad)
+            if i > 0:
+                pad_ref.xmin = prev_pad_ref.xmax + spacing[i-1]
+                
+                       
+        # handle spacing as a single float
+        else:
+            pad = bondpad(
+                shape=shape_i,
+                stack='t',
+                diameter=length,
+                hwQuota=hwQuota,
+                topMetal=topMetal,
+                bottomMetal=bottomMetal,
+                padType='probepad'
+            )
+            pad_ref = c.add_ref(pad)
+            if i > 0:
+                pad_ref.xmin = prev_pad_ref.xmax + spacing
+                
+        prev_pad_ref = pad_ref
 
     return c
 

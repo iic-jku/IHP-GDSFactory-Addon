@@ -1,6 +1,6 @@
-# IHP GDSFactory PDK 0.0.6
+# IHP GDSFactory PDK
 
-This repository contains a PDK (Process Design Kit) for the IHP CMOS technology, built using GDSFactory. It includes standard cell libraries, design rules, and example designs to facilitate the development of integrated circuits using this technology.
+This repository contains a PDK (Process Design Kit) for the IHP CMOS technology, built using GDSFactory. It includes **standard cells**, **waveguides**, **RF devices**, **design rules**, and **example designs** to facilitate the development of integrated circuits using this technology.
 
 One of the advantages of using GDSFactory for PDK development is its modular and flexible approach to layout design. GDSFactory allows for easy creation and manipulation of layout components, making it straightforward to build and customize standard cells and other layout elements.
 
@@ -10,6 +10,34 @@ Advantages of using GDSFactory for PDK development:
 - Team collaboration: GDSFactory's code-based approach facilitates version control and collaboration among team members.
 - Reproducibility: Designs can be easily reproduced and shared, ensuring that others can replicate the results.
 - Modular design: Layout components can be reused and combined to create complex designs, promoting consistency and reducing errors.
+
+## IHP Pcells
+
+- [x] PMOS / NMOS
+- [x] BJTs
+- [x] Resistors
+- [x] Capacitors
+- [x] Inductors
+- [x] Passives (ESD diodes, PTap, NTap, Sealring)
+- [x] VIA Stack
+- [x] Bondpads
+- [x] Antennas
+
+For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
+
+## Waveguides
+
+- [x] Embedded Microstrip
+- [x] Edge-Coupled Microstrip
+- [x] 90°-Bend Microstrip
+
+## RF Devices
+
+- [x] Probe Pads
+- [x] Branchline Coupler
+- [x] Wilkinson Divider
+- [x] Directional Coupler
+- [x] Coupled-Line Microstrip Bandpass Filter
 
 ## Installation
 
@@ -50,4 +78,3 @@ uv sync --extra docs --extra dev
 ## Documentation
 
 - [gdsfactory docs](https://gdsfactory.github.io/gdsfactory/)
-- [IHP docs](https://gdsfactory.github.io/ihp/) and [code](https://github.com/gdsfactory/ihp)
