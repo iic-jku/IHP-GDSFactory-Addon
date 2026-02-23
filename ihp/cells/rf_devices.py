@@ -631,7 +631,7 @@ def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
     return g
 
 
-gf.cell
+@gf.cell
 def coupled_line_bandpass_filter(
         order: int = 3,
         frequency: float = 10e9,
@@ -644,7 +644,33 @@ def coupled_line_bandpass_filter(
         filter_type: str = "butter",
         ripple_dB: float = 3,
     ) -> gf.Component:
-    
+    """Return a coupled-line bandpass filter.
+
+    Synthesises an *N*-th order coupled-line bandpass filter from
+    Butterworth or Chebyshev lowpass prototype coefficients.  Each
+    section is realised as a pair of coupled coplanar transmission
+    lines whose even/odd-mode impedances are derived from the
+    prototype element values and the fractional bandwidth.
+
+    Args:
+        order: Filter order (number of resonators).
+        frequency: Centre frequency (Hz).
+        bandwidth: Absolute bandwidth (Hz).
+        connection_length: Length of the input/output feed lines (um).
+        Z0: Reference characteristic impedance (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        e_r: Relative permittivity of the substrate.
+            Defaults to 4.1 for silicon dioxide.
+        filter_type: Prototype type — ``"butter"`` for Butterworth or
+            ``"cheby"`` for Chebyshev.
+        ripple_dB: Pass-band ripple in dB (only used when
+            *filter_type* is ``"cheby"``).
+
+    Returns:
+        A Component with ports ``e1`` (input) and ``e2`` (output).
+    """
+
     c = gf.Component()
     # get filter coefficients
     # g = [g1 g2 ... gN gN+1] for N-th order filter
@@ -653,12 +679,12 @@ def coupled_line_bandpass_filter(
     elif filter_type == "cheby":
         g = _chebyshev_prototype(order, ripple_dB)
 
-    print(g)
+    
 
     fractional_bandwidth = bandwidth / frequency
     f_2 = frequency * (1 + fractional_bandwidth / 2)
     f_1 = frequency * (1 - fractional_bandwidth / 2)
-    print(f_1, f_2)
+    
     delta = fractional_bandwidth
 
 
@@ -684,16 +710,14 @@ def coupled_line_bandpass_filter(
     for j in range(order + 1):
         Z0e[j] = Z0 * (1 + Z0J[j] + Z0J[j] ** 2)
         Z0o[j] = Z0 * (1 - Z0J[j] + Z0J[j] ** 2)
-        print(f"Section {j}: Z0e = {Z0e[j]:.2f} ohms, Z0o = {Z0o[j]:.2f} ohms")
+        
         Z_section[j] = sqrt(Z0e[j] * Z0o[j])
-        print(f"Section {j}: Z_section = {Z_section[j]:.2f} ohms")
     
     # calculate the coupling coefficient k for each section
     g = [1.0] + g  # prepend g0 = 1.0 for easier indexing
     k = [0.0] * (order + 1)
     for j in range(order + 1):
         k[j] = (f_2 - f_1) / sqrt(f_1 * f_2 * g[j] * g[j+1])
-        print(f"Section {j}: k = {k[j]:.4f}")
 
     e_eff = _calculate_effective_dielectric_constant(
         signal_cross_section=signal_cross_section,
@@ -702,7 +726,6 @@ def coupled_line_bandpass_filter(
     )
     segment_length = scipy.constants.c / frequency * 1e6 / sqrt(e_eff) / 4
     segment_length = segment_length - segment_length % tech.nm  # snap to grid
-    print(f"Segment length (λ/4) = {segment_length:.2f}")
 
     connection_in = c.add_ref(tline(
         length=connection_length,
