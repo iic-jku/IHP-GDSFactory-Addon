@@ -230,6 +230,7 @@ def wilkinson_power_divider(
     Z0: float = 50,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
+    e_r: float = 4.1,
 ) -> gf.Component:
     """Return a Wilkinson power divider coplanar transmission line.
 
@@ -261,13 +262,14 @@ def wilkinson_power_divider(
     width_Z0 = _calculate_width_from_Z0(
         Z0=Z0, 
         ground_cross_section=ground_cross_section, 
-        signal_cross_section=signal_cross_section
+        signal_cross_section=signal_cross_section,
+        e_r=e_r,
     )
     width_Z0_sqrt2  = _calculate_width_from_Z0(
         Z0=Z0*sqrt(2), 
         ground_cross_section=ground_cross_section, 
         signal_cross_section=signal_cross_section,
-        e_r=4.1
+        e_r=e_r
     )
     
     # create and connect the input line
@@ -282,7 +284,7 @@ def wilkinson_power_divider(
     e_eff = _calculate_effective_dielectric_constant(
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
-        e_r=4.1
+        e_r=e_r
     )
     wave_length = 3e8 / frequency * 1e6 / sqrt(e_eff)  # in um, assuming effective index of 3.5
     quater_wave_length = wave_length / 4
@@ -653,7 +655,7 @@ def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
 def coupled_line_bandpass_filter(
         order: int = 3,
         frequency: float = 10e9,
-        bandwidth: float = 0.2,
+        bandwidth: float = 1e9,
         connection_length: float = 50,
         Z0: float = 50,
         signal_cross_section: CrossSectionSpec = "topmetal2_routing",
