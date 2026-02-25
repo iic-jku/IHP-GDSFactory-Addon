@@ -38,6 +38,7 @@ For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
 - [x] Wilkinson Divider
 - [x] Directional Coupler
 - [x] Coupled-Line Microstrip Bandpass Filter
+- [x] Hairpin Coupled-Line Microstrip Bandpass Filter
 
 ## Installation
 
