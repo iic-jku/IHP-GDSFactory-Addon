@@ -902,4 +902,276 @@ def coupled_line_bandpass_filter(
     
     return c
 
+
+@gf.cell
+def _corner_rectangle(
+    width: float,
+    length: float,
+    cross_section: CrossSectionSpec = "topmetal2_routing",
+) -> gf.Component:
+    """Return a corner rectangle.
+
+    Args:
+        width: width of the rectangle.
+        length: length of the rectangle.
+        cross_section: cross section of the rectangle.
+    """
+    c = gf.Component()
+    c.add_ref(gf.components.rectangle(
+        size=(length, width),
+        layer=gf.get_cross_section(cross_section).layer,
+    ))
     
+    c.add_port(
+        name="e1",
+        center=(length/2, width),
+        width=length,
+        orientation=90,
+        port_type="electrical",
+        layer=gf.get_cross_section(cross_section).layer,
+    )
+    c.add_port(
+        name="e2",
+        center=(length, width/2),
+        width=width,
+        orientation=0,
+        port_type="electrical",
+        layer=gf.get_cross_section(cross_section).layer,
+    )
+    c.add_port(
+        name="e3",
+        center=(length/2, 0),
+        width=length,
+        orientation=270,
+        port_type="electrical",
+        layer=gf.get_cross_section(cross_section).layer,
+    )
+    c.add_port(
+        name="e4",
+        center=(0, width/2),
+        width=width,
+        orientation=180,
+        port_type="electrical",
+        layer=gf.get_cross_section(cross_section).layer,
+    )
+    return c
+
+
+@gf.cell
+def hairpin_coupled_line_bandpass_filter(
+        order: int = 3,
+        frequency: float = 10e9,
+        bandwidth: float = 1e9,
+        connection_length: float = 50,
+        Z0: float = 50,
+        signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+        ground_cross_section: CrossSectionSpec = "metal5_routing",
+        e_r: float = 4.1,
+        filter_type: str = "butter",
+        ripple_dB: float = 3,
+    ) -> gf.Component:
+    """Return a hairpin-coupled-line bandpass filter.
+
+    Synthesises an *N*-th order hairpin-coupled-line bandpass filter from
+    
+    
+    
+    """
+    
+    c = gf.Component()
+    # get filter coefficients
+    # g = [g1 g2 ... gN gN+1] for N-th order filter
+    if filter_type == "butter":
+        g = _butterworth_prototype(order)
+    elif filter_type == "cheby":
+        g = _chebyshev_prototype(order, ripple_dB)
+
+    
+
+    fractional_bandwidth = bandwidth / frequency
+    f_2 = frequency * (1 + fractional_bandwidth / 2)
+    f_1 = frequency * (1 - fractional_bandwidth / 2)
+    
+    delta = fractional_bandwidth
+
+
+    # initialize lists for Z0J values
+    Z0J = [0.0] * (order + 1)
+
+    # first Z0J value
+    Z0J[0] = sqrt(pi * delta / (2 * g[0]))
+
+    # calculate Z0J values for j = 1 to N-1
+    for j in range(1, order):
+        Z0J[j] = pi * delta / (2 * sqrt(g[j-1] * g[j]))
+
+    # last Z0J value 
+    Z0J[order] = sqrt(pi * delta / (2 * g[order-1] * g[order]))
+
+
+    # initialize and calculate Z0e and Z0o values for each section
+    Z0e = [0.0] * (order + 1)
+    Z0o = [0.0] * (order + 1)
+    Z_section = [0.0] * (order + 1)
+    
+    for j in range(order + 1):
+        Z0e[j] = Z0 * (1 + Z0J[j] + Z0J[j] ** 2)
+        Z0o[j] = Z0 * (1 - Z0J[j] + Z0J[j] ** 2)
+        
+        Z_section[j] = sqrt(Z0e[j] * Z0o[j])
+    
+    # calculate the coupling coefficient k for each section
+    g = [1.0] + g  # prepend g0 = 1.0 for easier indexing
+    k = [0.0] * (order + 1)
+    for j in range(order + 1):
+        k[j] = (f_2 - f_1) / sqrt(f_1 * f_2 * g[j] * g[j+1])
+
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r,
+    )
+    
+    width_Z0 = _calculate_width_from_Z0(
+        Z0=Z0, 
+        ground_cross_section=ground_cross_section, 
+        signal_cross_section=signal_cross_section,
+        e_r=e_r
+    )
+    
+    segment_length = scipy.constants.c / frequency * 1e6 / sqrt(e_eff) / 4
+    segment_length = segment_length - segment_length % tech.nm  # snap to grid
+    
+    input_line = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    
+    first_vertical_line = tline(
+        length=segment_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ).copy()
+    # copy to be able to add port
+    
+    t = (1-0.2) * segment_length  # arbitrary distance for the first vertical line to start, can be adjusted for better performance
+    first_vertical_line.add_port(
+        name="e3",
+        center=(t, -width_Z0/2),
+        width=width_Z0,
+        orientation=270,
+        port_type="electrical",
+        layer=gf.get_cross_section(signal_cross_section).layer,
+    )
+    
+    first_vertical_line_ref = c.add_ref(first_vertical_line)
+    
+    
+    first_vertical_line_ref.connect("e3", input_line.ports["e2"])
+    
+    previous_line_ref = first_vertical_line_ref
+    
+
+    for i in range(order + 1):
+        section_i = c.add_ref(coupler_tline(
+            Z0e=Z0e[i],
+            Z0o=Z0o[i],
+            length=segment_length, 
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+        ))
+        corner_l = c.add_ref(_corner_rectangle(
+            width=width_Z0,
+            length=previous_line_ref.ports["e3"].width,
+            cross_section=signal_cross_section,
+        ))
+        
+        connection_i = c.add_ref(tline(
+            length=previous_line_ref.ports["e2"].width + section_i.ports["e3"].width,  # arbitrary length to connect the horizontal line to the coupler, can be adjusted for better performance
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0,
+        ))
+        
+        corner_r = c.add_ref(_corner_rectangle(
+            width=width_Z0,
+            length=section_i.ports["e3"].width,
+            cross_section=signal_cross_section,
+        ))
+        
+        if i % 2 == 0:
+            corner_l.connect("e1", previous_line_ref.ports["e2"])
+            connection_i.connect("e1", corner_l.ports["e2"])
+            corner_r.connect("e4", connection_i.ports["e2"])
+            
+            section_i.connect("e3", corner_r.ports["e1"])
+        else:
+            corner_l.connect("e3", previous_line_ref.ports["e1"])
+            connection_i.connect("e1", corner_l.ports["e2"])
+            corner_r.connect("e4", connection_i.ports["e2"])
+            
+            section_i.connect("e4", corner_r.ports["e3"])
+        
+        previous_line_ref = section_i
+       
+        
+    corner_l = c.add_ref(_corner_rectangle(
+            width=width_Z0,
+            length=previous_line_ref.ports["e3"].width,
+            cross_section=signal_cross_section,
+        )) 
+    
+    
+        
+    connection_i = c.add_ref(tline(
+        length=previous_line_ref.ports["e2"].width + width_Z0,  # arbitrary length to connect the horizontal line to the coupler, can be adjusted for better performance
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    
+    
+    
+    corner_r = c.add_ref(_corner_rectangle(
+        width=width_Z0,
+        length=width_Z0,
+        cross_section=signal_cross_section,
+    ))
+
+    last_vertical_line_ref = c.add_ref(first_vertical_line)
+    
+    
+    
+    output_line = c.add_ref(tline(
+        length=connection_length,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        Z0=Z0,
+    ))
+    
+    if order % 2 == 1:
+        last_vertical_line_ref.mirror()
+        corner_l.connect("e1", previous_line_ref.ports["e2"])
+        connection_i.connect("e1", corner_l.ports["e2"])
+        corner_r.connect("e4", connection_i.ports["e2"])
+        last_vertical_line_ref.connect("e2", corner_r.ports["e1"])
+        
+        output_line.connect("e1", last_vertical_line_ref.ports["e3"])
+    else:
+        corner_l.connect("e3", previous_line_ref.ports["e1"])
+        connection_i.connect("e1", corner_l.ports["e2"])
+        corner_r.connect("e4", connection_i.ports["e2"])
+            
+        last_vertical_line_ref.connect("e2", corner_r.ports["e3"])
+        
+        output_line.connect("e1", last_vertical_line_ref.ports["e3"])
+    
+    c.add_port(name="e1", port=input_line.ports["e1"])
+    c.add_port(name="e2", port=output_line.ports["e2"])
+        
+    # c.add_port(name="e1", port=input_line.ports["e1"])
+    
+    return c
