@@ -2,7 +2,7 @@ import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
 
-from math import cosh, exp, log, pi, sin, sinh, sqrt
+from math import cosh, exp, log, pi, sin, sinh, sqrt, asin
 
 import scipy
 from ihp.cells.resistors import rppd, CbResCalc
@@ -1057,10 +1057,12 @@ def hairpin_coupled_line_bandpass_filter(
     ).copy()
     # copy to be able to add port
     
-    t = (1-0.2) * segment_length  # arbitrary distance for the first vertical line to start, can be adjusted for better performance
+    # from Microstrip Filters for RF/Microwave Applications by Jia-Sheng Hong, M. J. Lancaster
+    t = 2*segment_length/scipy.constants.pi * asin(sqrt((fractional_bandwidth)/(g[1])))
+    
     first_vertical_line.add_port(
         name="e3",
-        center=(t, -width_Z0/2),
+        center=(segment_length-t, -width_Z0/2),
         width=width_Z0,
         orientation=270,
         port_type="electrical",
