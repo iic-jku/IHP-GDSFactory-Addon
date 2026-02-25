@@ -230,6 +230,7 @@ def wilkinson_power_divider(
     Z0: float = 50,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
+    shape: str = "C",
     e_r: float = 4.1,
 ) -> gf.Component:
     """Return a Wilkinson power divider coplanar transmission line.
@@ -248,7 +249,7 @@ def wilkinson_power_divider(
         ground_cross_section: Cross-section for the ground line.
             Accepts a single spec for microstrip or a two-element list
             ``[lower, upper]`` for stripline.
-
+        shape: Shape of the Wilkinson divider. Can be either "C" or "U". In a "C" shape, the quarter-wave branches are connected in a loop, while in a "U" shape, the branches are not braught together again
     Returns:
         A Component containing the Wilkinson power divider with ports
         ``e1`` (input), ``e2`` and ``e3`` (outputs).
@@ -295,8 +296,7 @@ def wilkinson_power_divider(
     width_R = 100
     length_R = CbResCalc(calc="l", l=0, r = 2*Z0, w=width_R, b=0, ps=0.18, cell='rppd')
     
-    # Calculate the circumference of the square
-    circumference = quater_wave_length * 2  + length_R
+    
     
     
     # create and connect the corner piece for the connection line
@@ -344,149 +344,268 @@ def wilkinson_power_divider(
         "e1", connection_in.ports["e2"]
     )
     
-    # create and connect upper branch line
-    branch_left_up = c.add_ref(tline(
-        length= circumference/8 - width_Z0_sqrt2 - width_Z0/2,  
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
+    if shape == "C":
+        
+        # Calculate the circumference of the square
+        circumference = quater_wave_length * 2  + length_R
     
-    branch_left_up.connect(
-        "e1", connection_corner_ref.ports["e2"]
-    )
+        # create and connect upper branch line
+        branch_left_up = c.add_ref(tline(
+            length= circumference/8 - width_Z0_sqrt2 - width_Z0/2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_left_up.connect(
+            "e1", connection_corner_ref.ports["e2"]
+        )
+        
+        corner_piece_upper_left = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_piece_upper_left.connect(
+            "e2", branch_left_up.ports["e2"]
+        )
+        
+        branch_left_down = c.add_ref(tline(
+            length= circumference/8 - width_Z0_sqrt2 - width_Z0/2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_left_down.connect(
+            "e1", connection_corner_ref.ports["e3"]
+        )
+        
+        corner_piece_lower_left = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_piece_lower_left.connect(
+            "e1", branch_left_down.ports["e2"]
+        )
+        
+        branch_top = c.add_ref(tline(
+            length= circumference/4 - width_Z0_sqrt2*2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_top.connect(
+            "e1", corner_piece_upper_left.ports["e1"]
+        )
+        
+        branch_bottom = c.add_ref(tline(
+            length= circumference/4 - width_Z0_sqrt2*2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_bottom.connect(
+            "e1", corner_piece_lower_left.ports["e2"]
+        )
+        
+        corner_piece_upper_right = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        
+        corner_piece_upper_right.connect(
+            "e2", branch_top.ports["e2"]
+        )
+        
+        branch_right_down = c.add_ref(tline(
+            length= circumference/8 - width_Z0_sqrt2*2 - length_R/2,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_right_down.connect(
+            "e1", corner_piece_upper_right.ports["e1"]
+        )
+        
+        corner_piece_lower_right = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_piece_lower_right.connect(
+            "e1", branch_bottom.ports["e2"]
+        )
+        
+        branch_right_up = c.add_ref(tline(
+            length= circumference/8 - width_Z0_sqrt2*2 - length_R/2,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_right_up.connect(
+            "e1", corner_piece_lower_right.ports["e2"]
+        )
+        
+        corner_output_p2 = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_output_p2.connect(
+            "e1", branch_right_down.ports["e2"]
+        )
+        
+        corner_output_p3 = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_output_p3.connect(
+            "e2", branch_right_up.ports["e2"]
+        )
+        
+        connection_out_p2 = c.add_ref(tline(
+            length=connection_length,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0,
+        ))
+        
+        connection_out_p2.connect(
+            "e1", corner_output_p2.ports["e2"], allow_width_mismatch=True
+        )
+        connection_out_p2.movey(width_Z0/2 - width_Z0_sqrt2/2)
+        
+        connection_out_p3 = c.add_ref(tline(
+            length=connection_length,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0,
+        ))
+        
+        connection_out_p3.connect(
+            "e1", corner_output_p3.ports["e1"], allow_width_mismatch=True
+        )
+        connection_out_p3.movey(-(width_Z0/2 - width_Z0_sqrt2/2))
+        
+        c.add_port(name="e1", port=connection_in.ports["e1"])
+        c.add_port(name="e2", port=connection_out_p2.ports["e2"])
+        c.add_port(name="e3", port=connection_out_p3.ports["e2"])
+        
     
-    corner_piece_upper_left = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    corner_piece_upper_left.connect(
-        "e2", branch_left_up.ports["e2"]
-    )
-       
-    branch_left_down = c.add_ref(tline(
-        length= circumference/8 - width_Z0_sqrt2 - width_Z0/2,  
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
+    elif shape == "U":
+        # Calculate the circumference of the square
+        circumference = quater_wave_length * 2
     
-    branch_left_down.connect(
-        "e1", connection_corner_ref.ports["e3"]
-    )
-    
-    corner_piece_lower_left = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    corner_piece_lower_left.connect(
-        "e1", branch_left_down.ports["e2"]
-    )
-    
-    branch_top = c.add_ref(tline(
-        length= circumference/4 - width_Z0_sqrt2*2,  
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
-    
-    branch_top.connect(
-        "e1", corner_piece_upper_left.ports["e1"]
-    )
-    
-    branch_bottom = c.add_ref(tline(
-        length= circumference/4 - width_Z0_sqrt2*2,  
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
-    
-    branch_bottom.connect(
-        "e1", corner_piece_lower_left.ports["e2"]
-    )
-    
-    corner_piece_upper_right = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    
-    corner_piece_upper_right.connect(
-        "e2", branch_top.ports["e2"]
-    )
-    
-    branch_right_down = c.add_ref(tline(
-        length= circumference/8 - width_Z0_sqrt2*2 - length_R/2,
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
-    
-    branch_right_down.connect(
-        "e1", corner_piece_upper_right.ports["e1"]
-    )
-    
-    corner_piece_lower_right = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    corner_piece_lower_right.connect(
-        "e1", branch_bottom.ports["e2"]
-    )
-    
-    branch_right_up = c.add_ref(tline(
-        length= circumference/8 - width_Z0_sqrt2*2 - length_R/2,
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0_sqrt2,))
-    
-    branch_right_up.connect(
-        "e1", corner_piece_lower_right.ports["e2"]
-    )
-    
-    corner_output_p2 = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    corner_output_p2.connect(
-        "e1", branch_right_down.ports["e2"]
-    )
-    
-    corner_output_p3 = c.add_ref(tline_corner(
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        Z0=Z0*sqrt(2)
-    ))
-    corner_output_p3.connect(
-        "e2", branch_right_up.ports["e2"]
-    )
-    
-    connection_out_p2 = c.add_ref(tline(
-        length=connection_length,
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0,
-    ))
-    
-    connection_out_p2.connect(
-        "e1", corner_output_p2.ports["e2"], allow_width_mismatch=True
-    )
-    connection_out_p2.movey(width_Z0/2 - width_Z0_sqrt2/2)
-    
-    connection_out_p3 = c.add_ref(tline(
-        length=connection_length,
-        signal_cross_section=signal_cross_section,
-        ground_cross_section=ground_cross_section,
-        width=width_Z0,
-    ))
-    
-    connection_out_p3.connect(
-        "e1", corner_output_p3.ports["e1"], allow_width_mismatch=True
-    )
-    connection_out_p3.movey(-(width_Z0/2 - width_Z0_sqrt2/2))
-    
-    c.add_port(name="e1", port=connection_in.ports["e1"])
-    c.add_port(name="e2", port=connection_out_p2.ports["e2"])
-    c.add_port(name="e3", port=connection_out_p3.ports["e2"])
+         # create and connect upper branch line
+        branch_left_up = c.add_ref(tline(
+            length= circumference/6 - width_Z0_sqrt2 - width_Z0/2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_left_up.connect(
+            "e1", connection_corner_ref.ports["e2"]
+        )
+        
+        corner_piece_upper_left = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_piece_upper_left.connect(
+            "e2", branch_left_up.ports["e2"]
+        )
+        
+        branch_left_down = c.add_ref(tline(
+            length= circumference/6 - width_Z0_sqrt2 - width_Z0/2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_left_down.connect(
+            "e1", connection_corner_ref.ports["e3"]
+        )
+        
+        corner_piece_lower_left = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_piece_lower_left.connect(
+            "e1", branch_left_down.ports["e2"]
+        )
+        
+        branch_top = c.add_ref(tline(
+            length= circumference/3 - width_Z0_sqrt2*2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_top.connect(
+            "e1", corner_piece_upper_left.ports["e1"]
+        )
+        
+        branch_bottom = c.add_ref(tline(
+            length= circumference/3 - width_Z0_sqrt2*2,  
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0_sqrt2,))
+        
+        branch_bottom.connect(
+            "e1", corner_piece_lower_left.ports["e2"]
+        )
+        
+        corner_output_p2 = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_output_p2.connect(
+            "e1", branch_top.ports["e2"]
+        )
+        
+        corner_output_p3 = c.add_ref(tline_corner(
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            Z0=Z0*sqrt(2)
+        ))
+        corner_output_p3.connect(
+            "e2", branch_bottom.ports["e2"]
+        )
+        
+        connection_out_p2 = c.add_ref(tline(
+            length=connection_length,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0,
+        ))
+        
+        connection_out_p2.connect(
+            "e1", corner_output_p2.ports["e2"], allow_width_mismatch=True
+        )
+        connection_out_p2.movex(-width_Z0/2 + width_Z0_sqrt2/2)
+        
+        connection_out_p3 = c.add_ref(tline(
+            length=connection_length,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
+            width=width_Z0,
+        ))
+        
+        connection_out_p3.connect(
+            "e1", corner_output_p3.ports["e1"], allow_width_mismatch=True
+        )
+        connection_out_p3.movex(-width_Z0/2 + width_Z0_sqrt2/2)
+        
+        c.add_port(name="e1", port=connection_in.ports["e1"])
+        c.add_port(name="e2", port=connection_out_p2.ports["e2"])
+        c.add_port(name="e3", port=connection_out_p3.ports["e2"])
+        
+    else:
+        
+        raise ValueError("Invalid shape. Must be either 'C' or 'U'.")
     
     # for future use, add the resistor in the middle of the coupler
     # c.add_ref(rppd(
