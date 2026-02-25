@@ -436,7 +436,9 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 #     frequency=50e9,
 #     Z0=50,
 #     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing",))
+#     ground_cross_section="metal5_routing",
+#     shape="U",
+#     e_r = 4.1))
 
 # c.add_ports(wd.ports)
 # c.draw_ports()
@@ -543,22 +545,36 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 # -------------------------------------------------------
 # coupled line bandpass filter test
 
-# c = gf.Component()
+c = gf.Component()
 
-# bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter2(
-#     order=3,
-#     connection_length=50,
-#     frequency=50e9,
-#     bandwidth=10e9,
-#     filter_type="butter",
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing",
-#     Z0=50,
-# ))
+bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
+    order=4,
+    connection_length=50,
+    frequency=50e9,
+    bandwidth=10e9,
+    filter_type="butter",
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing",
+    Z0=50,
+))
 
-# c.add_ports(bp.ports)
-# c.draw_ports()
-# c.show()
+c.move((0, 1000))
+
+
+hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
+    order=4,
+    connection_length=50,
+    frequency=150e9,
+    bandwidth=10e9,
+    filter_type="butter",
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing",
+    Z0=50,
+))
+c.add_ports(bp.ports, prefix="bp_")
+c.add_ports(hairpin_bp.ports, prefix="hairpin_")
+c.draw_ports()
+c.show()
 
 
 # ----------------------------------------
@@ -589,3 +605,7 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 # pad2 = c.add_ref(ihp.cells.probe_pads())
 
 # c.show()
+
+## -------------------------------------------------------
+
+print(_chebyshev_prototype(N=5, ripple_dB=0.1))
