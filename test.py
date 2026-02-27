@@ -198,6 +198,18 @@ ihp.PDK.activate()
 # c.pprint_ports()
 # c.show()
 
+
+# -----------------------------------------------------------------
+# diode test
+
+c = gf.Component()
+
+diode = c.add_ref(ihp.cells.schottky(width=1, length=0.3, Nx=2, Ny=3))
+c.add_ports(diode.ports, prefix="diode_")
+
+c.draw_ports()
+c.show()
+
 # ----------------------------------------------------------------
 # inductor test
 
@@ -340,11 +352,12 @@ ihp.PDK.activate()
 # ------------------------------------------------------
 # waveguide test
 
-frequency = 50e9  # 50 GHz
-wavelength = scipy.constants.c / 50e9 * 1e6 / sqrt(3.85)
+frequency = 150e9  # 50 GHz
+wavelength = scipy.constants.c / frequency * 1e6 / sqrt(3.85)
 quater_wavelength = wavelength / 4
 quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round to DBU
 
+print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 # c = gf.Component()
 
 # e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
@@ -545,36 +558,36 @@ quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round t
 # -------------------------------------------------------
 # coupled line bandpass filter test
 
-c = gf.Component()
+# c = gf.Component()
 
-bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
-    order=4,
-    connection_length=50,
-    frequency=50e9,
-    bandwidth=10e9,
-    filter_type="butter",
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    Z0=50,
-))
+# bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
+#     order=4,
+#     connection_length=50,
+#     frequency=50e9,
+#     bandwidth=10e9,
+#     filter_type="butter",
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     Z0=50,
+# ))
 
-c.move((0, 1000))
+# c.move((0, 1000))
 
 
-hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
-    order=4,
-    connection_length=50,
-    frequency=150e9,
-    bandwidth=10e9,
-    filter_type="butter",
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    Z0=50,
-))
-c.add_ports(bp.ports, prefix="bp_")
-c.add_ports(hairpin_bp.ports, prefix="hairpin_")
-c.draw_ports()
-c.show()
+# hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
+#     order=4,
+#     connection_length=50,
+#     frequency=150e9,
+#     bandwidth=10e9,
+#     filter_type="butter",
+#     signal_cross_section="topmetal2_routing",
+#     ground_cross_section="metal5_routing",
+#     Z0=50,
+# ))
+# c.add_ports(bp.ports, prefix="bp_")
+# c.add_ports(hairpin_bp.ports, prefix="hairpin_")
+# c.draw_ports()
+# c.show()
 
 
 # ----------------------------------------
@@ -609,3 +622,5 @@ c.show()
 ## -------------------------------------------------------
 
 print(_chebyshev_prototype(N=5, ripple_dB=0.1))
+
+print(_butterworth_prototype(N=3))
