@@ -169,7 +169,7 @@ def probe_pads(
             pad = bondpad(
                 shape=shape_i,
                 stack='t',
-                diameter=length,
+                diameter=length* 1/hwQuota,
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
@@ -178,14 +178,13 @@ def probe_pads(
             pad_ref = c.add_ref(pad)
             if i > 0:
                 pad_ref.xmin = prev_pad_ref.xmax + spacing[i-1]
-                
                        
         # handle spacing as a single float
         else:
             pad = bondpad(
                 shape=shape_i,
                 stack='t',
-                diameter=length,
+                diameter=length* 1/hwQuota,
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
@@ -196,7 +195,9 @@ def probe_pads(
                 pad_ref.xmin = prev_pad_ref.xmax + spacing
                 
         prev_pad_ref = pad_ref
-
+        # c.add_label(text=config[i], position=pad_ref.center)
+        c.add_ref(gf.components.text(config[i], size=length/2, layer=tech.LAYER.TEXTdrawing)).center = pad_ref.center
+        
     return c
 
 
