@@ -1050,7 +1050,7 @@ def hairpin_coupled_line_bandpass_filter(
     ))
     
     first_vertical_line = tline(
-        length=segment_length,
+        length=segment_length - 2 * width_Z0,  # adjust length to account for the port at the end
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         Z0=Z0,
@@ -1081,7 +1081,7 @@ def hairpin_coupled_line_bandpass_filter(
         section_i = c.add_ref(coupler_tline(
             Z0e=Z0e[i],
             Z0o=Z0o[i],
-            length=segment_length, 
+            length=segment_length - 2 * width_Z0,  # adjust length to account for the port at the end
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
         ))
