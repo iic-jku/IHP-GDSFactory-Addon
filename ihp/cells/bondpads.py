@@ -173,11 +173,11 @@ def probe_pads(
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
-                padType='probepad'
+                padType='probepad',
             )
             pad_ref = c.add_ref(pad)
             if i > 0:
-                pad_ref.xmin = prev_pad_ref.xmax + spacing[i-1]
+                pad_ref.movex(sum(spacing[:i]))
                        
         # handle spacing as a single float
         else:
@@ -192,7 +192,7 @@ def probe_pads(
             )
             pad_ref = c.add_ref(pad)
             if i > 0:
-                pad_ref.xmin = prev_pad_ref.xmax + spacing
+                pad_ref.movex(i* spacing)
                 
         prev_pad_ref = pad_ref
         # c.add_label(text=config[i], position=pad_ref.center)
