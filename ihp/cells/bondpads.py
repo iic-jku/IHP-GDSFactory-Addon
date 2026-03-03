@@ -80,46 +80,15 @@ def bondpad(
 
 @gf.cell
 def bondpad_array(
-    n_pads: int = 4,
-    pad_pitch: float = 100.0,
-    pad_diameter: float = 68.0,
-    shape: Literal['octagon', 'square', 'circle'] = "octagon",
-    stack_metals: Literal['t', 'nil'] = 't'
-) -> gf.Component:
-    """Create an array of bondpads.
-
-    Args:
-        n_pads: Number of bondpads.
-        pad_pitch: Pitch between bondpad centers in micrometers.
-        pad_diameter: Diameter of each bondpad in micrometers.
-        shape: Shape of the bondpads.
-        stack_metals: Stack all metal layers.
-
-    Returns:
-        Component with bondpad array.
-    """
-    c = gf.Component()
-
-    for i in range(n_pads):
-        pad = bondpad(
-            shape=shape,
-            stack=stack_metals,
-            diameter=pad_diameter,
-        )
-        pad_ref = c.add_ref(pad)
-        pad_ref.movex(i * pad_pitch)
-
-    
-@gf.cell
-def probe_pads(
     width_signal: float = 85.0, 
     width_ground: float = 85.0, 
     length: float = 85.0,
-    spacing: float | list[float] = 125.0,
+    pitch: float | list[float] = 125.0,
     config: str = "GSG",
     shape: Literal['octagon', 'square', 'circle'] | list[Literal['octagon', 'square', 'circle']] = "square",
     signal_cross_section: str = "topmetal2_routing",
-    ground_cross_section: str = "metal5_routing"
+    ground_cross_section: str = "metal5_routing",
+    padType: Literal['bondpad', 'probepad'] = 'bondpad',
     ) -> gf.Component:
     
     
@@ -137,11 +106,11 @@ def probe_pads(
     
     c = gf.Component()
     
-    for i, pad_type in enumerate(config):
+    for i, conf in enumerate(config):
         
         ## Preprocessing parameters
         # Determine the width based on pad type
-        width = width_signal if pad_type == 'S' else width_ground
+        width = width_signal if conf == 'S' else width_ground
         hwQuota = length / width
         
         # Handle shape as a list of shapes or a single shape
@@ -151,7 +120,7 @@ def probe_pads(
             shape_i = shape
         
         # Handle Layers
-        if pad_type == 'S':
+        if conf == 'S':
             topMetal = layer_dict[tech.LAYER.TopMetal2drawing]
             if signal_cross_section == "topmetal2_routing":
                 bottomMetal = layer_dict[tech.LAYER.TopMetal1drawing]
@@ -161,10 +130,10 @@ def probe_pads(
             topMetal = layer_dict[tech.LAYER.TopMetal2drawing]
             bottomMetal = layer_dict[gf.get_cross_section(ground_cross_section).layer]
             
-        # handle spacing as a list of floats
-        if isinstance(spacing, list):
-            if len(spacing)+1 != len(config):
-                raise ValueError("Spacing must be a list of length one less than the number of pads in the config.")
+        # handle pitch as a list of floats
+        if isinstance(pitch, list):
+            if len(pitch)+1 != len(config):
+                raise ValueError("Pitch must be a list of length one less than the number of pads in the config.")
             
             pad = bondpad(
                 shape=shape_i,
@@ -173,13 +142,13 @@ def probe_pads(
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
-                padType='probepad',
+                padType=padType,
             )
             pad_ref = c.add_ref(pad)
             if i > 0:
-                pad_ref.movex(sum(spacing[:i]))
+                pad_ref.movex(sum(pitch[:i]))
                        
-        # handle spacing as a single float
+        # handle pitch as a single float
         else:
             pad = bondpad(
                 shape=shape_i,
@@ -188,11 +157,11 @@ def probe_pads(
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
-                padType='probepad'
+                padType=padType
             )
             pad_ref = c.add_ref(pad)
             if i > 0:
-                pad_ref.movex(i* spacing)
+                pad_ref.movex(i* pitch)
                 
         prev_pad_ref = pad_ref
         # c.add_label(text=config[i], position=pad_ref.center)
