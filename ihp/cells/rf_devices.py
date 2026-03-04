@@ -726,6 +726,76 @@ def directional_coupler(
     return c
 
 
+@gf.cell
+def quarter_wave_transformer(
+    connection_length: float = 100,
+    frequency: float = 50e9,
+    Z0_in: float = 50,
+    Z_L: float = 75,
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
+    e_r: float = 4.1
+) -> gf.Component:
+    """Returns a quarter-wave transformer coplanar transmission line.
+
+    Creates a quarter-wave transformer for impedance matching between an
+    input impedance Z0_in and a load impedance Z_L at a given frequency.
+    
+    Args:
+        connection_length: Length of the input line.
+        frequency: Operating frequency (Hz).
+        Z0_in: Characteristic impedance of the input line (ohms).
+        Z_L: Load impedance to be matched (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
+    """
+    wave_length = scipy.constants.c / frequency * 1e6  
+    
+    c = gf.Component()
+    
+    e_eff = _calculate_effective_dielectric_constant(
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+        e_r=e_r
+    )
+    
+    quater_wave_length = wave_length / 4  / sqrt(e_eff)  
+    quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
+    
+    Z0_transformer = sqrt(Z0_in * Z_L)
+    
+    transformer_line = c.add_ref(tline(
+        length=quater_wave_length,
+        Z0=Z0_transformer,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    connection_port1 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z0_in,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    connection_port1.connect("e1", transformer_line.ports["e1"], allow_width_mismatch=True)
+    
+    connection_port2 = c.add_ref(tline(
+        length=connection_length,
+        Z0=Z_L,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
+    ))
+    
+    connection_port2.connect("e1", transformer_line.ports["e2"], allow_width_mismatch=True)
+    
+    c.add_port(name="e1", port=connection_port1.ports["e2"])
+    c.add_port(name="e2", port=connection_port2.ports["e2"])
+    
+    return c
+
+
 def _butterworth_prototype(N: int) -> list[float]:
     """Return Butterworth lowpass prototype element values g_0 … g_{N+1}."""
     # g = [1.0]
