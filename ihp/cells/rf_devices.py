@@ -730,7 +730,7 @@ def directional_coupler(
 def quarter_wave_transformer(
     connection_length: float = 100,
     frequency: float = 50e9,
-    Z0_in: float = 50,
+    Z_in: float = 50,
     Z_L: float = 75,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec = "metal5_routing",
@@ -739,12 +739,12 @@ def quarter_wave_transformer(
     """Returns a quarter-wave transformer coplanar transmission line.
 
     Creates a quarter-wave transformer for impedance matching between an
-    input impedance Z0_in and a load impedance Z_L at a given frequency.
+    input impedance Z_in and a load impedance Z_L at a given frequency.
     
     Args:
         connection_length: Length of the input line.
         frequency: Operating frequency (Hz).
-        Z0_in: Characteristic impedance of the input line (ohms).
+        Z_in: Characteristic impedance of the input line (ohms).
         Z_L: Load impedance to be matched (ohms).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
@@ -763,7 +763,7 @@ def quarter_wave_transformer(
     quater_wave_length = wave_length / 4  / sqrt(e_eff)  
     quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)  # truncate to 5 nm
     
-    Z0_transformer = sqrt(Z0_in * Z_L)
+    Z0_transformer = sqrt(Z_in * Z_L)
     
     transformer_line = c.add_ref(tline(
         length=quater_wave_length,
@@ -774,7 +774,7 @@ def quarter_wave_transformer(
     
     connection_port1 = c.add_ref(tline(
         length=connection_length,
-        Z0=Z0_in,
+        Z0=Z_in,
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
     ))
