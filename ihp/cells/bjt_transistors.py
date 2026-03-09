@@ -87,7 +87,7 @@ def npn13G2(
     # add ports to the component
     c = generate_gf_from_ihp(cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP())
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=False)
     c.ports["e1"].name = "B"
     c.ports["e2"].name = "C"
     c.ports["e3"].name = "E"
