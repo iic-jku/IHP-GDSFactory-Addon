@@ -422,6 +422,15 @@ def metal_routing(
     )
 
 
+gatpoly_routing = partial(
+    metal_routing,
+    layer=LAYER.GatPolydrawing,
+    width=0.13,
+    port_names=gf.cross_section.port_names_electrical,
+    port_types=gf.cross_section.port_types_electrical,
+    radius=None,
+)
+
 # Metal routing cross-sections
 metal1_routing = partial(
     metal_routing,
