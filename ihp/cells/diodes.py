@@ -45,6 +45,7 @@ def schottky(
     # add ports to the component
     c = generate_gf_from_ihp(cell_name="schottky", cell_params=params, function_name=schottkyIHP())
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
+    c.ports["e2"].center = (round(c.ports["e2"].center[0], 2), round(c.ports["e2"].center[1], 2))
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=False)
     # c.ports["e1"].name = "B"
     # c.ports["e2"].name = "C"
