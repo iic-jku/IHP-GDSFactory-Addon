@@ -466,23 +466,23 @@ def tline(
     if isinstance(ground_cross_section, list):
         ground_low = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
             )
         )
-        ground_low.move(( -3*width, 0))
+        # ground_low.move(( -3*width, 0))
         ground_high = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
             )
         )
-        ground_high.move(( -3*width, 0))
+        # ground_high.move(( -3*width, 0))
     else:
         ground = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section, width=7*width, npoints=npoints
             )
         )
-        ground.move(( -3*width, 0))
+        # ground.move(( -3*width, 0))
     
     return c
 
