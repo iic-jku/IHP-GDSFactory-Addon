@@ -202,13 +202,13 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # diode test
 
-c = gf.Component()
+# c = gf.Component()
 
-diode = c.add_ref(ihp.cells.schottky(width=1, length=0.3, Nx=2, Ny=3))
-c.add_ports(diode.ports, prefix="diode_")
+# diode = c.add_ref(ihp.cells.schottky(width=1, length=0.3, Nx=1, Ny=1))
+# c.add_ports(diode.ports, prefix="diode_")
 
-c.draw_ports()
-c.show()
+# c.draw_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # inductor test
@@ -423,21 +423,21 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 # ------------------------------------------------------
 # branch line coupler test
 
-# c = gf.Component()
+c = gf.Component()
 
-# blc = c.add_ref(ihp.cells.branch_line_coupler(
-#     connection_length=50,
-#     frequency=50e9,
-#     Z0=50,
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing",
-#     e_r = 4.1))
+blc = c.add_ref(ihp.cells.branch_line_coupler(
+    connection_length=50,
+    frequency=50e9,
+    Z0=50,
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing",
+    e_r = 4.1))
 
-# c.add_ports(blc.ports)
-# # c.pprint_ports()
-# # c.draw_ports()
+c.add_ports(blc.ports)
+# c.pprint_ports()
+# c.draw_ports()
 
-# c.show()
+c.show()
 
 # # ------------------------------------------------------
 # # test wilkinson power divider test
@@ -595,9 +595,9 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c = gf.Component()
 
-# pad = c.add_ref(ihp.cells.probe_pads(
+# pad = c.add_ref(ihp.cells.bondpad_array(
 #     config="GSG", 
-#     spacing=[100, 150], 
+#     pitch=[100, 150], 
 #     shape=["octagon", "square", "octagon"], 
 #     length= 150, 
 #     width_signal=100, 
@@ -605,9 +605,9 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c.move((0,200))
 
-# pad1 = c.add_ref(ihp.cells.probe_pads(
+# pad1 = c.add_ref(ihp.cells.bondpad_array(
 #     config="GSG", 
-#     spacing=100, 
+#     pitch=100, 
 #     shape=["octagon", "square", "octagon"], 
 #     length= 150, 
 #     width_signal=100, 
@@ -615,8 +615,11 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c.move((0,200))
 
-# pad2 = c.add_ref(ihp.cells.probe_pads())
+# pad2 = c.add_ref(ihp.cells.bondpad_array())
 
+# c.add_ports(pad2.ports, prefix="pad2_")
+# c.pprint_ports()
+# c.draw_ports()
 # c.show()
 
 ## -------------------------------------------------------
