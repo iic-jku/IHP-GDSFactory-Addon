@@ -167,6 +167,11 @@ def bondpad_array(
         # c.add_label(text=config[i], position=pad_ref.center)
         c.add_ref(gf.components.text(config[i], size=length/2, layer=tech.LAYER.TEXTdrawing)).center = pad_ref.center
         
+        
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal2drawing), port_name_prefix=f"PAD{i+1}", port_type="electrical", ports_on_short_side=False)
+    for port in c.ports:
+            port.center = (port.center[0], port.center[1]-length/2)
+            port.orientation = 270
     return c
 
 
