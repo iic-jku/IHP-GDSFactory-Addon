@@ -218,6 +218,7 @@ class LayerMapIHP(LayerMap):
     NWelllabel: Layer = (31, 1)
     NWellnet: Layer = (31, 3)
     NWellpin: Layer = (31, 2)
+    NWelltext: Layer = (31, 25)
     NoDRCdrawing: Layer = (62, 0)
     NoMetFillerdrawing: Layer = (160, 0)
     NoRCXdrawing: Layer = (148, 0)
