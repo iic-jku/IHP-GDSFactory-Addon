@@ -97,6 +97,19 @@ def branch_line_coupler(
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
 
+
+    ground_plate_corner = gf.Component()
+    ground_plate_corner.add_polygon(
+        points=[
+            (0, 0),
+            (7*width_Z0, 0),
+            (7*width_Z0, 7*width_Z0_sqrt2),
+            (0, 7*width_Z0_sqrt2),
+        ],
+        layer=gf.get_cross_section(ground_cross_section).layer,
+    )
+    gp_ref = corner.add_ref(ground_plate_corner)
+    gp_ref.move((-3*width_Z0, -3*width_Z0_sqrt2))
     # start with the top left corner
     corner_nw = c.add_ref(corner)
 
@@ -336,7 +349,18 @@ def wilkinson_power_divider(
         port_type="electrical",
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
-    
+    ground_plate_corner = gf.Component()
+    ground_plate_corner.add_polygon(
+        points=[
+            (0, 0),
+            (7*width_Z0_sqrt2, 0),
+            (7*width_Z0_sqrt2, 7*width_Z0),
+            (0, 7*width_Z0),
+        ],
+        layer=gf.get_cross_section(ground_cross_section).layer,
+    )
+    gp_ref = connection_corner.add_ref(ground_plate_corner)
+    gp_ref.move((-3*width_Z0_sqrt2, -3*width_Z0))
     
     connection_corner_ref = c.add_ref(connection_corner)
     
@@ -977,19 +1001,21 @@ def coupled_line_bandpass_filter(
 def _corner_rectangle(
     width: float,
     length: float,
-    cross_section: CrossSectionSpec = "topmetal2_routing",
+    signal_cross_section: CrossSectionSpec = "topmetal2_routing",
+    ground_cross_section: CrossSectionSpec = "metal5_routing",
 ) -> gf.Component:
     """Return a corner rectangle.
 
     Args:
         width: width of the rectangle.
         length: length of the rectangle.
-        cross_section: cross section of the rectangle.
+        signal_cross_section: signal cross section of the rectangle.
+        ground_cross_section: ground cross section of the rectangle.
     """
     c = gf.Component()
-    c.add_ref(gf.components.rectangle(
+    signal = c.add_ref(gf.components.rectangle(
         size=(length, width),
-        layer=gf.get_cross_section(cross_section).layer,
+        layer=gf.get_cross_section(signal_cross_section).layer,
     ))
     
     c.add_port(
@@ -998,7 +1024,7 @@ def _corner_rectangle(
         width=length,
         orientation=90,
         port_type="electrical",
-        layer=gf.get_cross_section(cross_section).layer,
+        layer=gf.get_cross_section(signal_cross_section).layer,
     )
     c.add_port(
         name="e2",
@@ -1006,7 +1032,7 @@ def _corner_rectangle(
         width=width,
         orientation=0,
         port_type="electrical",
-        layer=gf.get_cross_section(cross_section).layer,
+        layer=gf.get_cross_section(signal_cross_section).layer,
     )
     c.add_port(
         name="e3",
@@ -1014,7 +1040,7 @@ def _corner_rectangle(
         width=length,
         orientation=270,
         port_type="electrical",
-        layer=gf.get_cross_section(cross_section).layer,
+        layer=gf.get_cross_section(signal_cross_section).layer,
     )
     c.add_port(
         name="e4",
@@ -1022,8 +1048,21 @@ def _corner_rectangle(
         width=width,
         orientation=180,
         port_type="electrical",
-        layer=gf.get_cross_section(cross_section).layer,
+        layer=gf.get_cross_section(signal_cross_section).layer,
     )
+
+    ground_plate_corner = gf.Component()
+    ground_plate_corner.add_polygon(
+        points=[
+            (0, 0),
+            (7*length, 0),
+            (7*length, 7*width),
+            (0, 7*width),
+        ],
+        layer=gf.get_cross_section(ground_cross_section).layer,
+    )
+    gp_ref = c.add_ref(ground_plate_corner)
+    gp_ref.move((-3*length, -3*width))
     return c
 
 
@@ -1158,7 +1197,8 @@ def hairpin_coupled_line_bandpass_filter(
         corner_l = c.add_ref(_corner_rectangle(
             width=width_Z0,
             length=previous_line_ref.ports["e3"].width,
-            cross_section=signal_cross_section,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
         ))
         
         connection_i = c.add_ref(tline(
@@ -1171,7 +1211,8 @@ def hairpin_coupled_line_bandpass_filter(
         corner_r = c.add_ref(_corner_rectangle(
             width=width_Z0,
             length=section_i.ports["e3"].width,
-            cross_section=signal_cross_section,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
         ))
         
         if i % 2 == 0:
@@ -1193,7 +1234,8 @@ def hairpin_coupled_line_bandpass_filter(
     corner_l = c.add_ref(_corner_rectangle(
             width=width_Z0,
             length=previous_line_ref.ports["e3"].width,
-            cross_section=signal_cross_section,
+            signal_cross_section=signal_cross_section,
+            ground_cross_section=ground_cross_section,
         )) 
     
     
@@ -1210,7 +1252,8 @@ def hairpin_coupled_line_bandpass_filter(
     corner_r = c.add_ref(_corner_rectangle(
         width=width_Z0,
         length=width_Z0,
-        cross_section=signal_cross_section,
+        signal_cross_section=signal_cross_section,
+        ground_cross_section=ground_cross_section,
     ))
 
     last_vertical_line_ref = c.add_ref(first_vertical_line)
