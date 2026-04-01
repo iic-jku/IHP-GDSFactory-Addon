@@ -10,6 +10,15 @@ from ihp.cells.resistors import rppd, CbResCalc
 from ihp.cells.waveguides import _calculate_effective_dielectric_constant, _calculate_width_from_Z0, _get_stack_geometry, tline, coupler_tline, tline_corner
 from .. import tech
 
+@gf.cell
+def _slit_ground() -> gf.Component:
+    c = gf.Component()
+    c.add_polygon(layer=tech.LAYER.Metal5slit, points=[
+        (1.1,1.1),
+        (4,1.1),
+        (4,5),
+        (1.1,5)])
+    return c
 
 
 @gf.cell
@@ -1159,7 +1168,7 @@ def hairpin_coupled_line_bandpass_filter(
     ))
     
     first_vertical_line = tline(
-        length=segment_length - 2 * width_Z0,  # adjust length to account for the port at the end
+        length=segment_length - 10 * width_Z0,  # adjust length to account for the port at the end
         signal_cross_section=signal_cross_section,
         ground_cross_section=ground_cross_section,
         Z0=Z0,
@@ -1171,7 +1180,7 @@ def hairpin_coupled_line_bandpass_filter(
     
     first_vertical_line.add_port(
         name="e3",
-        center=(segment_length-t, -width_Z0/2),
+        center=(segment_length-t - 12*width_Z0, -width_Z0/2),
         width=width_Z0,
         orientation=270,
         port_type="electrical",
@@ -1190,7 +1199,7 @@ def hairpin_coupled_line_bandpass_filter(
         section_i = c.add_ref(coupler_tline(
             Z0e=Z0e[i],
             Z0o=Z0o[i],
-            length=segment_length - 2 * width_Z0,  # adjust length to account for the port at the end
+            length=segment_length - 1 * width_Z0,  # adjust length to account for the port at the end
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
         ))
@@ -1288,5 +1297,10 @@ def hairpin_coupled_line_bandpass_filter(
     c.add_port(name="e2", port=output_line.ports["e2"])
         
     # c.add_port(name="e1", port=input_line.ports["e1"])
-    
+    c.fill(fill_cell=_slit_ground(),
+        fill_layers=[(tech.LAYER.Metal5drawing, -15)],
+        exclude_layers=[(tech.LAYER.TopMetal2drawing, 1)],
+        x_space=1.1,
+        y_space=1.1,
+    )
     return c

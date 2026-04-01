@@ -836,7 +836,7 @@ def coupler_tline(
     # https://www.dmcrf.com/microstrip-calculators/differential-microstrip-impedance-calculator/
     Z_d = 2 * Z0o
     d = -h/0.98 * log(1-(Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
-    
+    d = 8
     
     c = gf.Component()
 

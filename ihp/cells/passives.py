@@ -9,6 +9,7 @@ from sg13g2_pycell_lib.ihp.esd_code import esd as esdIHP
 from sg13g2_pycell_lib.ihp.ptap1_code import ptap1 as ptap1IHP
 from sg13g2_pycell_lib.ihp.ntap1_code import ntap1 as ntap1IHP
 from sg13g2_pycell_lib.ihp.sealring_code import sealring as sealringIHP
+from sg13g2_pycell_lib.ihp.guard_ring_code import guard_ring as guardringIHP
 
 
 import gdsfactory as gf
@@ -223,6 +224,42 @@ def sealring(
     }
 
     c = generate_gf_from_ihp(cell_name="sealring", cell_params=params, function_name=sealringIHP())
+    
+    # add ports to the component
+    # ports should be added manually if needed
+    
+    return c
+
+
+@gf.cell
+def guard_ring(
+    width: float = 3.0,
+    height: float = 3.0,
+    guardRingType: Literal['nwell', 'psub'] = "psub",
+) -> gf.Component:
+    """Create a guard ring for device isolation.
+
+    This function generates a parametric guard ring around sensitive devices with optional
+    label and slit features. The guard ring helps isolate the device from substrate noise
+    and latch-up.
+
+    Args:
+        width: Inner width of the guard ring in micrometers.
+        height: Inner height of the guard ring in micrometers.
+        guardRingType: Type of guard ring. Options: 'nwell' (N-well guard ring), 'psub' (P-substrate guard ring).
+
+    Returns:
+        gdsfactory.Component: The generated guard ring layout.
+    """
+
+    params = {
+        'cdf_version': tech.techParams['CDFVersion'],
+        'h': height*1e-6,    # Length in μm
+        'w': width*1e-6,   # Length in μm
+        'type': guardRingType,
+    }
+
+    c = generate_gf_from_ihp(cell_name="guardring", cell_params=params, function_name=guardringIHP())
     
     # add ports to the component
     # ports should be added manually if needed
