@@ -136,7 +136,7 @@ def _calculate_width_from_Z0(
         raise ValueError("Calculated width is negative. Check Z0 and cross-section choices.")
     
     width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
-    print(f"Calculated width: {width} um for Z0: {Z0} ohms")
+    print(f"Calculated width: {width} um for Z0: {round(Z0, 2)} ohm")
     
     
     return width
@@ -193,7 +193,7 @@ def _calculate_Z0_from_width(
     if Z0 < 0:
         raise ValueError("Calculated Z0 is negative. Check width and cross-section choices.")
     
-    print(f"Calculated Z0: {Z0} ohms for width: {width} um")
+    print(f"Calculated Z0: {Z0} ohm for width: {round(width, 2)} um")
     return Z0
         
 
