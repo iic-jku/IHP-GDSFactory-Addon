@@ -1,6 +1,8 @@
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from sg13g2_pycell_lib.ihp.npn13G2_code import npn13G2 as npn13G2IHP
 from sg13g2_pycell_lib.ihp.npn13G2L_code import npn13G2L as npn13G2LIHP

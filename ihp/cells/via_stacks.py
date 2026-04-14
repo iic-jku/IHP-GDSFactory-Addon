@@ -1,8 +1,10 @@
 """Via stack components for IHP PDK. Also includes NoFillerStack."""
 #TODO probably not the right place for NoFillerStack
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from ihp.layer_map_ihp import LAYER
 from sg13g2_pycell_lib.ihp.via_stack_code import via_stack as via_stackIHP
