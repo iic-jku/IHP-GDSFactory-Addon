@@ -35,8 +35,8 @@ gf.kcl.dbu = 0.005
 pin_length = 10 * nm
 heater_width = 4
 
-
-ihp_filepath = "/foss/pdks/ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp"
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+ihp_filepath = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp")
 
 package_folder = os.path.dirname(os.path.abspath(__file__))
 
