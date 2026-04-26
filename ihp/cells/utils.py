@@ -34,7 +34,7 @@ def generate_gf_from_ihp(
     device = PCellWrapper(impl=function_name, tech=tech)
     
     # Convert params into a list in the order of device.param_decls
-    param_values = [cell_params[p.name] for p in device.param_decls]
+    param_values = [cell_params[p.name] for p in device._paramDecls]
 
     # ----------------------------------------------------------------
     # Step 4: Produce the layout
