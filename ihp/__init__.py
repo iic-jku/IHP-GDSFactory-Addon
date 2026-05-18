@@ -1,5 +1,20 @@
 """IHP PDK."""
 
+# Inject sg13g2_pycell_lib paths early so the submodule imports below can
+# resolve `from sg13g2_pycell_lib...` at module load. The sys.path setup in
+# `ihp.cells.utils` only runs after `ihp.cells.__init__` has tried to import
+# the passive PCells, so it is too late to satisfy the first failing import.
+import os as _os
+import sys as _sys
+
+_pdk_root = _os.environ.get("PDK_ROOT", "/foss/pdks")
+for _p in (
+    _os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python"),
+    _os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"),
+):
+    if _p not in _sys.path:
+        _sys.path.append(_p)
+
 from typing import cast
 
 from gdsfactory.get_factories import get_cells

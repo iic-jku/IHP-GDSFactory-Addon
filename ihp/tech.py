@@ -312,7 +312,7 @@ techName: str = "sg13g2"
 techNameParam: str = "techName"
 jsonTechFile: str = techName + "_tech.json"
 
-techFilePath: str = os.path.join("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile) #TODO hardcoded path, böse
+techFilePath: str = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile)  # patched: was hardcoded /foss/pdks
 
 with open(techFilePath, "r") as tech_file:
     jsData = json.load(tech_file)

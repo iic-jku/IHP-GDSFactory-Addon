@@ -1,6 +1,8 @@
+import os
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+_pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python"))
+sys.path.append(os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"))
 import gdsfactory as gf # to have gf.Component
 from cni.tech import Tech # to get the technology
 from cni.dlo import PCellWrapper # to wrap the PyCell
