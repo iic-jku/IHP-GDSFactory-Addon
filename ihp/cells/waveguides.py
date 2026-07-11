@@ -1,6 +1,8 @@
 """Primitives."""
 
 
+import warnings
+
 import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
@@ -166,10 +168,10 @@ def _calculate_Z0_from_width(
             for silicon dioxide.
 
     Returns:
-        Estimated characteristic impedance Z0 (ohms).
-
-    Raises:
-        ValueError: If the calculated Z0 is negative.
+        Estimated characteristic impedance Z0 (ohms). May be very small (or, when
+        the closed-form approximation is pushed out of its validity range for a
+        wide line on a thin dielectric, non-physically negative); the geometry is
+        still generated and a warning is emitted.
     """
     if isinstance(ground_cross_section, list):
         h_below, t = _get_stack_geometry(
@@ -191,9 +193,15 @@ def _calculate_Z0_from_width(
         Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
     
     if Z0 < 0:
-        raise ValueError("Calculated Z0 is negative. Check width and cross-section choices.")
-    
-    print(f"Calculated Z0: {Z0} ohm for width: {round(width, 2)} um")
+        warnings.warn(
+            f"Approximated Z0 is negative ({Z0:.2f} ohm) for width {round(width, 2)} um; "
+            "the microstrip approximation is out of range for this wide line / thin "
+            "dielectric. A negative impedance is not physical - the real Z0 is just very "
+            "small. Generating the geometry anyway.",
+            stacklevel=2,
+        )
+    else:
+        print(f"Calculated Z0: {Z0} ohm for width: {round(width, 2)} um")
     return Z0
         
 
