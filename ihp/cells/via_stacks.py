@@ -85,8 +85,18 @@ def via_stack(
 
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[bottom_layer]), port_type="electrical", ports_on_short_side=False)
     c.ports["e1"].name = "bottom"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[top_layer]), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
-    c.ports["e1"].name = "top"
+    try:
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[top_layer]), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+        c.ports["e1"].name = "top"
+    except ValueError:
+        # gdsfactory >= 9.45 refuses to register a port that geometrically
+        # coincides with an existing one. When the top and bottom pin boxes of
+        # the via stack overlap exactly, derive the top port from the bottom
+        # port instead (same geometry, top layer).
+        bot = c.ports["bottom"]
+        c.add_port(name="top", center=bot.center, width=bot.width,
+                   orientation=bot.orientation, layer=gf.get_layer(layer_map[top_layer]),
+                   port_type="electrical")
     
     return c
 

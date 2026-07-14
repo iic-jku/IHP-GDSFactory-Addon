@@ -70,8 +70,17 @@ def cmim(
     # no pin layers for cmim, so we use drawing layers
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5drawing), port_type="electrical", ports_on_short_side=True)
     c.ports["e1"].name = "B"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
-    c.ports["e1"].name = "T"
+    try:
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        c.ports["e1"].name = "T"
+    except ValueError:
+        # gdsfactory >= 9.45 refuses to register a port that geometrically
+        # coincides with an existing one. The MIM top and bottom plate boxes
+        # overlap, so derive the top port from the bottom port instead.
+        bot = c.ports["B"]
+        c.add_port(name="T", center=bot.center, width=bot.width,
+                   orientation=bot.orientation, layer=gf.get_layer(tech.LAYER.TopMetal1drawing),
+                   port_type="electrical")
     c.ports["B"].orientation = 0
     c.ports["T"].orientation = 180
     

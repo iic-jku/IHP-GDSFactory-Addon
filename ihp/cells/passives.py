@@ -73,7 +73,18 @@ def esd(
         gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
         c.ports["e1"].orientation = 270
         c.ports["e1"].name = "VSS"
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        try:
+            gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        except ValueError:
+            # gdsfactory >= 9.45 refuses to register a port that geometrically
+            # coincides with an existing one. One Metal2 pin of this model sits
+            # exactly on the Metal1 VSS pin, so recreate the rejected port from
+            # the VSS geometry on the Metal2 pin layer.
+            vss = c.ports["VSS"]
+            missing = "e1" if any(pt.name == "e2" for pt in c.ports) else "e2"
+            c.add_port(name=missing, center=vss.center, width=vss.width,
+                       orientation=vss.orientation, layer=gf.get_layer(tech.LAYER.Metal2pin),
+                       port_type="electrical")
         c.ports["e1"].orientation = 0
         c.ports["e1"].name = "VDD"
         c.ports["e2"].orientation = 180
