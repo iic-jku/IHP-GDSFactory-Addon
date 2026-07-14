@@ -31,7 +31,7 @@ from gdsfactory.technology import lyp_to_dataclass
 from ihp.config import PATH
 
 nm = 0.005  # 1 grid unit = 5nm
-gf.kcl.dbu = 0.005
+gf.kcl.dbu = 0.001
 pin_length = 10 * nm
 heater_width = 4
 
