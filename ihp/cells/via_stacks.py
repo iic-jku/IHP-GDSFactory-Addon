@@ -90,13 +90,17 @@ def via_stack(
         c.ports["e1"].name = "top"
     except ValueError:
         # gdsfactory >= 9.45 refuses to register a port that geometrically
-        # coincides with an existing one. When the top and bottom pin boxes of
-        # the via stack overlap exactly, derive the top port from the bottom
-        # port instead (same geometry, top layer).
-        bot = c.ports["bottom"]
-        c.add_port(name="top", center=bot.center, width=bot.width,
-                   orientation=bot.orientation, layer=gf.get_layer(layer_map[top_layer]),
-                   port_type="electrical")
+        # coincides with an existing one. Derive the top port from the
+        # top-layer pin box instead (same result as the regular inference).
+        lay = gf.get_layer(layer_map[top_layer])
+        bb = c.get_boxes(layer=lay)[0].bbox()
+        snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+        w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+        c.add_port(name="top",
+                   center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
+                   width=w,
+                   orientation=c.ports["bottom"].orientation,
+                   layer=lay, port_type="electrical")
     
     return c
 

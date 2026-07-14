@@ -79,12 +79,23 @@ def esd(
             # gdsfactory >= 9.45 refuses to register a port that geometrically
             # coincides with an existing one. One Metal2 pin of this model sits
             # exactly on the Metal1 VSS pin, so recreate the rejected port from
-            # the VSS geometry on the Metal2 pin layer.
-            vss = c.ports["VSS"]
+            # its own Metal2 pin box (the box whose center is not taken by the
+            # Metal2 port that did register).
+            lay = gf.get_layer(tech.LAYER.Metal2pin)
+            taken = [tuple(round(v, 3) for v in pt.center)
+                     for pt in c.ports if pt.name in ("e1", "e2")]
             missing = "e1" if any(pt.name == "e2" for pt in c.ports) else "e2"
-            c.add_port(name=missing, center=vss.center, width=vss.width,
-                       orientation=vss.orientation, layer=gf.get_layer(tech.LAYER.Metal2pin),
-                       port_type="electrical")
+            for box in c.get_boxes(layer=lay):
+                bb = box.bbox()
+                ctr = ((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2)
+                if tuple(round(v, 3) for v in ctr) not in taken:
+                    snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+                    w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+                    c.add_port(name=missing, center=ctr,
+                               width=w,
+                               orientation=c.ports["VSS"].orientation,
+                               layer=lay, port_type="electrical")
+                    break
         c.ports["e1"].orientation = 0
         c.ports["e1"].name = "VDD"
         c.ports["e2"].orientation = 180

@@ -75,12 +75,18 @@ def cmim(
         c.ports["e1"].name = "T"
     except ValueError:
         # gdsfactory >= 9.45 refuses to register a port that geometrically
-        # coincides with an existing one. The MIM top and bottom plate boxes
-        # overlap, so derive the top port from the bottom port instead.
-        bot = c.ports["B"]
-        c.add_port(name="T", center=bot.center, width=bot.width,
-                   orientation=bot.orientation, layer=gf.get_layer(tech.LAYER.TopMetal1drawing),
-                   port_type="electrical")
+        # coincides with an existing one (the concentric MIM plates share the
+        # same center). Derive the top port from the TopMetal1 plate box, the
+        # same result the regular inference produces.
+        lay = gf.get_layer(tech.LAYER.TopMetal1drawing)
+        bb = c.get_boxes(layer=lay)[0].bbox()
+        snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+        w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+        c.add_port(name="T",
+                   center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
+                   width=w,
+                   orientation=c.ports["B"].orientation,
+                   layer=lay, port_type="electrical")
     c.ports["B"].orientation = 0
     c.ports["T"].orientation = 180
     
