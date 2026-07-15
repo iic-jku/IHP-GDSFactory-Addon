@@ -24,6 +24,23 @@ from functools import partial
 from .. import tech
 
 
+
+
+def _rename_ports_by_position(c, prefix):
+    """Renumber auto-generated ports deterministically from left to right.
+
+    add_ports_from_boxes names ports by the klayout box enumeration order,
+    which is not stable across tool versions. Sort by position instead so
+    e.g. DS_1 is always the leftmost source/drain finger.
+    """
+    ports = [p for p in c.ports if p.name and p.name.startswith(prefix)]
+    ports.sort(key=lambda p: (round(p.center[0], 6), round(p.center[1], 6)))
+    for i, p in enumerate(ports, 1):
+        p.name = f"__tmp_{prefix}{i}"
+    for i, p in enumerate(ports, 1):
+        p.name = f"{prefix}{i}"
+
+
 @gf.cell
 def nmos(
     w: float = 0.15, 
@@ -75,6 +92,8 @@ def nmos(
         port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
         
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    _rename_ports_by_position(c, "DS_")
+    _rename_ports_by_position(c, "G_")
     return c
 
 @gf.cell
@@ -129,6 +148,8 @@ def nmosHV(
         port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
         
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    _rename_ports_by_position(c, "DS_")
+    _rename_ports_by_position(c, "G_")
     
     return c
 
@@ -185,6 +206,8 @@ def pmos(
         port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
         
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    _rename_ports_by_position(c, "DS_")
+    _rename_ports_by_position(c, "G_")
     return c
 
 
@@ -240,6 +263,8 @@ def pmosHV(
         port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
         
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    _rename_ports_by_position(c, "DS_")
+    _rename_ports_by_position(c, "G_")
     return c    
 
 
@@ -305,6 +330,8 @@ def rfnmos(
         port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
         
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.GatPolydrawing), port_type="electrical", port_name_prefix="G_", ports_on_short_side=True, auto_rename_ports=False)
+    _rename_ports_by_position(c, "DS_")
+    _rename_ports_by_position(c, "G_")
     return c
 
 
