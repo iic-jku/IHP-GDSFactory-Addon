@@ -1,18 +1,16 @@
 name: Test code
-
 on:
   pull_request:
   push:
     branches:
       - main
-
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v6
-    - uses: pre-commit/action@v3.0.1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+      - uses: pre-commit/action@v3.0.1
   test_code:
     runs-on: ubuntu-latest
     steps:
@@ -21,7 +19,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      # Importing ihp needs the IHP Open PDK (sg13g2_pycell_lib), which is not
-      # available on PyPI, so CI only checks that the package installs.
       - name: Install package
+        # Importing ihp needs the IHP Open PDK (sg13g2_pycell_lib), which is not
+
+        # available on PyPI, so CI only checks that the package installs.
         run: pip install .

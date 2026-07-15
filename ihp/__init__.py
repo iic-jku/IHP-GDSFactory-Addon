@@ -10,7 +10,10 @@ import sys as _sys
 _pdk_root = _os.environ.get("PDK_ROOT", "/foss/pdks")
 for _p in (
     _os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python"),
-    _os.path.join(_pdk_root, "ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"),
+    _os.path.join(
+        _pdk_root,
+        "ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/",
+    ),
 ):
     if _p not in _sys.path:
         _sys.path.append(_p)
@@ -32,7 +35,7 @@ from ihp.tech import (
     LAYER_STACK,
     LAYER_VIEWS,
     cross_sections,
-    #routing_strategies,
+    # routing_strategies,
 )
 
 components = cells
@@ -71,5 +74,5 @@ PDK = Pdk(
     layer_stack=LAYER_STACK,
     layer_views=LAYER_VIEWS,
     connectivity=connectivity,
-    #routing_strategies=routing_strategies,
+    # routing_strategies=routing_strategies,
 )

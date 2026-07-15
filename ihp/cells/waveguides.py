@@ -1,13 +1,11 @@
 """Primitives."""
 
-
 import warnings
+from math import exp, log, sqrt
 
 import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
-
-from math import exp, log, sin, sqrt
 
 from .. import tech
 
@@ -33,14 +31,14 @@ def _get_stack_geometry(
 
     if start < end:
         stack_height = 0
-        for k in keys[start + 1:end]:
+        for k in keys[start + 1 : end]:
             stack_height += layers[k].thickness
 
         signal_layer_thickness = layers[keys[end]].thickness
-        
+
     else:
         stack_height = 0
-        for k in keys[end + 1:start]:
+        for k in keys[end + 1 : start]:
             stack_height += layers[k].thickness
 
         signal_layer_thickness = layers[keys[end]].thickness
@@ -51,7 +49,7 @@ def _get_stack_geometry(
 def _calculate_effective_dielectric_constant(
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec = "metal5_routing",
-    e_r: float = 4.1,    
+    e_r: float = 4.1,
 ) -> float:
     """Calculate the effective dielectric constant for a coplanar waveguide.
 
@@ -66,11 +64,9 @@ def _calculate_effective_dielectric_constant(
     """
     if isinstance(ground_cross_section, list):
         return e_r
-    
-    h_p, t = _get_stack_geometry(
-        signal_cross_section, ground_cross_section
-    )
-    
+
+    h_p, t = _get_stack_geometry(signal_cross_section, ground_cross_section)
+
     # calculate distance from signal layer to surface
     signal_layer_name = signal_cross_section.split("_")[0]
     if signal_layer_name == "topmetal2":
@@ -80,20 +76,19 @@ def _calculate_effective_dielectric_constant(
         keys = list(layers.keys())
         signal_idx = keys.index(signal_layer_name)
         h_above = sum(
-            layers[keys[i]].thickness
-            for i in range(signal_idx + 1, len(keys))
+            layers[keys[i]].thickness for i in range(signal_idx + 1, len(keys))
         )
-    
-    e_eff = e_r * (1-exp(-1.55*(h_p+t+h_above)/h_p))
-    
+
+    e_eff = e_r * (1 - exp(-1.55 * (h_p + t + h_above) / h_p))
+
     return e_eff
 
 
 def _calculate_width_from_Z0(
-    Z0: float, 
+    Z0: float,
     signal_cross_section: CrossSectionSpec,
-    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec], 
-    e_r: float = 4.1
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec],
+    e_r: float = 4.1,
 ) -> float:
     """Calculate the width of a coplanar waveguide given the characteristic impedance Z0.
 
@@ -118,37 +113,44 @@ def _calculate_width_from_Z0(
         ValueError: If the calculated width is negative.
     """
     if isinstance(ground_cross_section, list):
-        h_below, t = _get_stack_geometry(
-            signal_cross_section, ground_cross_section[0]
-        )
-        h_above, t = _get_stack_geometry(
-            signal_cross_section, ground_cross_section[1]
-        )
+        h_below, t = _get_stack_geometry(signal_cross_section, ground_cross_section[0])
+        h_above, t = _get_stack_geometry(signal_cross_section, ground_cross_section[1])
         # approximation from https://www.pcbway.com/pcb_prototype/impedance_calculator.html
-        width = (1.9 * (2 * h_above + t) * exp(-Z0 * sqrt(e_r) / (80.0 * (1 - h_above / (4 * h_below)))) - t) / 0.8
+        width = (
+            1.9
+            * (2 * h_above + t)
+            * exp(-Z0 * sqrt(e_r) / (80.0 * (1 - h_above / (4 * h_below))))
+            - t
+        ) / 0.8
     else:
         stack_height, signal_layer_thickness = _get_stack_geometry(
             signal_cross_section, ground_cross_section
         )
         # approximation from https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
-        
-        width = (exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height - signal_layer_thickness) / 0.8
-        
+
+        width = (
+            exp(-Z0 * sqrt(e_r + 1.41) / 87.0) * 5.98 * stack_height
+            - signal_layer_thickness
+        ) / 0.8
+
     if width < 0:
-        raise ValueError("Calculated width is negative. Check Z0 and cross-section choices.")
-    
-    width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
+        raise ValueError(
+            "Calculated width is negative. Check Z0 and cross-section choices."
+        )
+
+    width = width - width % (
+        2 * tech.nm
+    )  # truncate to 2 nm, gdsfactory needs even widths for ports
     print(f"Calculated width: {width} um for Z0: {round(Z0, 2)} ohm")
-    
-    
+
     return width
 
 
 def _calculate_Z0_from_width(
     width: float,
     signal_cross_section: CrossSectionSpec,
-    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec], 
-    e_r: float = 4.1
+    ground_cross_section: CrossSectionSpec | list[CrossSectionSpec],
+    e_r: float = 4.1,
 ) -> float:
     """Estimate the characteristic impedance Z0 from a given signal width.
 
@@ -174,24 +176,29 @@ def _calculate_Z0_from_width(
         still generated and a warning is emitted.
     """
     if isinstance(ground_cross_section, list):
-        h_below, t = _get_stack_geometry(
-            signal_cross_section, ground_cross_section[0]
-        )
-        
-        h_above, t = _get_stack_geometry(
-            signal_cross_section, ground_cross_section[1]
-        )
+        h_below, t = _get_stack_geometry(signal_cross_section, ground_cross_section[0])
+
+        h_above, t = _get_stack_geometry(signal_cross_section, ground_cross_section[1])
         # approximation from https://www.pcbway.com/pcb_prototype/impedance_calculator.html
-        Z0 = 80/sqrt(e_r) * log(1.9*(2*h_above+t)/(0.8*width+t))*(1-h_above/(4*h_below))
-        
+        Z0 = (
+            80
+            / sqrt(e_r)
+            * log(1.9 * (2 * h_above + t) / (0.8 * width + t))
+            * (1 - h_above / (4 * h_below))
+        )
+
     else:
         stack_height, signal_layer_thickness = _get_stack_geometry(
             signal_cross_section, ground_cross_section
         )
-        
+
         # https://chemandy.com/calculators/microstrip-transmission-line-calculator-ipc2141.htm
-        Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
-    
+        Z0 = (
+            87.0
+            / sqrt(e_r + 1.41)
+            * log(5.98 * stack_height / (0.8 * width + signal_layer_thickness))
+        )
+
     if Z0 < 0:
         warnings.warn(
             f"Approximated Z0 is negative ({Z0:.2f} ohm) for width {round(width, 2)} um; "
@@ -203,7 +210,7 @@ def _calculate_Z0_from_width(
     else:
         print(f"Calculated Z0: {Z0} ohm for width: {round(width, 2)} um")
     return Z0
-        
+
 
 @gf.cell
 def straight(
@@ -286,7 +293,9 @@ def bend_s(
 
 @gf.cell
 def wire_corner(
-    cross_section: CrossSectionSpec = "metal_routing", width: float | None = None, radius: float | None = None
+    cross_section: CrossSectionSpec = "metal_routing",
+    width: float | None = None,
+    radius: float | None = None,
 ) -> gf.Component:
     """Returns 45 degrees electrical corner wire.
 
@@ -403,9 +412,10 @@ def bend_s_metal(
         allow_min_radius_violation=allow_min_radius_violation,
         width=width,
     )
-    
-    
+
+
 # ------------------------------------------------------
+
 
 @gf.cell
 def tline(
@@ -445,53 +455,61 @@ def tline(
 
     if width is not None and Z0 is not None:
         raise ValueError("Provide only one of width or Z0")
-    
+
     if width is None:
         width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )   
-        
+            Z0=Z0,
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
+        )
+
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
         )
-        
-        
-    
+
     c = gf.Component()
-    
+
     signal = c.add_ref(
         gf.c.straight(
-            length=length, cross_section=signal_cross_section, width=width, npoints=npoints
+            length=length,
+            cross_section=signal_cross_section,
+            width=width,
+            npoints=npoints,
         )
     )
     c.add_ports(signal.ports)
-    
+
     if isinstance(ground_cross_section, list):
-        ground_low = c.add_ref(
+        c.add_ref(
             gf.c.straight(
-                length=length, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
+                length=length,
+                cross_section=ground_cross_section[0],
+                width=7 * width,
+                npoints=npoints,
             )
         )
-        # ground_low.move(( -3*width, 0))
-        ground_high = c.add_ref(
+        c.add_ref(
             gf.c.straight(
-                length=length, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
+                length=length,
+                cross_section=ground_cross_section[1],
+                width=7 * width,
+                npoints=npoints,
             )
         )
-        # ground_high.move(( -3*width, 0))
     else:
-        ground = c.add_ref(
+        c.add_ref(
             gf.c.straight(
-                length=length, cross_section=ground_cross_section, width=7*width, npoints=npoints
+                length=length,
+                cross_section=ground_cross_section,
+                width=7 * width,
+                npoints=npoints,
             )
         )
         # ground.move(( -3*width, 0))
-    
+
     return c
 
 
@@ -507,7 +525,7 @@ def tline_bend_circular(
     """Returns a circular bend coplanar transmission line.
 
     Creates a signal bend and a wider ground bend aligned around it.
-    
+
     Args:
         radius: Bend radius (um).
         angle: Bend angle (degrees).
@@ -516,55 +534,67 @@ def tline_bend_circular(
         width: Line width (µm). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
-    
+
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
 
     if width is not None and Z0 is not None:
         raise ValueError("Provide only one of width or Z0")
-    
+
     if width is None:
         width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )   
+            Z0=Z0,
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
+        )
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
         )
-        
-    
+
     c = gf.Component()
-    
-    if angle ==90 or angle==180:
+
+    if angle == 90 or angle == 180:
         signal = c.add_ref(
             gf.c.bend_circular(
-                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+                radius=radius,
+                angle=angle,
+                cross_section=signal_cross_section,
+                width=width,
             )
         )
         c.add_ports(signal.ports)
-        ground = c.add_ref(
+        c.add_ref(
             gf.c.bend_circular(
-                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+                radius=radius,
+                angle=angle,
+                cross_section=ground_cross_section,
+                width=7 * width,
             )
         )
     else:
         signal = c.add_ref_off_grid(
             gf.c.bend_circular_all_angle(
-                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+                radius=radius,
+                angle=angle,
+                cross_section=signal_cross_section,
+                width=width,
             )
         )
         c.add_ports(signal.ports)
-        ground = c.add_ref_off_grid(
+        c.add_ref_off_grid(
             gf.c.bend_circular_all_angle(
-                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+                radius=radius,
+                angle=angle,
+                cross_section=ground_cross_section,
+                width=7 * width,
             )
         )
-    
+
     return c
+
 
 @gf.cell
 def tline_bend_euler(
@@ -578,7 +608,7 @@ def tline_bend_euler(
     """Returns an euler bend coplanar transmission line.
 
     Creates a signal bend and a wider ground bend aligned around it.
-    
+
     Args:
         radius: Bend radius (um).
         angle: Bend angle (degrees).
@@ -587,55 +617,67 @@ def tline_bend_euler(
         width: Line width (µm). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
-    
+
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
 
     if width is not None and Z0 is not None:
         raise ValueError("Provide only one of width or Z0")
-    
+
     if width is None:
         width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )   
+            Z0=Z0,
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
+        )
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
         )
-        
-    
+
     c = gf.Component()
-    
-    if angle ==90 or angle==180:
+
+    if angle == 90 or angle == 180:
         signal = c.add_ref(
             gf.c.bend_euler(
-                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+                radius=radius,
+                angle=angle,
+                cross_section=signal_cross_section,
+                width=width,
             )
         )
         c.add_ports(signal.ports)
-        ground = c.add_ref(
+        c.add_ref(
             gf.c.bend_euler(
-                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+                radius=radius,
+                angle=angle,
+                cross_section=ground_cross_section,
+                width=7 * width,
             )
         )
     else:
         signal = c.add_ref_off_grid(
             gf.c.bend_euler_all_angle(
-                radius=radius, angle=angle, cross_section=signal_cross_section, width=width
+                radius=radius,
+                angle=angle,
+                cross_section=signal_cross_section,
+                width=width,
             )
         )
         c.add_ports(signal.ports)
-        ground = c.add_ref_off_grid(
+        c.add_ref_off_grid(
             gf.c.bend_euler_all_angle(
-                radius=radius, angle=angle, cross_section=ground_cross_section, width=7*width
+                radius=radius,
+                angle=angle,
+                cross_section=ground_cross_section,
+                width=7 * width,
             )
         )
-    
+
     return c
+
 
 @gf.cell
 def tline_bend_s(
@@ -648,7 +690,7 @@ def tline_bend_s(
     """Returns an S bend coplanar transmission line.
 
     Creates a signal bend and a wider ground bend aligned around it.
-    
+
     Args:
         size: in x and y direction.
         signal_cross_section: Cross-section for the signal line.
@@ -656,44 +698,42 @@ def tline_bend_s(
         width: Line width (µm). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
-    
+
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
 
     if width is not None and Z0 is not None:
         raise ValueError("Provide only one of width or Z0")
-    
+
     if width is None:
         width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )   
+            Z0=Z0,
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
+        )
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
         )
-        
+
     c = gf.Component()
-    
+
     signal = c.add_ref(
-        gf.c.bend_s(
-            size=size, cross_section=signal_cross_section, width=width
-        )
+        gf.c.bend_s(size=size, cross_section=signal_cross_section, width=width)
     )
     c.add_ports(signal.ports)
-    ground = c.add_ref(
-        gf.c.bend_s(
-            size=(size), cross_section=ground_cross_section, width=7*width
-        )
+    c.add_ref(
+        gf.c.bend_s(size=(size), cross_section=ground_cross_section, width=7 * width)
     )
-    
+
     return c
 
+
 @gf.cell
-def tline_corner(length: float = 10,
+def tline_corner(
+    length: float = 10,
     signal_cross_section: CrossSectionSpec = "topmetal2_routing",
     ground_cross_section: CrossSectionSpec | list[CrossSectionSpec] = "metal5_routing",
     width: float | None = None,
@@ -707,43 +747,38 @@ def tline_corner(length: float = 10,
 
     if width is not None and Z0 is not None:
         raise ValueError("Provide only one of width or Z0")
-    
+
     if width is None:
         width = _calculate_width_from_Z0(
-            Z0=Z0, 
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
-        )  
-        
+            Z0=Z0,
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
+        )
+
     else:
         Z0 = _calculate_Z0_from_width(
             width=width,
-            ground_cross_section=ground_cross_section, 
-            signal_cross_section=signal_cross_section
+            ground_cross_section=ground_cross_section,
+            signal_cross_section=signal_cross_section,
         )
-        
+
     c = gf.Component()
     # signal
     c.add_polygon(
-        points=[
-            (0, 0),
-            (0, width),
-            (width, width),
-            (width, 0)
-        ],
+        points=[(0, 0), (0, width), (width, width), (width, 0)],
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
-    
-    extension = 3 # extension over signal plate
+
+    extension = 3  # extension over signal plate
     if isinstance(ground_cross_section, list):
         # ground planes for stripline
         for gc in ground_cross_section:
             c.add_polygon(
                 points=[
-                    (0 - extension*width, -extension*width),
-                    (0 - extension*width, width + extension*width),
-                    (width + extension*width, width + extension*width),
-                    (width + extension*width, 0 - extension*width)
+                    (0 - extension * width, -extension * width),
+                    (0 - extension * width, width + extension * width),
+                    (width + extension * width, width + extension * width),
+                    (width + extension * width, 0 - extension * width),
                 ],
                 layer=gf.get_cross_section(gc).layer,
             )
@@ -751,17 +786,17 @@ def tline_corner(length: float = 10,
         # ground plate
         c.add_polygon(
             points=[
-                (0 - extension*width, -extension*width),
-                (0 - extension*width, width + extension*width),
-                (width + extension*width, width + extension*width),
-                (width + extension*width, 0 - extension*width)
+                (0 - extension * width, -extension * width),
+                (0 - extension * width, width + extension * width),
+                (width + extension * width, width + extension * width),
+                (width + extension * width, 0 - extension * width),
             ],
             layer=gf.get_cross_section(ground_cross_section).layer,
         )
-    
+
     c.add_port(
         name="e1",
-        center=(0, width/2),
+        center=(0, width / 2),
         width=width,
         orientation=180,
         port_type="electrical",
@@ -769,7 +804,7 @@ def tline_corner(length: float = 10,
     )
     c.add_port(
         name="e2",
-        center=(width/2, width),
+        center=(width / 2, width),
         width=width,
         orientation=90,
         port_type="electrical",
@@ -777,7 +812,7 @@ def tline_corner(length: float = 10,
     )
     c.add_port(
         name="e3",
-        center=(width, width/2),
+        center=(width, width / 2),
         width=width,
         orientation=0,
         port_type="electrical",
@@ -785,13 +820,14 @@ def tline_corner(length: float = 10,
     )
     c.add_port(
         name="e4",
-        center=(width/2, 0),
+        center=(width / 2, 0),
         width=width,
         orientation=270,
         port_type="electrical",
         layer=gf.get_cross_section(signal_cross_section).layer,
     )
     return c
+
 
 @gf.cell
 def coupler_tline(
@@ -830,45 +866,49 @@ def coupler_tline(
         ValueError: If neither or both of *width* and *Z0* are provided.
     """
     Z0 = sqrt(Z0e * Z0o)
-    
+
     width = _calculate_width_from_Z0(
-        Z0=Z0, 
-        ground_cross_section=ground_cross_section, 
+        Z0=Z0,
+        ground_cross_section=ground_cross_section,
         signal_cross_section=signal_cross_section,
-        e_r=e_r
+        e_r=e_r,
     )
-    
+
     h, t = _get_stack_geometry(signal_cross_section, ground_cross_section)
 
-    # calculate seperation gap from even and odd mode impedances
+    # calculate separation gap from even and odd mode impedances
     # https://www.dmcrf.com/microstrip-calculators/differential-microstrip-impedance-calculator/
     Z_d = 2 * Z0o
-    d = -h/0.98 * log(1-(Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
+    d = (
+        -h
+        / 0.98
+        * log(1 - (Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
+    )
     d = 8
-    
+
     c = gf.Component()
 
     top = c.add_ref(
         tline(
-            length=length, 
+            length=length,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
-            width=width, 
-            npoints=npoints
+            width=width,
+            npoints=npoints,
         )
     )
-    top.movey(d/2 + width/2)
+    top.movey(d / 2 + width / 2)
 
     bot = c.add_ref(
         tline(
-            length=length, 
+            length=length,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
-            width=width, 
-            npoints=npoints
+            width=width,
+            npoints=npoints,
         )
     )
-    bot.movey(-d/2 - width/2)
+    bot.movey(-d / 2 - width / 2)
 
     c.add_port(name="e1", port=top.ports["e1"])
     c.add_port(name="e2", port=top.ports["e2"])

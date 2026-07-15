@@ -1,31 +1,38 @@
 """Passive components (varicaps, ESD, taps, seal rings) for IHP PDK."""
-import sys
+
 import os
+import sys
+
 pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
 sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+sys.path.append(
+    f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
+)
 
-from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbTapCalc
-
-from sg13g2_pycell_lib.ihp.esd_code import esd as esdIHP
-from sg13g2_pycell_lib.ihp.ptap1_code import ptap1 as ptap1IHP
-from sg13g2_pycell_lib.ihp.ntap1_code import ntap1 as ntap1IHP
-from sg13g2_pycell_lib.ihp.sealring_code import sealring as sealringIHP
-from sg13g2_pycell_lib.ihp.guard_ring_code import guard_ring as guardringIHP
-
-
-import gdsfactory as gf
 from typing import Literal
 
-from .utils import *
-from functools import partial
-from .. import tech
+import gdsfactory as gf
+from sg13g2_pycell_lib.ihp.esd_code import esd as esdIHP
+from sg13g2_pycell_lib.ihp.guard_ring_code import guard_ring as guardringIHP
+from sg13g2_pycell_lib.ihp.ntap1_code import ntap1 as ntap1IHP
+from sg13g2_pycell_lib.ihp.ptap1_code import ptap1 as ptap1IHP
+from sg13g2_pycell_lib.ihp.sealring_code import sealring as sealringIHP
+from sg13g2_pycell_lib.ihp.utility_functions import CbTapCalc, eng_string_to_float
 
+from .. import tech
+from .utils import *
 
 
 @gf.cell
 def esd(
-    model: Literal['diodevdd_2kv', 'diodevss_2kv', 'diodevdd_4kv', 'diodevss_4kv', 'nmoscl_2', 'nmoscl_4'] = "diodevdd_2kv",
+    model: Literal[
+        "diodevdd_2kv",
+        "diodevss_2kv",
+        "diodevdd_4kv",
+        "diodevss_4kv",
+        "nmoscl_2",
+        "nmoscl_4",
+    ] = "diodevdd_2kv",
 ) -> gf.Component:
     """Create an ESD protection device layout.
 
@@ -46,35 +53,58 @@ def esd(
         gdsfactory.Component: The generated ESD protection layout.
     """
 
-
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': model
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": model,
     }
 
-    c = generate_gf_from_ihp(cell_name="esd", cell_params=params, function_name=esdIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="esd", cell_params=params, function_name=esdIHP()
+    )
+
     ## add ports to the component
     # default direction should be away from the device center
     # set port names and orientations based on model
-    
-    if model == 'diodevdd_2kv':
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+
+    if model == "diodevdd_2kv":
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal1pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+        )
         c.ports["e1"].orientation = 270
         c.ports["e1"].name = "VSS"
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal2pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+            auto_rename_ports=False,
+        )
         c.ports["e1"].orientation = 180
         c.ports["e1"].name = "PAD"
         c.ports["e2"].orientation = 0
         c.ports["e2"].name = "VDD"
-        
-    elif model == 'diodevdd_4kv':
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+
+    elif model == "diodevdd_4kv":
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal1pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+        )
         c.ports["e1"].orientation = 270
         c.ports["e1"].name = "VSS"
         try:
-            gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+            gf.add_ports.add_ports_from_boxes(
+                c,
+                pin_layer=(tech.LAYER.Metal2pin),
+                port_type="electrical",
+                ports_on_short_side=True,
+                auto_rename_ports=False,
+            )
         except ValueError:
             # gdsfactory >= 9.45 refuses to register a port that geometrically
             # coincides with an existing one. One Metal2 pin of this model sits
@@ -82,8 +112,11 @@ def esd(
             # its own Metal2 pin box (the box whose center is not taken by the
             # Metal2 port that did register).
             lay = gf.get_layer(tech.LAYER.Metal2pin)
-            taken = [tuple(round(v, 3) for v in pt.center)
-                     for pt in c.ports if pt.name in ("e1", "e2")]
+            taken = [
+                tuple(round(v, 3) for v in pt.center)
+                for pt in c.ports
+                if pt.name in ("e1", "e2")
+            ]
             missing = "e1" if any(pt.name == "e2" for pt in c.ports) else "e2"
             for box in c.get_boxes(layer=lay):
                 bb = box.bbox()
@@ -91,35 +124,54 @@ def esd(
                 if tuple(round(v, 3) for v in ctr) not in taken:
                     snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
                     w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
-                    c.add_port(name=missing, center=ctr,
-                               width=w,
-                               orientation=c.ports["VSS"].orientation,
-                               layer=lay, port_type="electrical")
+                    c.add_port(
+                        name=missing,
+                        center=ctr,
+                        width=w,
+                        orientation=c.ports["VSS"].orientation,
+                        layer=lay,
+                        port_type="electrical",
+                    )
                     break
         c.ports["e1"].orientation = 0
         c.ports["e1"].name = "VDD"
         c.ports["e2"].orientation = 180
         c.ports["e2"].name = "PAD"
-        
-    elif model in ['diodevss_2kv', 'diodevss_4kv']:
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+
+    elif model in ["diodevss_2kv", "diodevss_4kv"]:
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal1pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+        )
         c.ports["e1"].orientation = 90
         c.ports["e1"].name = "VDD"
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal2pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+            auto_rename_ports=False,
+        )
         c.ports["e1"].orientation = 180
         c.ports["e1"].name = "PAD"
         c.ports["e2"].orientation = 0
         c.ports["e2"].name = "VSS"
-    
+
     else:  # NMOS clamp
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal3pin), port_type="electrical", ports_on_short_side=True)
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.Metal3pin),
+            port_type="electrical",
+            ports_on_short_side=True,
+        )
         c.ports["e1"].orientation = 270
         c.ports["e1"].name = "VSS"
         c.ports["e2"].orientation = 90
         c.ports["e2"].name = "VDD"
-        
-    return c
 
+    return c
 
 
 @gf.cell
@@ -144,33 +196,41 @@ def ptap1(
     area = width * length
     perimeter = 2 * (width + length)
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': "R,A",
-        'R': CbTapCalc('R', 0, length*1e-6, width*1e-6, 'ptap1'),    # TODO Is this used?
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Length in μm
-        'A': area,
-        'Perim': perimeter,
-        'Rspec': 0.980*1e-9,    # hardcoded in the PCell
-        'Wmin': eng_string_to_float(tech.techParams['ptap1_minLW']),
-        'Lmin': eng_string_to_float(tech.techParams['ptap1_minLW']),
-        'm': 1
-        
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "R,A",
+        "R": CbTapCalc(
+            "R", 0, length * 1e-6, width * 1e-6, "ptap1"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Length in μm
+        "A": area,
+        "Perim": perimeter,
+        "Rspec": 0.980 * 1e-9,  # hardcoded in the PCell
+        "Wmin": eng_string_to_float(tech.techParams["ptap1_minLW"]),
+        "Lmin": eng_string_to_float(tech.techParams["ptap1_minLW"]),
+        "m": 1,
     }
 
-    c = generate_gf_from_ihp(cell_name="ptap1", cell_params=params, function_name=ptap1IHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="ptap1", cell_params=params, function_name=ptap1IHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
+
     return c
 
 
 @gf.cell
 def ntap1(
-    width = 0.78,
-    length = 0.78,
+    width=0.78,
+    length=0.78,
 ) -> gf.Component:
     """Create an N+ substrate tap.
 
@@ -186,36 +246,43 @@ def ntap1(
     area = width * length
     perimeter = 2 * (width + length)
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': "R,A",
-        'R': CbTapCalc('R', 0, length*1e-6, width*1e-6, 'ntap1'),    # TODO Is this used?
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Length in μm
-        'A': area,
-        'Perim': perimeter,
-        'Rspec': 0.980*1e-9,    # hardcoded in the PCell
-        'Wmin': eng_string_to_float(tech.techParams['ntap1_minLW']),
-        'Lmin': eng_string_to_float(tech.techParams['ntap1_minLW']),
-        'm': 1
-        
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "R,A",
+        "R": CbTapCalc(
+            "R", 0, length * 1e-6, width * 1e-6, "ntap1"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Length in μm
+        "A": area,
+        "Perim": perimeter,
+        "Rspec": 0.980 * 1e-9,  # hardcoded in the PCell
+        "Wmin": eng_string_to_float(tech.techParams["ntap1_minLW"]),
+        "Lmin": eng_string_to_float(tech.techParams["ntap1_minLW"]),
+        "m": 1,
     }
 
-    c = generate_gf_from_ihp(cell_name="ntap1", cell_params=params, function_name=ntap1IHP())
-    
-    # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    
-    return c
+    c = generate_gf_from_ihp(
+        cell_name="ntap1", cell_params=params, function_name=ntap1IHP()
+    )
 
+    # add ports to the component
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
+
+    return c
 
 
 @gf.cell
 def sealring(
     width: float = 400.0,
     height: float = 400.0,
-    addLabel: Literal['nil', 't'] = "nil",
-    addSlit: Literal['nil', 't'] = "nil",
+    addLabel: Literal["nil", "t"] = "nil",
+    addSlit: Literal["nil", "t"] = "nil",
     edgeBox: float = 25.0,
 ) -> gf.Component:
     """Create a seal ring for die protection.
@@ -236,22 +303,24 @@ def sealring(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'l': width*1e-6,    # Length in μm
-        'w': height*1e-6,   # Length in μm
-        'addLabel': addLabel,
-        'addSlit': addSlit,
-        'Wmin': eng_string_to_float(tech.techParams['sealring_complete_minW']),
-        'Lmin': eng_string_to_float(tech.techParams['sealring_complete_minL']),
-        'edgeBox': edgeBox*1e-6
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "l": width * 1e-6,  # Length in μm
+        "w": height * 1e-6,  # Length in μm
+        "addLabel": addLabel,
+        "addSlit": addSlit,
+        "Wmin": eng_string_to_float(tech.techParams["sealring_complete_minW"]),
+        "Lmin": eng_string_to_float(tech.techParams["sealring_complete_minL"]),
+        "edgeBox": edgeBox * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="sealring", cell_params=params, function_name=sealringIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="sealring", cell_params=params, function_name=sealringIHP()
+    )
+
     # add ports to the component
     # ports should be added manually if needed
-    
+
     return c
 
 
@@ -259,7 +328,7 @@ def sealring(
 def guard_ring(
     width: float = 3.0,
     height: float = 3.0,
-    guardRingType: Literal['nwell', 'psub'] = "psub",
+    guardRingType: Literal["nwell", "psub"] = "psub",
 ) -> gf.Component:
     """Create a guard ring for device isolation.
 
@@ -277,17 +346,19 @@ def guard_ring(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'h': height*1e-6,    # Length in μm
-        'w': width*1e-6,   # Length in μm
-        'type': guardRingType,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "h": height * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # Length in μm
+        "type": guardRingType,
     }
 
-    c = generate_gf_from_ihp(cell_name="guardring", cell_params=params, function_name=guardringIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="guardring", cell_params=params, function_name=guardringIHP()
+    )
+
     # add ports to the component
     # ports should be added manually if needed
-    
+
     return c
 
 

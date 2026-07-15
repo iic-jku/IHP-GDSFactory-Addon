@@ -1,21 +1,21 @@
-import sys
 import os
+import sys
+
 pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
 sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+sys.path.append(
+    f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
+)
 
+
+import gdsfactory as gf
 from sg13g2_pycell_lib.ihp.npn13G2_code import npn13G2 as npn13G2IHP
 from sg13g2_pycell_lib.ihp.npn13G2L_code import npn13G2L as npn13G2LIHP
 from sg13g2_pycell_lib.ihp.npn13G2V_code import npn13G2V as npn13G2VIHP
 from sg13g2_pycell_lib.ihp.pnpMPA_code import pnpMPA as pnpMPAIHP
 
-
-import gdsfactory as gf
-from typing import Literal
-
-from .utils import *
-from functools import partial
 from .. import tech
+from .utils import *
 
 
 @gf.cell
@@ -30,7 +30,7 @@ def npn13G2(
     emitter_width: float = 0.7,
     Nx: int = 1,
     Ny: int = 1,
-    text: str = 'npn13G2',
+    text: str = "npn13G2",
     CMetY1: float = 0,
     CMetY2: float = 0,
 ) -> gf.Component:
@@ -60,40 +60,52 @@ def npn13G2(
         gdsfactory.Component: The generated npn13G2 transistor layout.
     """
 
-    
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': tech.techParams['npn13G2_model'],
-        'Nx': Nx,
-        'Ny': Ny,
-        'le': emitter_length*1e-6,    # Length in μm
-        'we': emitter_width*1e-6,   # Width in nm
-        'STI': STI*1e-6,
-        'baspolyx': baspolyx*1e-6,
-        'bipwinx': bipwinx*1e-6,
-        'bipwiny': bipwiny*1e-6,
-        'empolyx': empolyx*1e-6,
-        'empolyy': empolyy*1e-6,
-        'Icmax': 3*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'Iarea': 1*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'area': 1, # hardcoded in IHP PyCell, not in techparams
-        'bn': 'sub!',    # hardcoded in IHP PyCell, not in techparams
-        'm': 1,      
-        'trise': '',
-        'Text': text,
-        'CMetY1': CMetY1*1e-6, # hardcoded in IHP PyCell, not in techparams
-        'CMetY2': CMetY2*1e-6, # hardcoded in IHP PyCell, not in techparams
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": tech.techParams["npn13G2_model"],
+        "Nx": Nx,
+        "Ny": Ny,
+        "le": emitter_length * 1e-6,  # Length in μm
+        "we": emitter_width * 1e-6,  # Width in nm
+        "STI": STI * 1e-6,
+        "baspolyx": baspolyx * 1e-6,
+        "bipwinx": bipwinx * 1e-6,
+        "bipwiny": bipwiny * 1e-6,
+        "empolyx": empolyx * 1e-6,
+        "empolyy": empolyy * 1e-6,
+        "Icmax": 3 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "Iarea": 1 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "area": 1,  # hardcoded in IHP PyCell, not in techparams
+        "bn": "sub!",  # hardcoded in IHP PyCell, not in techparams
+        "m": 1,
+        "trise": "",
+        "Text": text,
+        "CMetY1": CMetY1 * 1e-6,  # hardcoded in IHP PyCell, not in techparams
+        "CMetY2": CMetY2 * 1e-6,  # hardcoded in IHP PyCell, not in techparams
     }
 
     # add ports to the component
-    c = generate_gf_from_ihp(cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP())
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=False)
+    c = generate_gf_from_ihp(
+        cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP()
+    )
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal2pin),
+        port_name_prefix="E",
+        port_type="electrical",
+        ports_on_short_side=False,
+    )
     c.ports["e1"].name = "B"
     c.ports["e2"].name = "C"
     c.ports["e3"].name = "E"
-    
+
     return c
 
 
@@ -119,33 +131,45 @@ def npn13G2L(
         gdsfactory.Component: The generated npn13G2L transistor layout.
     """
 
-    
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': tech.techParams['npn13G2L_model'],
-        'Nx': Nx,
-        'le': emitter_length*1e-6,    # Length in μm
-        'we': emitter_width*1e-6,   # Width in nm
-        'Icmax': 3*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'Iarea': 1*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'area': 1, # hardcoded in IHP PyCell, not in techparams
-        'bn': 'sub!',    # hardcoded in IHP PyCell, not in techparams
-        'Vbe': '',
-        'Vce': '',
-        'm': 1,      
-        'trise': '',
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": tech.techParams["npn13G2L_model"],
+        "Nx": Nx,
+        "le": emitter_length * 1e-6,  # Length in μm
+        "we": emitter_width * 1e-6,  # Width in nm
+        "Icmax": 3 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "Iarea": 1 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "area": 1,  # hardcoded in IHP PyCell, not in techparams
+        "bn": "sub!",  # hardcoded in IHP PyCell, not in techparams
+        "Vbe": "",
+        "Vce": "",
+        "m": 1,
+        "trise": "",
     }
 
-    c = generate_gf_from_ihp(cell_name="npn13G2L", cell_params=params, function_name=npn13G2LIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="npn13G2L", cell_params=params, function_name=npn13G2LIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal2pin),
+        port_name_prefix="E",
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].name = "B"
     c.ports["e2"].name = "E"
     c.ports["e3"].name = "C"
-    
+
     return c
 
 
@@ -171,34 +195,47 @@ def npn13G2V(
         gdsfactory.Component: The generated npn13G2V transistor layout.
     """
 
-    
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': tech.techParams['npn13G2V_model'],
-        'Nx': Nx,
-        'le': emitter_length*1e-6,    # Length in μm
-        'we': emitter_width*1e-6,   # Width in nm
-        'Icmax': 3*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'Iarea': 1*1e-3, # hardcoded in IHP PyCell, not in techparams
-        'area': 1, # hardcoded in IHP PyCell, not in techparams
-        'bn': 'sub!',    # hardcoded in IHP PyCell, not in techparams
-        'Vbe': '',
-        'Vce': '',
-        'm': 1,      
-        'trise': '',
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": tech.techParams["npn13G2V_model"],
+        "Nx": Nx,
+        "le": emitter_length * 1e-6,  # Length in μm
+        "we": emitter_width * 1e-6,  # Width in nm
+        "Icmax": 3 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "Iarea": 1 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
+        "area": 1,  # hardcoded in IHP PyCell, not in techparams
+        "bn": "sub!",  # hardcoded in IHP PyCell, not in techparams
+        "Vbe": "",
+        "Vce": "",
+        "m": 1,
+        "trise": "",
     }
 
-    c = generate_gf_from_ihp(cell_name="npn13G2V", cell_params=params, function_name=npn13G2VIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="npn13G2V", cell_params=params, function_name=npn13G2VIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal2pin),
+        port_name_prefix="E",
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].name = "B"
     c.ports["e2"].name = "C"
     c.ports["e3"].name = "E"
-    
+
     return c
+
 
 @gf.cell
 def pnpMPA(
@@ -221,27 +258,34 @@ def pnpMPA(
     area = width * length
     perimeter = 2 * (width + length)
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': tech.techParams['pnpMPA_model'],
-        'Calculate': 'a',
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Width in nm
-        'a': area*1e-12,
-        'p': perimeter*1e-6,
-        'ac': 7.524*1e-12,
-        'pc': 11.16*1e-6,
-        'm': 1,      # Multiplier
-        'region': '',
-        'trise': ''
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": tech.techParams["pnpMPA_model"],
+        "Calculate": "a",
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Width in nm
+        "a": area * 1e-12,
+        "p": perimeter * 1e-6,
+        "ac": 7.524 * 1e-12,
+        "pc": 11.16 * 1e-6,
+        "m": 1,  # Multiplier
+        "region": "",
+        "trise": "",
     }
 
-    c = generate_gf_from_ihp(cell_name="pnpMPA", cell_params=params, function_name=pnpMPAIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="pnpMPA", cell_params=params, function_name=pnpMPAIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].name = "TIE"
     c.ports["e2"].name = "PLUS"
     c.ports["e3"].name = "MINUS"
-    
+
     return c

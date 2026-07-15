@@ -1,19 +1,21 @@
-import sys
 import os
+import sys
+
 pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
 sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+sys.path.append(
+    f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
+)
 
+from typing import Literal
+
+import gdsfactory as gf
 from sg13g2_pycell_lib.ihp.inductor2_code import inductor2 as inductor2IHP
 from sg13g2_pycell_lib.ihp.inductor3_code import inductor3 as inductor3IHP
 
-
-import gdsfactory as gf
-from typing import Literal
-
-from .utils import *
-from functools import partial
 from .. import tech
+from .utils import *
+
 
 @gf.cell
 def inductor2(
@@ -25,7 +27,7 @@ def inductor2(
     num_turns: int = 1,
     block_qrc: bool = True,
     subE: bool = False,
-    guardRingType: Literal['none', 'psub', 'nwell'] = "none",
+    guardRingType: Literal["none", "psub", "nwell"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a parametric inductor layout.
@@ -53,40 +55,47 @@ def inductor2(
         gdsfactory.Component: The generated inductor layout.
     """
 
-    
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': 'inductor2',
-        'w': width*1e-6,
-        's': space*1e-6,
-        'd': distance*1e-6,
-        'r': resistance*1e-3,
-        'l': inductance*1e-9,
-        'nr_r': num_turns,
-        'blockqrc': block_qrc,
-        'subE': subE,
-        'lEstim': 33.303*1e-9,
-        'rEstim': 577.7*1e-3,
-        'Wmin': 2*1e-6,
-        'Smin': 2.1*1e-6,
-        'Dmin': 15.48*1e-6,
-        'minNr_t': 1,
-        'mergeStat': 16,
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6   
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": "inductor2",
+        "w": width * 1e-6,
+        "s": space * 1e-6,
+        "d": distance * 1e-6,
+        "r": resistance * 1e-3,
+        "l": inductance * 1e-9,
+        "nr_r": num_turns,
+        "blockqrc": block_qrc,
+        "subE": subE,
+        "lEstim": 33.303 * 1e-9,
+        "rEstim": 577.7 * 1e-3,
+        "Wmin": 2 * 1e-6,
+        "Smin": 2.1 * 1e-6,
+        "Dmin": 15.48 * 1e-6,
+        "minNr_t": 1,
+        "mergeStat": 16,
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="inductor2", cell_params=params, function_name=inductor2IHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="inductor2", cell_params=params, function_name=inductor2IHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal2pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.TopMetal2pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     for port in c.ports:
         port.orientation = 270  # all ports should face downwards
     c.ports["e1"].name = "LB"
     c.ports["e2"].name = "LA"
-    
+
     return c
+
 
 @gf.cell
 def inductor3(
@@ -98,7 +107,7 @@ def inductor3(
     num_turns: int = 2,
     block_qrc: bool = True,
     subE: bool = False,
-    guardRingType: Literal['none', 'psub', 'nwell'] = "none",
+    guardRingType: Literal["none", "psub", "nwell"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a parametric inductor layout.
@@ -127,40 +136,52 @@ def inductor3(
         gdsfactory.Component: The generated inductor layout.
     """
 
-    
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': 'inductor3',
-        'w': width*1e-6,
-        's': space*1e-6,
-        'd': distance*1e-6,
-        'r': resistance*1e-3,
-        'l': inductance*1e-9,
-        'nr_r': num_turns,
-        'blockqrc': block_qrc,
-        'subE': subE,
-        'lEstim': 33.303*1e-9,
-        'rEstim': 577.7*1e-3,
-        'Wmin': 2*1e-6,
-        'Smin': 2.1*1e-6,
-        'Dmin': 25.84*1e-6,
-        'minNr_t': 2,
-        'mergeStat': 16,
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": "inductor3",
+        "w": width * 1e-6,
+        "s": space * 1e-6,
+        "d": distance * 1e-6,
+        "r": resistance * 1e-3,
+        "l": inductance * 1e-9,
+        "nr_r": num_turns,
+        "blockqrc": block_qrc,
+        "subE": subE,
+        "lEstim": 33.303 * 1e-9,
+        "rEstim": 577.7 * 1e-3,
+        "Wmin": 2 * 1e-6,
+        "Smin": 2.1 * 1e-6,
+        "Dmin": 25.84 * 1e-6,
+        "minNr_t": 2,
+        "mergeStat": 16,
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="inductor3", cell_params=params, function_name=inductor3IHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="inductor3", cell_params=params, function_name=inductor3IHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.TopMetal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].name = "LA"
     c.ports["e2"].name = "LB"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.TopMetal2pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+        auto_rename_ports=False,
+    )
     c.ports["e1"].name = "LC"
-    
+
     for port in c.ports:
         port.orientation = 270  # all ports should face downwards
-    
+
     return c

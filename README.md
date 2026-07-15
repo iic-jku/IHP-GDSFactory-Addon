@@ -1,17 +1,24 @@
-# IHP GDSFactory PDK
+# IHP Open-PDK GDSFactory Addon
 
-This repository contains a PDK (Process Design Kit) for the IHP CMOS technology, built using GDSFactory. It includes **standard cells**, **waveguides**, **RF devices**, **design rules**, and **example designs** to facilitate the development of integrated circuits using this technology.
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Test code](https://github.com/iic-jku/IHP-GDSFactory-Addon/actions/workflows/test_code.yml/badge.svg)](https://github.com/iic-jku/IHP-GDSFactory-Addon/actions/workflows/test_code.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
 
-One of the advantages of using GDSFactory for PDK development is its modular and flexible approach to layout design. GDSFactory allows for easy creation and manipulation of layout components, making it straightforward to build and customize standard cells and other layout elements.
+(c) 2025-2026 David Kellerer-Pirklbauer, and Simon Dorrer
 
-Advantages of using GDSFactory for PDK development:
+Institute for Integrated Circuits and Quantum Computing, Johannes Kepler University (JKU), Linz, Austria
 
-- Programmatic layout generation: GDSFactory enables the creation of layout components using Python code, allowing for automation and easy modifications.
-- Team collaboration: GDSFactory's code-based approach facilitates version control and collaboration among team members.
-- Reproducibility: Designs can be easily reproduced and shared, ensuring that others can replicate the results.
-- Modular design: Layout components can be reused and combined to create complex designs, promoting consistency and reducing errors.
+## Overview
 
-## IHP Pcells
+This repository contains a Python-based PDK (Process Design Kit) for the open-source **IHP SG13G2** 130 nm SiGe:C BiCMOS technology, built on top of [GDSFactory](https://gdsfactory.github.io/gdsfactory/). The PCells drive the official [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) PCell library (`sg13g2_pycell_lib`) through GDSFactory and extend it with parametric microstrip transmission lines and RF/mm-wave building blocks (couplers, dividers, and filters).
+
+Because the layout is generated programmatically in Python, designs are reproducible, version-controllable, and easy to parameterize — PCells can be combined into complex, DRC-clean layouts directly from code.
+
+This project started as a fork of [`gdsfactory/IHP`](https://github.com/gdsfactory/IHP) and is now independently developed and maintained. The version in `gdsfactory/IHP` built the PCells completely from scratch, whereas this version implemented a wrapper layer and uses the original IHP PCells.
+
+## Features
+
+### PCells
 
 - [x] PMOS / NMOS
 - [x] BJTs
@@ -20,19 +27,18 @@ Advantages of using GDSFactory for PDK development:
 - [x] Inductors
 - [x] Passives (ESD diodes, PTap, NTap, Sealring)
 - [x] VIA Stack
-- [x] Bondpads
-- [x] Bondpads/Probe Pads
+- [x] Bondpads / Probe Pads
 - [x] Antennas
 
-For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
+For a detailed implementation status, have a look at the [PCell checklist](KLayout_PCell_Checklist.xlsx).
 
-## Waveguides
+### Waveguides
 
 - [x] Embedded Microstrip
 - [x] Edge-Coupled Microstrip
 - [x] 90°-Bend Microstrip
 
-## RF Devices
+### RF Devices
 
 - [x] Branchline Coupler
 - [x] Wilkinson Divider
@@ -41,42 +47,82 @@ For a better overview have a look into [this](Klayout_PCell_Checklist.xlsx).
 - [x] Hairpin Coupled-Line Microstrip Bandpass Filter
 - [x] Quarter Wave Transformer
 
+## Requirements
+
+> [!IMPORTANT]
+> This PDK requires the [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) to be installed, with the environment variable `PDK_ROOT` pointing to its installation directory (defaults to `/foss/pdks`, as used in the [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) container). The PCells import `sg13g2_pycell_lib` from `$PDK_ROOT/ihp-sg13g2/libs.tech/klayout/python` at load time.
+
+- Python 3.11, 3.12, or 3.13
+- [KLayout](https://www.klayout.de/) for viewing the generated layouts
+
 ## Installation
 
-We recommend `uv`
+### For users
 
-```bash
-# On macOS and Linux.
-curl -LsSf https://astral.sh/uv/install.sh | sh
+```sh
+pip install git+https://github.com/iic-jku/IHP-GDSFactory-Addon.git
 ```
 
-```bash
-# On Windows.
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+### For contributors
+
+```sh
+git clone https://github.com/iic-jku/IHP-GDSFactory-Addon.git
+cd IHP-GDSFactory-Addon
+pip install -e ".[dev]"
+pre-commit install
 ```
 
-### Installation for users
+### KLayout technology
 
-Use python 3.11, 3.12 or 3.13. We recommend [VSCode](https://code.visualstudio.com/) as an IDE.
+To install the SG13G2 layer properties and technology into KLayout, run:
+
+```sh
+python install_tech.py
+```
+
+Then restart KLayout to make the newly installed technology appear.
+
+## Usage
+
+```python
+import ihp
+
+ihp.PDK.activate()
+
+c = ihp.cells.straight(length=30, cross_section="metal5_routing")
+c.show()  # stream the layout to KLayout (requires the klive plugin)
+```
+
+## Directory Structure
 
 ```
-uv pip install ihp-gdfactory --upgrade
-```
-
-Then you need to restart Klayout to make sure the new technology installed appears.
-
-### Installation for contributors
-
-
-Then you can install with:
-
-```bash
-git clone https://github.com/gdsfactory/ihp.git
-cd ubc
-uv venv --python 3.12
-uv sync --extra docs --extra dev
+📁 IHP-GDSFactory-Addon/
+├─ 📁 .github/                      → CI workflows (pre-commit, packaging check)
+├─ 📁 ihp/                          → the Python package
+│  ├─ 📁 cells/                     → PCells: transistors, diodes, R/L/C, bondpads,
+│  │                                  ESD, via stacks, microstrips, RF devices, …
+│  ├─ 📁 klayout/tech/              → KLayout technology (layers.lyp, tech.lyt)
+│  ├─ 📄 config.py                  → package paths
+│  ├─ 📄 layer_map_ihp.py           → layer map (generated from layers.lyp)
+│  ├─ 📄 tech.py                    → layers, layer stack, and cross-sections
+│  └─ 📄 __init__.py                → PDK definition and registration
+├─ 📄 install_tech.py               → installs the KLayout technology
+├─ 📄 playground.py                 → development playground
+├─ 📄 KLayout_PCell_Checklist.xlsx  → PCell implementation status
+├─ 📄 pyproject.toml                → package metadata and dependencies
+└─ 📄 LICENSE                       → Apache License 2.0
 ```
 
 ## Documentation
 
-- [gdsfactory docs](https://gdsfactory.github.io/gdsfactory/)
+- [GDSFactory documentation](https://gdsfactory.github.io/gdsfactory/)
+- [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK)
+- [PCell checklist](KLayout_PCell_Checklist.xlsx)
+
+## Acknowledgements
+
+This PDK is developed and maintained at the **Institute for Integrated Circuits and Quantum Computing (IICQC)**, Johannes Kepler University (JKU), Linz, Austria.
+
+---
+
+Licensed under the **Apache License 2.0**, see [`LICENSE`](LICENSE).

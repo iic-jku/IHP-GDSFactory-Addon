@@ -1,5 +1,5 @@
-from gdsfactory.typings import Layer
 from gdsfactory.technology.layer_map import LayerMap
+from gdsfactory.typings import Layer
 
 
 class LayerMapIHP(LayerMap):

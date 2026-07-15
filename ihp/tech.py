@@ -5,10 +5,9 @@
 - Cross-sections for routing
 - Technology parameters
 """
-import os
+
 import json
-
-
+import os
 import sys
 from functools import partial
 from typing import Any
@@ -24,10 +23,10 @@ from gdsfactory.cross_section import (
     port_types_electrical,
     xsection,
 )
-from gdsfactory.technology import LayerLevel, LayerMap, LayerStack
-from gdsfactory.typings import Layer, LayerSpec
+from gdsfactory.technology import LayerLevel, LayerStack, lyp_to_dataclass
+from gdsfactory.typings import LayerSpec
 from pydantic import BaseModel
-from gdsfactory.technology import lyp_to_dataclass
+
 from ihp.config import PATH
 
 nm = 0.005  # 1 grid unit = 5nm
@@ -41,7 +40,12 @@ ihp_filepath = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/tech/sg13g2.
 package_folder = os.path.dirname(os.path.abspath(__file__))
 
 output_filepath = os.path.join(package_folder, "layer_map_ihp.py")
-lyp_to_dataclass(ihp_filepath, overwrite=True, output_filepath=output_filepath, map_name="LayerMapIHP")
+lyp_to_dataclass(
+    ihp_filepath,
+    overwrite=True,
+    output_filepath=output_filepath,
+    map_name="LayerMapIHP",
+)
 
 # import after generation
 from ihp.layer_map_ihp import LAYER
@@ -305,6 +309,7 @@ def get_layer_stack(
         )
     )
 
+
 techParams: dict = {}
 dataBaseUnits: float = 0.001
 
@@ -312,11 +317,14 @@ techName: str = "sg13g2"
 techNameParam: str = "techName"
 jsonTechFile: str = techName + "_tech.json"
 
-techFilePath: str = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile)  # patched: was hardcoded /foss/pdks
+techFilePath: str = os.path.join(
+    pdk_root, "ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile
+)  # patched: was hardcoded /foss/pdks
 
-with open(techFilePath, "r") as tech_file:
+with open(techFilePath) as tech_file:
     jsData = json.load(tech_file)
     techParams = jsData["techParams"]
+
 
 class TechIHP(BaseModel):
     """IHP PDK Technology parameters."""
@@ -341,11 +349,11 @@ class TechIHP(BaseModel):
     via1_size: float = 0.19
     via1_spacing: float = 0.22
     via1_enc_metal: float = 0.05
-    
+
     topvia1_size: float = 0.42
     topvia1_spacing: float = 0.42
     topvia1_enc_metal: float = 0.42
-    
+
     topvia2_size: float = 0.9
     topvia2_spacing: float = 1.05
     topvia2_enc_metal: float = 0.5
@@ -389,6 +397,7 @@ class TechIHP(BaseModel):
     inductor_min_diameter: float = 15.0
 
     techParams: dict = techParams
+
 
 TECH = TechIHP()
 LAYER_STACK = get_layer_stack()

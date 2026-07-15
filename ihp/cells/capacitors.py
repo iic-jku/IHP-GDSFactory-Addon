@@ -1,29 +1,31 @@
 """Capacitor components for IHP PDK."""
-import sys
+
 import os
+import sys
+
 pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
 sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+sys.path.append(
+    f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
+)
 
-from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbCapCalc
+from typing import Literal
 
+import gdsfactory as gf
 from sg13g2_pycell_lib.ihp.cmim_code import cmim as cmimIHP
 from sg13g2_pycell_lib.ihp.rfcmim_code import rfcmim as rfcmimIHP
 from sg13g2_pycell_lib.ihp.SVaricap_code import SVaricap as SVaricapIHP
+from sg13g2_pycell_lib.ihp.utility_functions import CbCapCalc, eng_string_to_float
 
-
-import gdsfactory as gf
-from typing import Literal
-
-from .utils import *
-from functools import partial
 from .. import tech
+from .utils import *
+
 
 @gf.cell
 def cmim(
     width: float = 6.99,
     length: float = 6.99,
-    guardRingType: Literal['none', 'psub', 'nwell'] = 'none',
+    guardRingType: Literal["none", "psub", "nwell"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a MIM (Metal-Insulator-Metal) capacitor.
@@ -46,32 +48,47 @@ def cmim(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': "w&l",
-        'model': tech.techParams['cmim_model'],
-        'C': CbCapCalc('C', 0, width*1e-6, length*1e-6, 'cmim'),    # TODO Is this used?
-        'w': width*1e-6,    # Width in μm
-        'l': length*1e-6,   # Length in μm
-        'Cspec': eng_string_to_float(tech.techParams['cmim_caspec']),     # Number of gates
-        'Wmin': eng_string_to_float(tech.techParams['cmim_minLW']),
-        'Lmin': eng_string_to_float(tech.techParams['cmim_minLW']),
-        'Cmax': eng_string_to_float(tech.techParams['cmim_maxC']),
-        'ic': "",
-        'm': 1,      # Multiplier
-        'trise': "",
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "w&l",
+        "model": tech.techParams["cmim_model"],
+        "C": CbCapCalc(
+            "C", 0, width * 1e-6, length * 1e-6, "cmim"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Width in μm
+        "l": length * 1e-6,  # Length in μm
+        "Cspec": eng_string_to_float(tech.techParams["cmim_caspec"]),  # Number of gates
+        "Wmin": eng_string_to_float(tech.techParams["cmim_minLW"]),
+        "Lmin": eng_string_to_float(tech.techParams["cmim_minLW"]),
+        "Cmax": eng_string_to_float(tech.techParams["cmim_maxC"]),
+        "ic": "",
+        "m": 1,  # Multiplier
+        "trise": "",
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="cmim", cell_params=params, function_name=cmimIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="cmim", cell_params=params, function_name=cmimIHP()
+    )
+
     # add ports to the component
     # no pin layers for cmim, so we use drawing layers
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5drawing), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal5drawing),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].name = "B"
     try:
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        gf.add_ports.add_ports_from_boxes(
+            c,
+            pin_layer=(tech.LAYER.TopMetal1drawing),
+            port_type="electrical",
+            ports_on_short_side=True,
+            auto_rename_ports=False,
+        )
         c.ports["e1"].name = "T"
     except ValueError:
         # gdsfactory >= 9.45 refuses to register a port that geometrically
@@ -82,14 +99,17 @@ def cmim(
         bb = c.get_boxes(layer=lay)[0].bbox()
         snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
         w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
-        c.add_port(name="T",
-                   center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
-                   width=w,
-                   orientation=c.ports["B"].orientation,
-                   layer=lay, port_type="electrical")
+        c.add_port(
+            name="T",
+            center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
+            width=w,
+            orientation=c.ports["B"].orientation,
+            layer=lay,
+            port_type="electrical",
+        )
     c.ports["B"].orientation = 0
     c.ports["T"].orientation = 180
-    
+
     return c
 
 
@@ -114,42 +134,66 @@ def rfcmim(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': "C",
-        'model': tech.techParams['rfcmim_model'],
-        'C': CbCapCalc('C', 0, width*1e-6, length*1e-6, 'rfcmim'),    # TODO Is this used?
-        'w': width*1e-6,    # Width in μm
-        'l': length*1e-6,   # Length in μm
-        'wfeed': feed_width*1e-6,
-        'Cspec': eng_string_to_float(tech.techParams['rfcmim_caspec']),     # Number of gates
-        'Wmin': eng_string_to_float(tech.techParams['rfcmim_minLW']),
-        'Lmin': eng_string_to_float(tech.techParams['rfcmim_minLW']),
-        'Cmax': eng_string_to_float(tech.techParams['rfcmim_maxC']),
-        'ic': "",
-        'm': 1,      # Multiplier
-        'trise': "",
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "C",
+        "model": tech.techParams["rfcmim_model"],
+        "C": CbCapCalc(
+            "C", 0, width * 1e-6, length * 1e-6, "rfcmim"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Width in μm
+        "l": length * 1e-6,  # Length in μm
+        "wfeed": feed_width * 1e-6,
+        "Cspec": eng_string_to_float(
+            tech.techParams["rfcmim_caspec"]
+        ),  # Number of gates
+        "Wmin": eng_string_to_float(tech.techParams["rfcmim_minLW"]),
+        "Lmin": eng_string_to_float(tech.techParams["rfcmim_minLW"]),
+        "Cmax": eng_string_to_float(tech.techParams["rfcmim_maxC"]),
+        "ic": "",
+        "m": 1,  # Multiplier
+        "trise": "",
     }
 
-    c = generate_gf_from_ihp(cell_name="rfcmim", cell_params=params, function_name=rfcmimIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="rfcmim", cell_params=params, function_name=rfcmimIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5pin), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal5pin),
+        port_type="electrical",
+        ports_on_short_side=False,
+        auto_rename_ports=False,
+    )
     c.ports["e1"].name = "MINUS"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1pin), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.TopMetal1pin),
+        port_type="electrical",
+        ports_on_short_side=False,
+        auto_rename_ports=False,
+    )
     c.ports["e1"].name = "PLUS"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+        auto_rename_ports=False,
+    )
     c.ports["e1"].name = "TIE"
-    
+
     return c
 
 
 @gf.cell
 def svaricap(
-    width: Literal['3.74u', '9.74u'] = '9.74u',
-    length: Literal['0.3u', '0.8u'] = '0.8u',
+    width: Literal["3.74u", "9.74u"] = "9.74u",
+    length: Literal["0.3u", "0.8u"] = "0.8u",
     Nx: int = 1,
-    guardRingType: Literal['none', 'nwell'] = 'none',
+    guardRingType: Literal["none", "nwell"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a MOS varicap (variable capacitor) layout.
@@ -171,26 +215,33 @@ def svaricap(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'model': tech.techParams['SVaricap_model'],
-        'w': width,    # Width in μm
-        'l': length,   # Length in μm
-        'Nx': Nx,
-        'bn': "sub!",      
-        'trise': "",
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "model": tech.techParams["SVaricap_model"],
+        "w": width,  # Width in μm
+        "l": length,  # Length in μm
+        "Nx": Nx,
+        "bn": "sub!",
+        "trise": "",
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="svaricap", cell_params=params, function_name=SVaricapIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="svaricap", cell_params=params, function_name=SVaricapIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=True,
+    )
     c.ports["e1"].orientation = 90
     c.ports["e2"].orientation = 270
     c.ports["e3"].orientation = 180
-    
+
     return c
 
 

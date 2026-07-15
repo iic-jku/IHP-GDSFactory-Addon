@@ -1,23 +1,28 @@
 """Resistor components for IHP PDK."""
-import sys
+
 import os
+import sys
+
 pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
 sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+sys.path.append(
+    f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
+)
 
-from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbResCalc, CbResCurrent
+from typing import Literal
 
+import gdsfactory as gf
 from sg13g2_pycell_lib.ihp.rhigh_code import rhigh as rhighIHP
 from sg13g2_pycell_lib.ihp.rppd_code import rppd as rppdIHP
 from sg13g2_pycell_lib.ihp.rsil_code import rsil as rsilIHP
+from sg13g2_pycell_lib.ihp.utility_functions import (
+    CbResCalc,
+    CbResCurrent,
+    eng_string_to_float,
+)
 
-
-import gdsfactory as gf
-from typing import Literal
-
-from .utils import *
-from functools import partial
 from .. import tech
+from .utils import *
 
 
 @gf.cell
@@ -27,9 +32,9 @@ def rhigh(
     bends: int = 0,
     polySpace: float = 0.18,
     numberOfSegments: int = 1,
-    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentConnection: Literal["None", "Serial", "Parallel"] = "Serial",
     segmentSpacing: float = 2,
-    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingType: Literal["none", "nwell", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a high-resistance polysilicon resistor layout.
@@ -60,41 +65,52 @@ def rhigh(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': 'l',       # TODO check what to do
-        'Recommendation': "No",
-        'model': tech.techParams['rhigh_model'],
-        'R': CbResCalc('R', 0, length*1e-6, width*1e-6, bends, polySpace*1e-6, 'rhigh'),    # TODO Is this used?
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Length in μm
-        'b': bends,
-        'ps': polySpace*1e-6,
-        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rhighG2'), # TODO Is this used?
-        'bn': "sub!",
-        'Wmin': eng_string_to_float(tech.techParams['rhigh_minW'])*1e-6,
-        'Lmin': eng_string_to_float(tech.techParams['rhigh_minL'])*1e-6,
-        'PSmin': eng_string_to_float(tech.techParams['rhigh_minPS'])*1e-6,
-        'Rspec': tech.techParams['rhigh_rspec'],
-        'Rkspec': tech.techParams['rhigh_rkspec'],
-        'Rzspec': tech.techParams['rhigh_rzspec'],
-        'tc1': -2300e-6,    # hardcoded in the PCell
-        'tc2': 2.1e-6,    # hardcoded in the PCell
-        'PWB': "No",
-        'm': 1,      # Multiplier
-        'trise': 0,
-        'NumberOfSegments': numberOfSegments,
-        'SegmentConnection': segmentConnection,
-        'SegmentSpacing': segmentSpacing*1e-6,
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "l",  # TODO check what to do
+        "Recommendation": "No",
+        "model": tech.techParams["rhigh_model"],
+        "R": CbResCalc(
+            "R", 0, length * 1e-6, width * 1e-6, bends, polySpace * 1e-6, "rhigh"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Length in μm
+        "b": bends,
+        "ps": polySpace * 1e-6,
+        "Imax": CbResCurrent(
+            width * 1e-6, tech.techParams["epsilon2"], "rhighG2"
+        ),  # TODO Is this used?
+        "bn": "sub!",
+        "Wmin": eng_string_to_float(tech.techParams["rhigh_minW"]) * 1e-6,
+        "Lmin": eng_string_to_float(tech.techParams["rhigh_minL"]) * 1e-6,
+        "PSmin": eng_string_to_float(tech.techParams["rhigh_minPS"]) * 1e-6,
+        "Rspec": tech.techParams["rhigh_rspec"],
+        "Rkspec": tech.techParams["rhigh_rkspec"],
+        "Rzspec": tech.techParams["rhigh_rzspec"],
+        "tc1": -2300e-6,  # hardcoded in the PCell
+        "tc2": 2.1e-6,  # hardcoded in the PCell
+        "PWB": "No",
+        "m": 1,  # Multiplier
+        "trise": 0,
+        "NumberOfSegments": numberOfSegments,
+        "SegmentConnection": segmentConnection,
+        "SegmentSpacing": segmentSpacing * 1e-6,
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="rhigh", cell_params=params, function_name=rhighIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="rhigh", cell_params=params, function_name=rhighIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
-    
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=False,
+    )
+
     return c
 
 
@@ -105,9 +121,9 @@ def rppd(
     bends: int = 0,
     polySpace: float = 0.18,
     numberOfSegments: int = 1,
-    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentConnection: Literal["None", "Serial", "Parallel"] = "Serial",
     segmentSpacing: float = 2,
-    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingType: Literal["none", "nwell", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a high-resistance polysilicon resistor layout.
@@ -138,41 +154,52 @@ def rppd(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': 'l',       # TODO check what to do
-        'Recommendation': "No",
-        'model': tech.techParams['rppd_model'],
-        'R': CbResCalc('R', 0, length*1e-6, width*1e-6, bends, polySpace*1e-6, 'rppd'),    # TODO Is this used?
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Length in μm
-        'b': bends,
-        'ps': polySpace*1e-6,
-        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rppdG2'), # TODO Is this used?
-        'bn': "sub!",
-        'Wmin': eng_string_to_float(tech.techParams['rppd_minW'])*1e-6,
-        'Lmin': eng_string_to_float(tech.techParams['rppd_minL'])*1e-6,
-        'PSmin': eng_string_to_float(tech.techParams['rppd_minPS'])*1e-6,
-        'Rspec': tech.techParams['rppd_rspec'],
-        'Rkspec': tech.techParams['rppd_rkspec'],
-        'Rzspec': tech.techParams['rppd_rzspec'],
-        'tc1': -170e-6,    # hardcoded in the PCell
-        'tc2': 0.4e-6,    # hardcoded in the PCell
-        'PWB': "No",
-        'm': 1,      # Multiplier
-        'trise': 0,
-        'NumberOfSegments': numberOfSegments,
-        'SegmentConnection': segmentConnection,
-        'SegmentSpacing': segmentSpacing*1e-6,
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "l",  # TODO check what to do
+        "Recommendation": "No",
+        "model": tech.techParams["rppd_model"],
+        "R": CbResCalc(
+            "R", 0, length * 1e-6, width * 1e-6, bends, polySpace * 1e-6, "rppd"
+        ),  # TODO Is this used?
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Length in μm
+        "b": bends,
+        "ps": polySpace * 1e-6,
+        "Imax": CbResCurrent(
+            width * 1e-6, tech.techParams["epsilon2"], "rppdG2"
+        ),  # TODO Is this used?
+        "bn": "sub!",
+        "Wmin": eng_string_to_float(tech.techParams["rppd_minW"]) * 1e-6,
+        "Lmin": eng_string_to_float(tech.techParams["rppd_minL"]) * 1e-6,
+        "PSmin": eng_string_to_float(tech.techParams["rppd_minPS"]) * 1e-6,
+        "Rspec": tech.techParams["rppd_rspec"],
+        "Rkspec": tech.techParams["rppd_rkspec"],
+        "Rzspec": tech.techParams["rppd_rzspec"],
+        "tc1": -170e-6,  # hardcoded in the PCell
+        "tc2": 0.4e-6,  # hardcoded in the PCell
+        "PWB": "No",
+        "m": 1,  # Multiplier
+        "trise": 0,
+        "NumberOfSegments": numberOfSegments,
+        "SegmentConnection": segmentConnection,
+        "SegmentSpacing": segmentSpacing * 1e-6,
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="rppd", cell_params=params, function_name=rppdIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="rppd", cell_params=params, function_name=rppdIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
-    
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=False,
+    )
+
     return c
 
 
@@ -183,9 +210,9 @@ def rsil(
     polySpace: float = 0.18,
     resistance: float = 24.9,
     numberOfSegments: int = 1,
-    segmentConnection: Literal['None', 'Serial', 'Parallel'] = 'Serial',
+    segmentConnection: Literal["None", "Serial", "Parallel"] = "Serial",
     segmentSpacing: float = 2,
-    guardRingType: Literal['none', 'nwell', 'psub'] = 'none',
+    guardRingType: Literal["none", "nwell", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
     """Create a high-resistance polysilicon resistor layout (RSIL type).
@@ -216,40 +243,49 @@ def rsil(
     """
 
     params = {
-        'cdf_version': tech.techParams['CDFVersion'],
-        'Display': 'Selected',
-        'Calculate': 'l',       # TODO check what to do
-        'Recommendation': "No",
-        'model': tech.techParams['rsil_model'],
-        'R': resistance,    # TODO IHP function defines it as user parameter but also calculates it
-        'w': width*1e-6,    # Length in μm
-        'l': length*1e-6,   # Length in μm
-        'ps': polySpace*1e-6,
-        'Imax': CbResCurrent(width*1e-6, tech.techParams['epsilon2'], 'rsilG2'), # TODO Is this used?
-        'bn': "sub!",
-        'Wmin': eng_string_to_float(tech.techParams['rsil_minW'])*1e-6,
-        'Lmin': eng_string_to_float(tech.techParams['rsil_minL'])*1e-6,
-        'PSmin': eng_string_to_float(tech.techParams['rsil_minPS'])*1e-6,
-        'Rspec': tech.techParams['rsil_rspec'],
-        'Rkspec': tech.techParams['rsil_rkspec'],
-        'Rzspec': tech.techParams['rsil_rzspec'],
-        'tc1': -170e-6,    # hardcoded in the PCell
-        'tc2': 0.4e-6,    # hardcoded in the PCell
-        'PWB': "No",
-        'm': 1,      # Multiplier
-        'trise': 0,
-        'NumberOfSegments': numberOfSegments,
-        'SegmentConnection': segmentConnection,
-        'SegmentSpacing': segmentSpacing*1e-6,
-        'guardRingType': guardRingType,
-        'guardRingDistance': guardRingDistance*1e-6,
+        "cdf_version": tech.techParams["CDFVersion"],
+        "Display": "Selected",
+        "Calculate": "l",  # TODO check what to do
+        "Recommendation": "No",
+        "model": tech.techParams["rsil_model"],
+        "R": resistance,  # TODO IHP function defines it as user parameter but also calculates it
+        "w": width * 1e-6,  # Length in μm
+        "l": length * 1e-6,  # Length in μm
+        "ps": polySpace * 1e-6,
+        "Imax": CbResCurrent(
+            width * 1e-6, tech.techParams["epsilon2"], "rsilG2"
+        ),  # TODO Is this used?
+        "bn": "sub!",
+        "Wmin": eng_string_to_float(tech.techParams["rsil_minW"]) * 1e-6,
+        "Lmin": eng_string_to_float(tech.techParams["rsil_minL"]) * 1e-6,
+        "PSmin": eng_string_to_float(tech.techParams["rsil_minPS"]) * 1e-6,
+        "Rspec": tech.techParams["rsil_rspec"],
+        "Rkspec": tech.techParams["rsil_rkspec"],
+        "Rzspec": tech.techParams["rsil_rzspec"],
+        "tc1": -170e-6,  # hardcoded in the PCell
+        "tc2": 0.4e-6,  # hardcoded in the PCell
+        "PWB": "No",
+        "m": 1,  # Multiplier
+        "trise": 0,
+        "NumberOfSegments": numberOfSegments,
+        "SegmentConnection": segmentConnection,
+        "SegmentSpacing": segmentSpacing * 1e-6,
+        "guardRingType": guardRingType,
+        "guardRingDistance": guardRingDistance * 1e-6,
     }
 
-    c = generate_gf_from_ihp(cell_name="rsil", cell_params=params, function_name=rsilIHP())
-    
+    c = generate_gf_from_ihp(
+        cell_name="rsil", cell_params=params, function_name=rsilIHP()
+    )
+
     # add ports to the component
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
-    
+    gf.add_ports.add_ports_from_boxes(
+        c,
+        pin_layer=(tech.LAYER.Metal1pin),
+        port_type="electrical",
+        ports_on_short_side=False,
+    )
+
     return c
 
 
