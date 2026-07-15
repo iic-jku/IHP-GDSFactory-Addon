@@ -15,13 +15,9 @@ class Path:
     module = module
     repo = repo
     cells = module / "cells"
-    samples = module / "samples"
-    data = samples / "data"
-    gds = module / "gds"
 
     lyp = module / "klayout" / "tech" / "layers.lyp"
     lyt = module / "klayout" / "tech" / "tech.lyt"
-    layers_yaml = module / "layers.yaml"
     tech = module / "klayout" / "tech"
 
 

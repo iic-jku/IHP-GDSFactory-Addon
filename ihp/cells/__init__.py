@@ -4,7 +4,6 @@ from .bondpads import *
 from .capacitors import *
 from .containers import *
 from .diodes import *
-# from .fixed import *
 from .passives import *
 from .text import *
 from .via_stacks import *
