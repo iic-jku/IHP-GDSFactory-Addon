@@ -4,7 +4,7 @@
 [![Test code](https://github.com/iic-jku/IHP-GDSFactory-Addon/actions/workflows/test_code.yml/badge.svg)](https://github.com/iic-jku/IHP-GDSFactory-Addon/actions/workflows/test_code.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
 
-(c) 2025-2026 David Kellerer-Pirklbauer, and Simon Dorrer
+(c) 2025-2026 David Kellerer-Pirklbauer and Simon Dorrer
 
 Institute for Integrated Circuits and Quantum Computing, Johannes Kepler University (JKU), Linz, Austria
 
@@ -14,7 +14,7 @@ This repository contains a Python-based Addon for the open-source **IHP SG13G2**
 
 Because the layout is generated programmatically in Python, designs are reproducible, version-controllable, and easy to parameterize. PCells can be combined into complex, DRC-clean layouts directly from code.
 
-This project started as a fork of [`gdsfactory/IHP`](https://github.com/gdsfactory/IHP) and is now independently developed and maintained. The version in `gdsfactory/IHP` built the PCells completely from scratch, whereas this version implemented a wrapper layer and uses the original IHP PCells.
+This project started as a fork of [`gdsfactory/IHP`](https://github.com/gdsfactory/IHP) and is now independently developed and maintained. The version in `gdsfactory/IHP` builds the PCells completely from scratch, whereas this version uses a wrapper layer around the original IHP PCells.
 
 ## Features
 
@@ -28,7 +28,7 @@ All PCells from the IHP Open-PDK are supported:
 - [x] Capacitors
 - [x] Inductors
 - [x] Passives (ESD diodes, ptap, ntap, seal ring, etc.)
-- [x] VIA stack
+- [x] Via stacks
 - [x] Bond pads / probe pads
 - [x] Antennas
 
@@ -36,18 +36,18 @@ For a detailed implementation status, have a look at the [PCell checklist](KLayo
 
 ### Waveguides
 
-- [x] Embedded Microstrip
-- [x] Edge-Coupled Microstrip
-- [x] 90°-Bend Microstrip
+- [x] Embedded microstrip
+- [x] Edge-coupled microstrip
+- [x] 90°-bend microstrip
 
-### RF Devices
+### RF devices
 
-- [x] Branchline Coupler
-- [x] Wilkinson Divider
-- [x] Directional Coupler
-- [x] Coupled-Line Microstrip Bandpass Filter
-- [x] Hairpin Coupled-Line Microstrip Bandpass Filter
-- [x] Quarter Wave Transformer
+- [x] Branch-line coupler
+- [x] Wilkinson divider
+- [x] Directional coupler
+- [x] Coupled-line microstrip bandpass filter
+- [x] Hairpin coupled-line microstrip bandpass filter
+- [x] Quarter-wave transformer
 
 ## Requirements
 
@@ -104,7 +104,7 @@ c.show()  # stream the layout to KLayout (requires the klive plugin)
 📁 IHP-GDSFactory-Addon/
 ├─ 📁 .github/                      → CI workflows (pre-commit, packaging check)
 ├─ 📁 ihp/                          → the Python package
-│  ├─ 📁 cells/                     → PCells: transistors, diodes, R/L/C, bondpads,
+│  ├─ 📁 cells/                     → PCells: transistors, diodes, R/L/C, bond pads,
 │  │                                  ESD, via stacks, microstrips, RF devices, …
 │  ├─ 📁 klayout/tech/              → KLayout technology (layers.lyp, tech.lyt)
 │  ├─ 📄 config.py                  → package paths
