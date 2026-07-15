@@ -10,9 +10,9 @@ Institute for Integrated Circuits and Quantum Computing, Johannes Kepler Univers
 
 ## Overview
 
-This repository contains a Python-based PDK (Process Design Kit) for the open-source **IHP SG13G2** 130 nm SiGe:C BiCMOS technology, built on top of [GDSFactory](https://gdsfactory.github.io/gdsfactory/). The PCells drive the official [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) PCell library (`sg13g2_pycell_lib`) through GDSFactory and extend it with parametric microstrip transmission lines and RF/mm-wave building blocks (couplers, dividers, and filters).
+This repository contains a Python-based Addon for the open-source **IHP SG13G2** 130 nm SiGe:C BiCMOS PDK, built on top of [GDSFactory](https://gdsfactory.github.io/gdsfactory/). The PCells drive the official [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) PCell library (`sg13g2_pycell_lib`) through GDSFactory and extend it with parametric microstrip transmission lines and RF/mm-wave building blocks (couplers, dividers, and filters).
 
-Because the layout is generated programmatically in Python, designs are reproducible, version-controllable, and easy to parameterize — PCells can be combined into complex, DRC-clean layouts directly from code.
+Because the layout is generated programmatically in Python, designs are reproducible, version-controllable, and easy to parameterize. PCells can be combined into complex, DRC-clean layouts directly from code.
 
 This project started as a fork of [`gdsfactory/IHP`](https://github.com/gdsfactory/IHP) and is now independently developed and maintained. The version in `gdsfactory/IHP` built the PCells completely from scratch, whereas this version implemented a wrapper layer and uses the original IHP PCells.
 
@@ -20,14 +20,16 @@ This project started as a fork of [`gdsfactory/IHP`](https://github.com/gdsfacto
 
 ### PCells
 
+All PCells from the IHP Open-PDK are supported:
+
 - [x] PMOS / NMOS
 - [x] BJTs
 - [x] Resistors
 - [x] Capacitors
 - [x] Inductors
-- [x] Passives (ESD diodes, PTap, NTap, Sealring)
-- [x] VIA Stack
-- [x] Bondpads / Probe Pads
+- [x] Passives (ESD diodes, ptap, ntap, seal ring, etc.)
+- [x] VIA stack
+- [x] Bond pads / probe pads
 - [x] Antennas
 
 For a detailed implementation status, have a look at the [PCell checklist](KLayout_PCell_Checklist.xlsx).
@@ -50,10 +52,13 @@ For a detailed implementation status, have a look at the [PCell checklist](KLayo
 ## Requirements
 
 > [!IMPORTANT]
-> This PDK requires the [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) to be installed, with the environment variable `PDK_ROOT` pointing to its installation directory (defaults to `/foss/pdks`, as used in the [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) container). The PCells import `sg13g2_pycell_lib` from `$PDK_ROOT/ihp-sg13g2/libs.tech/klayout/python` at load time.
+> This Addon requires the [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) to be installed, with the environment variable `PDK_ROOT` pointing to its installation directory (defaults to `/foss/pdks`, as used in the [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) container). The PCells import `sg13g2_pycell_lib` from `$PDK_ROOT/ihp-sg13g2/libs.tech/klayout/python` at load time.
 
 - Python 3.11, 3.12, or 3.13
 - [KLayout](https://www.klayout.de/) for viewing the generated layouts
+
+> [!TIP]
+> Use the [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) container with tag `2026.07` or later. Everything is already set up there, and you can start designing immediately.
 
 ## Installation
 
@@ -121,8 +126,8 @@ c.show()  # stream the layout to KLayout (requires the klive plugin)
 
 ## Acknowledgements
 
-This PDK is developed and maintained at the **Institute for Integrated Circuits and Quantum Computing (IICQC)**, Johannes Kepler University (JKU), Linz, Austria.
+This Addon is developed and maintained at the **Institute for Integrated Circuits and Quantum Computing (IICQC)**, Johannes Kepler University (JKU), Linz, Austria.
 
----
+## License
 
 Licensed under the **Apache License 2.0**, see [`LICENSE`](LICENSE).
