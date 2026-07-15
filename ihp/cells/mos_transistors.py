@@ -1,3 +1,5 @@
+"""MOS transistor components for IHP PDK."""
+
 import os
 import sys
 
@@ -68,10 +70,10 @@ def nmos(
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
         "model": tech.techParams["nmos_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["nmos_defW"])
-        / eng_string_to_float(tech.techParams["nmos_defNG"]),  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        / eng_string_to_float(tech.techParams["nmos_defNG"]),  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "m": 1,  # Multiplier
         "Wmin": eng_string_to_float(tech.techParams["nmos_minW"]),
@@ -95,7 +97,7 @@ def nmos(
         ports_on_short_side=True,
         auto_rename_ports=False,
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # adjust Metal1 port orientations so every other DS port points in the opposite direction
     for i, port in enumerate(c.ports):
         port.orientation = (
             90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
@@ -144,10 +146,10 @@ def nmosHV(
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
         "model": tech.techParams["nmosHV_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["nmosHV_defW"])
-        / eng_string_to_float(tech.techParams["nmosHV_defNG"]),  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        / eng_string_to_float(tech.techParams["nmosHV_defNG"]),  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "m": 1,  # Multiplier
         "Wmin": eng_string_to_float(tech.techParams["nmosHV_minW"]),
@@ -171,7 +173,7 @@ def nmosHV(
         ports_on_short_side=True,
         auto_rename_ports=False,
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # adjust Metal1 port orientations so every other DS port points in the opposite direction
     for i, port in enumerate(c.ports):
         port.orientation = (
             90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
@@ -220,10 +222,10 @@ def pmos(
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
         "model": tech.techParams["pmos_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["pmos_defW"])
-        / eng_string_to_float(tech.techParams["pmos_defNG"]),  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        / eng_string_to_float(tech.techParams["pmos_defNG"]),  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "m": 1,  # Multiplier
         "Wmin": eng_string_to_float(tech.techParams["pmos_minW"]),
@@ -247,7 +249,7 @@ def pmos(
         ports_on_short_side=True,
         auto_rename_ports=False,
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # adjust Metal1 port orientations so every other DS port points in the opposite direction
     for i, port in enumerate(c.ports):
         port.orientation = (
             90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
@@ -296,10 +298,10 @@ def pmosHV(
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
         "model": tech.techParams["pmosHV_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["pmosHV_defW"])
-        / eng_string_to_float(tech.techParams["pmosHV_defNG"]),  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        / eng_string_to_float(tech.techParams["pmosHV_defNG"]),  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "m": 1,  # Multiplier
         "Wmin": eng_string_to_float(tech.techParams["pmosHV_minW"]),
@@ -323,7 +325,7 @@ def pmosHV(
         ports_on_short_side=True,
         auto_rename_ports=False,
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # adjust Metal1 port orientations so every other DS port points in the opposite direction
     for i, port in enumerate(c.ports):
         port.orientation = (
             90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
@@ -379,11 +381,11 @@ def rfnmos(
         "cdf_version": tech.techParams["CDFVersion"],
         "rfmode": 1,
         "model": tech.techParams["rfnmos_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["rfnmos_defW"])
         / eng_string_to_float(tech.techParams["rfnmos_defNG"])
-        * 1e-6,  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        * 1e-6,  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "calculate": True,
         "cnt_rows": cnt_rows,
@@ -410,7 +412,7 @@ def rfnmos(
         ports_on_short_side=True,
         auto_rename_ports=False,
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
+    # adjust Metal1 port orientations so every other DS port points in the opposite direction
     for i, port in enumerate(c.ports):
         port.orientation = (
             90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
@@ -466,11 +468,11 @@ def rfnmosHV(
         "cdf_version": tech.techParams["CDFVersion"],
         "rfmode": 1,
         "model": tech.techParams["rfnmosHV_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["rfnmosHV_defW"])
         / eng_string_to_float(tech.techParams["rfnmosHV_defNG"])
-        * 1e-6,  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        * 1e-6,  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "calculate": True,
         "cnt_rows": cnt_rows,
@@ -487,9 +489,6 @@ def rfnmosHV(
     c = generate_gf_from_ihp(
         cell_name="rfnmosHV", cell_params=params, function_name=rfnmosHVIHP()
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
 
@@ -530,11 +529,11 @@ def rfpmos(
         "cdf_version": tech.techParams["CDFVersion"],
         "rfmode": 1,
         "model": tech.techParams["rfpmos_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["rfpmos_defW"])
         / eng_string_to_float(tech.techParams["rfpmos_defNG"])
-        * 1e-6,  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        * 1e-6,  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "calculate": True,
         "cnt_rows": cnt_rows,
@@ -551,9 +550,6 @@ def rfpmos(
     c = generate_gf_from_ihp(
         cell_name="rfpmos", cell_params=params, function_name=rfpmosIHP()
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
 
@@ -594,11 +590,11 @@ def rfpmosHV(
         "cdf_version": tech.techParams["CDFVersion"],
         "rfmode": 1,
         "model": tech.techParams["rfpmosHV_model"],
-        "w": w * 1e-6,  # Width in μm
+        "w": w * 1e-6,  # um to m
         "ws": eng_string_to_float(tech.techParams["rfpmosHV_defW"])
         / eng_string_to_float(tech.techParams["rfpmosHV_defNG"])
-        * 1e-6,  # Single Width in nm
-        "l": l * 1e-6,  # Length in μm
+        * 1e-6,  # single finger width
+        "l": l * 1e-6,  # um to m
         "ng": ng,  # Number of gates
         "calculate": True,
         "cnt_rows": cnt_rows,
@@ -615,7 +611,4 @@ def rfpmosHV(
     c = generate_gf_from_ihp(
         cell_name="rfpmosHV", cell_params=params, function_name=rfpmosHVIHP()
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c

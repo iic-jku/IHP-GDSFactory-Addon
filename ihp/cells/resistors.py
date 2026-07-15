@@ -73,8 +73,8 @@ def rhigh(
         "R": CbResCalc(
             "R", 0, length * 1e-6, width * 1e-6, bends, polySpace * 1e-6, "rhigh"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "b": bends,
         "ps": polySpace * 1e-6,
         "Imax": CbResCurrent(
@@ -126,10 +126,10 @@ def rppd(
     guardRingType: Literal["none", "nwell", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a high-resistance polysilicon resistor layout.
+    """Create a P+ polysilicon resistor (rppd) layout.
 
-    This function generates a parametric high-resistance polysilicon resistor
-    with configurable width, length, bends, and multiple segments. Optional
+    This function generates a parametric P+ polysilicon resistor with
+    configurable width, length, bends, and multiple segments. Optional
     guard rings can be added for isolation.
 
     Args:
@@ -150,7 +150,7 @@ def rppd(
         guardRingDistance: Distance between the resistor and guard ring in micrometers.
 
     Returns:
-        gdsfactory.Component: The generated high-resistance polysilicon resistor layout.
+        gdsfactory.Component: The generated P+ polysilicon resistor layout.
     """
 
     params = {
@@ -162,8 +162,8 @@ def rppd(
         "R": CbResCalc(
             "R", 0, length * 1e-6, width * 1e-6, bends, polySpace * 1e-6, "rppd"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "b": bends,
         "ps": polySpace * 1e-6,
         "Imax": CbResCurrent(
@@ -215,11 +215,11 @@ def rsil(
     guardRingType: Literal["none", "nwell", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Create a high-resistance polysilicon resistor layout (RSIL type).
+    """Create a silicided polysilicon resistor (rsil) layout.
 
-    This function generates a parametric high-resistance polysilicon resistor
-    of RSIL type with configurable width, length, target resistance, bends,
-    multiple segments, and optional guard rings for isolation.
+    This function generates a parametric silicided polysilicon resistor
+    with configurable width, length, target resistance, multiple segments,
+    and optional guard rings for isolation.
 
     Args:
         length: Length of the resistor in micrometers.
@@ -239,7 +239,7 @@ def rsil(
         guardRingDistance: Distance between the resistor and guard ring in micrometers.
 
     Returns:
-        gdsfactory.Component: The generated RSIL polysilicon resistor layout.
+        gdsfactory.Component: The generated silicided polysilicon resistor layout.
     """
 
     params = {
@@ -249,8 +249,8 @@ def rsil(
         "Recommendation": "No",
         "model": tech.techParams["rsil_model"],
         "R": resistance,  # TODO IHP function defines it as user parameter but also calculates it
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "ps": polySpace * 1e-6,
         "Imax": CbResCurrent(
             width * 1e-6, tech.techParams["epsilon2"], "rsilG2"

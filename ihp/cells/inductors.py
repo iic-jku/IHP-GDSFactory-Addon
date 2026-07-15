@@ -1,3 +1,5 @@
+"""Inductor components for IHP PDK."""
+
 import os
 import sys
 
@@ -39,11 +41,12 @@ def inductor2(
     Args:
         width: Width of the inductor trace in micrometers.
         space: Spacing between turns of the inductor in micrometers.
-        distance: Total distance of the inductor layout in micrometers.
+        distance: Outer diameter of the inductor in micrometers.
         resistance: Target series resistance in Ohms.
         inductance: Target inductance in nH (used for layout optimization).
         num_turns: Number of turns in the inductor.
-        block_qrc: Whether to block QRC (quasi-resistor-capacitor) structures.
+        block_qrc: Whether to add the noQRC layer that blocks parasitic (QRC)
+            extraction over the inductor.
         subE: Whether to connect to substrate for shielding or grounding.
         guardRingType: Type of guard ring to include. Options:
             - 'none': No guard ring.
@@ -120,11 +123,12 @@ def inductor3(
     Args:
         width: Width of the inductor trace in micrometers.
         space: Spacing between turns of the inductor in micrometers.
-        distance: Total distance of the inductor layout in micrometers.
+        distance: Outer diameter of the inductor in micrometers.
         resistance: Target series resistance in Ohms.
         inductance: Target inductance in nH (used for layout optimization).
         num_turns: Number of turns in the inductor.
-        block_qrc: Whether to block QRC (quasi-resistor-capacitor) structures.
+        block_qrc: Whether to add the noQRC layer that blocks parasitic (QRC)
+            extraction over the inductor.
         subE: Whether to connect to substrate for shielding or grounding.
         guardRingType: Type of guard ring to include. Options:
             - 'none': No guard ring.

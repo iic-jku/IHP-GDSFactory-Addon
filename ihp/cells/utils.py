@@ -1,3 +1,5 @@
+"""Helpers to wrap the original IHP PyCells into gdsfactory Components."""
+
 import os
 import sys
 
@@ -9,7 +11,6 @@ sys.path.append(
         "ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/",
     )
 )
-import os
 
 import gdsfactory as gf  # to have gf.Component
 import pya  # KLayout Python API
@@ -18,6 +19,16 @@ from cni.tech import Tech  # to get the technology
 
 
 def generate_gf_from_ihp(cell_name, cell_params, function_name) -> gf.Component:
+    """Instantiate an IHP PyCell and import the result as a gdsfactory Component.
+
+    Args:
+        cell_name: Name of the KLayout cell to create.
+        cell_params: Dictionary with all parameter values expected by the PyCell.
+        function_name: Instance of the IHP PyCell implementation class.
+
+    Returns:
+        gf.Component: The imported PyCell layout.
+    """
     # ----------------------------------------------------------------
     # Step 1: Get the technology object
     # ----------------------------------------------------------------
@@ -61,32 +72,21 @@ def generate_gf_from_ihp(cell_name, cell_params, function_name) -> gf.Component:
     return c
 
 
-def add_port_group(c: gf.component, ref, ports: list, prefix: str = ""):
-    """
-    Add a group of ports from a reference component to a target component,
-    optionally renaming them with a prefix.
+def add_port_group(c: gf.Component, ref, ports: list, prefix: str = ""):
+    """Add a group of ports from a reference to a component, with an optional prefix.
 
-    Parameters
-    ----------
-    c : gf.Component
-        The component to which the ports will be added.
-    ref : gf.ComponentReference or similar
-        The referenced component from which ports are copied.
-    ports : list of str
-        A list of port names to copy from `ref` to `c`.
-    prefix : str, optional
-        A string to prepend to each added port's name, by default "".
+    Every name in ports must exist in ref.ports. The port objects are not
+    deep-copied, the same ref.ports[p] objects are attached to c under
+    their new names.
 
-    Returns
-    -------
-    gf.Component
-        The updated component `c` with the copied ports added.
+    Args:
+        c: Component to which the ports are added.
+        ref: Component reference from which the ports are copied.
+        ports: Port names to copy from ref to c.
+        prefix: String to prepend to each added port name.
 
-    Notes
-    -----
-    - Each port in `ports` must exist in `ref.ports`.
-    - Port objects are not deep-copied; the function attaches the same
-      `ref.ports[p]` objects to `c` under new names.
+    Returns:
+        gf.Component: The component c with the copied ports added.
     """
     for p in ports:
         c.add_port(name=prefix + p, port=ref.ports[p])
@@ -94,29 +94,20 @@ def add_port_group(c: gf.component, ref, ports: list, prefix: str = ""):
     return c
 
 
-def change_port_orientation(c: gf.component, ports, orientation: int):
-    """
-    Change the orientation value of one or more ports in a component.
+def change_port_orientation(c: gf.Component, ports, orientation: int):
+    """Change the orientation of one or more ports in a component.
 
-    Parameters
-    ----------
-    c : gf.Component
-        The component whose port orientations will be modified.
-    ports : iterable of str
-        Names of the ports in `c` whose orientation should be updated.
-    orientation : int
-        The new orientation angle (in degrees) to assign to each port.
+    Every name in ports must exist in c.ports. The orientation is typically
+    one of 0, 90, 180 or 270 in gdsfactory conventions, but arbitrary
+    angles are allowed.
 
-    Returns
-    -------
-    gf.Component
-        The updated component `c` with modified port orientations.
+    Args:
+        c: Component whose port orientations are modified.
+        ports: Names of the ports in c to update.
+        orientation: New orientation angle in degrees.
 
-    Notes
-    -----
-    - Each port name in `ports` must exist in `c.ports`.
-    - Orientation is typically one of {0, 90, 180, 270} in gdsfactory
-      conventions, but arbitrary integer angles are allowed.
+    Returns:
+        gf.Component: The component c with the modified port orientations.
     """
     for p in ports:
         c.ports[p].orientation = orientation

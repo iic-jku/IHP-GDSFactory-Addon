@@ -1,4 +1,4 @@
-"""Passive components (varicaps, ESD, taps, seal rings) for IHP PDK."""
+"""Passive components (ESD devices, taps, seal rings, guard rings) for IHP PDK."""
 
 import os
 import sys
@@ -63,7 +63,7 @@ def esd(
         cell_name="esd", cell_params=params, function_name=esdIHP()
     )
 
-    ## add ports to the component
+    # add ports to the component
     # default direction should be away from the device center
     # set port names and orientations based on model
 
@@ -202,8 +202,8 @@ def ptap1(
         "R": CbTapCalc(
             "R", 0, length * 1e-6, width * 1e-6, "ptap1"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "A": area,
         "Perim": perimeter,
         "Rspec": 0.980 * 1e-9,  # hardcoded in the PCell
@@ -229,16 +229,14 @@ def ptap1(
 
 @gf.cell
 def ntap1(
-    width=0.78,
-    length=0.78,
+    width: float = 0.78,
+    length: float = 0.78,
 ) -> gf.Component:
     """Create an N+ substrate tap.
 
     Args:
         width: Width of the tap in micrometers.
         length: Length of the tap in micrometers.
-        rows: Number of contact rows.
-        cols: Number of contact columns.
 
     Returns:
         Component with N+ tap layout.
@@ -252,8 +250,8 @@ def ntap1(
         "R": CbTapCalc(
             "R", 0, length * 1e-6, width * 1e-6, "ntap1"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "A": area,
         "Perim": perimeter,
         "Rspec": 0.980 * 1e-9,  # hardcoded in the PCell
@@ -305,8 +303,8 @@ def sealring(
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
         "Display": "Selected",
-        "l": width * 1e-6,  # Length in μm
-        "w": height * 1e-6,  # Length in μm
+        "l": width * 1e-6,  # um to m
+        "w": height * 1e-6,  # um to m
         "addLabel": addLabel,
         "addSlit": addSlit,
         "Wmin": eng_string_to_float(tech.techParams["sealring_complete_minW"]),
@@ -332,8 +330,8 @@ def guard_ring(
 ) -> gf.Component:
     """Create a guard ring for device isolation.
 
-    This function generates a parametric guard ring around sensitive devices with optional
-    label and slit features. The guard ring helps isolate the device from substrate noise
+    This function generates a parametric guard ring around sensitive
+    devices. The guard ring helps isolate the device from substrate noise
     and latch-up.
 
     Args:
@@ -347,8 +345,8 @@ def guard_ring(
 
     params = {
         "cdf_version": tech.techParams["CDFVersion"],
-        "h": height * 1e-6,  # Length in μm
-        "w": width * 1e-6,  # Length in μm
+        "h": height * 1e-6,  # um to m
+        "w": width * 1e-6,  # um to m
         "type": guardRingType,
     }
 
@@ -364,12 +362,11 @@ def guard_ring(
 
 if __name__ == "__main__":
     # Test the components
-
-    c2 = esd(width=100.0, length=0.5, nf=20)
+    c2 = esd(model="diodevdd_2kv")
     c2.show()
 
-    c3 = ptap1(width=2.0, length=2.0, rows=2, cols=2)
+    c3 = ptap1(width=2.0, length=2.0)
     c3.show()
 
-    c4 = sealring(width=500, height=500, ring_width=10)
+    c4 = sealring(width=500, height=500)
     c4.show()

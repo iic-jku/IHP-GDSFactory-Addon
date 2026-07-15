@@ -68,7 +68,7 @@ def via_stack(
         vt2_rows: Number of rows for TopVia2.
 
     Returns:
-        gdsfactory.Component: The generated via stack test layout.
+        gdsfactory.Component: The generated via stack layout.
     """
 
     params = {
@@ -139,8 +139,8 @@ def via_stack(
 
 @gf.cell
 def no_filler_stack(
-    width: int = 10,
-    length: int = 10,
+    width: float = 10,
+    length: float = 10,
     noAct: Literal["Yes", "No"] = "Yes",  # no active filler
     noGP: Literal["Yes", "No"] = "Yes",  # no GatePoly filler
     noM1: Literal["Yes", "No"] = "Yes",  # no M1 filler
@@ -151,15 +151,15 @@ def no_filler_stack(
     noTM1: Literal["Yes", "No"] = "Yes",  # no TM1 filler
     noTM2: Literal["Yes", "No"] = "Yes",  # no TM2 filler
 ) -> gf.Component:
-    """Create a NoFiller via stack test component.
+    """Create a filler exclusion (NoFillerStack) component.
 
-    This function generates a via stack layout without filler structures
-    for the selected layers. Each layer can be individually excluded
-    from filler insertion using Yes/No flags.
+    This function generates exclusion boxes that block dummy filler
+    insertion on the selected layers over a width x length region. Each
+    layer can be individually excluded using Yes/No flags.
 
     Args:
-        width: Device width in micrometers.
-        length: Device length in micrometers.
+        width: Width of the exclusion region in micrometers.
+        length: Length of the exclusion region in micrometers.
         noAct: Exclude filler for the active layer. Options: 'Yes', 'No'.
         noGP: Exclude filler for the GatePoly layer. Options: 'Yes', 'No'.
         noM1: Exclude filler for Metal1. Options: 'Yes', 'No'.
@@ -196,9 +196,6 @@ def no_filler_stack(
         cell_params=params,
         function_name=no_filler_stackIHP(),
     )
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
     return c
 
 

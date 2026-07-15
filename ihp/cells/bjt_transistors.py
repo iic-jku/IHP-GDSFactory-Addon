@@ -1,3 +1,5 @@
+"""Bipolar transistor (HBT) components for IHP PDK."""
+
 import os
 import sys
 
@@ -66,8 +68,8 @@ def npn13G2(
         "model": tech.techParams["npn13G2_model"],
         "Nx": Nx,
         "Ny": Ny,
-        "le": emitter_length * 1e-6,  # Length in μm
-        "we": emitter_width * 1e-6,  # Width in nm
+        "le": emitter_length * 1e-6,  # um to m
+        "we": emitter_width * 1e-6,  # um to m
         "STI": STI * 1e-6,
         "baspolyx": baspolyx * 1e-6,
         "bipwinx": bipwinx * 1e-6,
@@ -85,10 +87,11 @@ def npn13G2(
         "CMetY2": CMetY2 * 1e-6,  # hardcoded in IHP PyCell, not in techparams
     }
 
-    # add ports to the component
     c = generate_gf_from_ihp(
         cell_name="npn13G2", cell_params=params, function_name=npn13G2IHP()
     )
+
+    # add ports to the component
     gf.add_ports.add_ports_from_boxes(
         c,
         pin_layer=(tech.LAYER.Metal1pin),
@@ -136,8 +139,8 @@ def npn13G2L(
         "Display": "Selected",
         "model": tech.techParams["npn13G2L_model"],
         "Nx": Nx,
-        "le": emitter_length * 1e-6,  # Length in μm
-        "we": emitter_width * 1e-6,  # Width in nm
+        "le": emitter_length * 1e-6,  # um to m
+        "we": emitter_width * 1e-6,  # um to m
         "Icmax": 3 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
         "Iarea": 1 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
         "area": 1,  # hardcoded in IHP PyCell, not in techparams
@@ -200,8 +203,8 @@ def npn13G2V(
         "Display": "Selected",
         "model": tech.techParams["npn13G2V_model"],
         "Nx": Nx,
-        "le": emitter_length * 1e-6,  # Length in μm
-        "we": emitter_width * 1e-6,  # Width in nm
+        "le": emitter_length * 1e-6,  # um to m
+        "we": emitter_width * 1e-6,  # um to m
         "Icmax": 3 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
         "Iarea": 1 * 1e-3,  # hardcoded in IHP PyCell, not in techparams
         "area": 1,  # hardcoded in IHP PyCell, not in techparams
@@ -262,8 +265,8 @@ def pnpMPA(
         "Display": "Selected",
         "model": tech.techParams["pnpMPA_model"],
         "Calculate": "a",
-        "w": width * 1e-6,  # Length in μm
-        "l": length * 1e-6,  # Width in nm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "a": area * 1e-12,
         "p": perimeter * 1e-6,
         "ac": 7.524 * 1e-12,

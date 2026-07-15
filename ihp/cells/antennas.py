@@ -23,7 +23,7 @@ from .utils import *
 def dantenna(
     width: float = 0.78,
     length: float = 0.78,
-    addRecLayer: str = "t",
+    addRecLayer: Literal["t", "f"] = "t",
     guardRingType: Literal["none", "psub"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
@@ -37,8 +37,9 @@ def dantenna(
     Args:
         width: Width of the antenna rectangle in microns.
         length: Length of the antenna rectangle in microns.
-        addRecLayer: Recognition layer to add (e.g., 't' for top, 'b' for bottom,
-            or '' for none).
+        addRecLayer: Whether to add a recognition layer. Valid values:
+            - 't': Add recognition layer.
+            - 'f': Do not add a recognition layer.
         guardRingType: Type of guard ring to include. Options include:
             - 'none': No guard ring
             - 'psub': P-type guard ring
@@ -97,7 +98,7 @@ def dpantenna(
     guardRingType: Literal["none", "nwell"] = "none",
     guardRingDistance: float = 1,
 ) -> gf.Component:
-    """Creates a dual-polarity antenna (dpantenna) structure.
+    """Creates a p-type diode antenna (dpantenna) structure.
 
     Generates a layout cell containing a rectangular antenna region with an
     optional recognition layer and an optional n-well guard ring. Parameters

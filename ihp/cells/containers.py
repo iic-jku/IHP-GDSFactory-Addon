@@ -30,7 +30,7 @@ def add_pads_top(
     route_width: float | list[float] | None = 0,
     **kwargs,
 ) -> Component:
-    """Returns new component with ports connected top pads.
+    """Returns new component with ports connected to top pads.
 
     Args:
         component: component spec to connect to.

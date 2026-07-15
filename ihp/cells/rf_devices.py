@@ -34,9 +34,9 @@ def branch_line_coupler(
     Z0: float = 50,
     e_r: float = 4.1,
 ) -> gf.Component:
-    """Returns a branch line coupler coplanar transmission line.
+    """Returns a branch-line coupler coplanar transmission line.
 
-    Creates signal and ground lines for a branch line coupler.
+    Creates signal and ground lines for a branch-line coupler.
 
     Args:
         connection_length: Length of the input line.
@@ -46,7 +46,7 @@ def branch_line_coupler(
         Z0: Target characteristic impedance (ohms).
         e_r: Relative permittivity of the substrate. Defaults to 4.1 for silicon dioxide.
     """
-    wave_length = 3e8 / frequency * 1e6
+    wave_length = scipy.constants.c / frequency * 1e6  # in um
 
     c = gf.Component()
 
@@ -71,8 +71,8 @@ def branch_line_coupler(
         e_r=e_r,
     )
 
-    quater_wave_length = wave_length / 4 / sqrt(e_eff)
-    quater_wave_length = quater_wave_length - quater_wave_length % (
+    quarter_wave_length = wave_length / 4 / sqrt(e_eff)
+    quarter_wave_length = quarter_wave_length - quarter_wave_length % (
         tech.nm
     )  # truncate to 5 nm
 
@@ -130,7 +130,7 @@ def branch_line_coupler(
     # create and connect the top Z0/sqrt(2) transmission line
     tline_top = c.add_ref(
         tline(
-            length=quater_wave_length - width_Z0,
+            length=quarter_wave_length - width_Z0,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
             width=width_Z0_sqrt2,
@@ -147,7 +147,7 @@ def branch_line_coupler(
     # create and connect the left Z0 transmission line
     tline_left = c.add_ref(
         tline(
-            length=quater_wave_length - width_Z0_sqrt2,
+            length=quarter_wave_length - width_Z0_sqrt2,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
             width=width_Z0,
@@ -164,7 +164,7 @@ def branch_line_coupler(
     # create and connect the bottom Z0/sqrt(2) transmission line
     tline_bottom = c.add_ref(
         tline(
-            length=quater_wave_length - width_Z0,
+            length=quarter_wave_length - width_Z0,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
             width=width_Z0_sqrt2,
@@ -183,7 +183,7 @@ def branch_line_coupler(
     # create and connect the right Z0 transmission line
     tline_right = c.add_ref(
         tline(
-            length=quater_wave_length - width_Z0_sqrt2,
+            length=quarter_wave_length - width_Z0_sqrt2,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
             width=width_Z0,
@@ -258,10 +258,10 @@ def wilkinson_power_divider(
 ) -> gf.Component:
     """Return a Wilkinson power divider coplanar transmission line.
 
-    Constructs a two-way Wilkinson divider from quarter-wave transformer
-    branches (impedance $Z_0 / sqrt{2}$) arranged in a loop.  The
-    quarter-wave length is derived from *frequency* and the effective
-    dielectric constant of the selected cross-section stack.
+    Constructs a two-way Wilkinson divider from quarter-wave branches
+    (impedance Z0 * sqrt(2)) arranged in a loop. The quarter-wave length
+    is derived from the frequency and the effective dielectric constant
+    of the selected cross-section stack.
 
     Args:
         connection_length: Length of the input/output feed lines (um).
@@ -272,12 +272,16 @@ def wilkinson_power_divider(
         ground_cross_section: Cross-section for the ground line.
             Accepts a single spec for microstrip or a two-element list
             ``[lower, upper]`` for stripline.
-        shape: Shape of the Wilkinson divider. Can be either "C" or "U". In a "C" shape, the quarter-wave branches are connected in a loop, while in a "U" shape, the branches are not braught together again
+        shape: Shape of the divider, either "C" or "U". In a "C" shape
+            the quarter-wave branches are closed into a loop, while in a
+            "U" shape the branches are not brought together again.
+        e_r: Relative permittivity of the substrate. Defaults to 4.1 for
+            silicon dioxide.
+
     Returns:
         A Component containing the Wilkinson power divider with ports
         ``e1`` (input), ``e2`` and ``e3`` (outputs).
     """
-
     c = gf.Component()
 
     # calculate the needed widths
@@ -310,15 +314,15 @@ def wilkinson_power_divider(
         ground_cross_section=ground_cross_section,
         e_r=e_r,
     )
-    wave_length = (
-        3e8 / frequency * 1e6 / sqrt(e_eff)
-    )  # in um, assuming effective index of 3.5
-    quater_wave_length = wave_length / 4
-    quater_wave_length = quater_wave_length - quater_wave_length % (
+    wave_length = scipy.constants.c / frequency * 1e6 / sqrt(e_eff)  # in um
+    quarter_wave_length = wave_length / 4
+    quarter_wave_length = quarter_wave_length - quarter_wave_length % (
         tech.nm
     )  # truncate to 5 nm
 
-    # for future use
+    # isolation resistor dimensions. The resistor itself is not placed yet
+    # (see the commented block at the end), but its length is accounted for
+    # in the loop circumference.
     width_R = 100
     length_R = CbResCalc(calc="l", l=0, r=2 * Z0, w=width_R, b=0, ps=0.18, cell="rppd")
 
@@ -372,7 +376,7 @@ def wilkinson_power_divider(
 
     if shape == "C":
         # Calculate the circumference of the square
-        circumference = quater_wave_length * 2 + length_R
+        circumference = quarter_wave_length * 2 + length_R
 
         # create and connect upper branch line
         branch_left_up = c.add_ref(
@@ -530,7 +534,7 @@ def wilkinson_power_divider(
 
     elif shape == "U":
         # Calculate the circumference of the square
-        circumference = quater_wave_length * 2
+        circumference = quarter_wave_length * 2
 
         # create and connect upper branch line
         branch_left_up = c.add_ref(
@@ -692,12 +696,12 @@ def directional_coupler(
         e_r=e_r,
     )
 
-    quater_wave_length = wave_length / 4 / sqrt(e_eff)
-    quater_wave_length = quater_wave_length - quater_wave_length % (
+    quarter_wave_length = wave_length / 4 / sqrt(e_eff)
+    quarter_wave_length = quarter_wave_length - quarter_wave_length % (
         tech.nm
     )  # truncate to 5 nm
 
-    # couping factor must be negative
+    # coupling factor must be negative
     if coupling_factor > 0:
         coupling_factor = (
             -coupling_factor
@@ -710,7 +714,7 @@ def directional_coupler(
         coupler_tline(
             Z0e=Z0 * (1 + coupling_factor_linear) / (1 - coupling_factor_linear),
             Z0o=Z0 * (1 - coupling_factor_linear) / (1 + coupling_factor_linear),
-            length=quater_wave_length,
+            length=quarter_wave_length,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
         )
@@ -817,8 +821,8 @@ def quarter_wave_transformer(
         e_r=e_r,
     )
 
-    quater_wave_length = wave_length / 4 / sqrt(e_eff)
-    quater_wave_length = quater_wave_length - quater_wave_length % (
+    quarter_wave_length = wave_length / 4 / sqrt(e_eff)
+    quarter_wave_length = quarter_wave_length - quarter_wave_length % (
         tech.nm
     )  # truncate to 5 nm
 
@@ -826,7 +830,7 @@ def quarter_wave_transformer(
 
     transformer_line = c.add_ref(
         tline(
-            length=quater_wave_length,
+            length=quarter_wave_length,
             Z0=Z0_transformer,
             signal_cross_section=signal_cross_section,
             ground_cross_section=ground_cross_section,
@@ -866,8 +870,7 @@ def quarter_wave_transformer(
 
 
 def _butterworth_prototype(N: int) -> list[float]:
-    """Return Butterworth lowpass prototype element values g_0 … g_{N+1}."""
-    # g = [1.0]
+    """Return Butterworth lowpass prototype element values g_1 ... g_{N+1}."""
     g = []
     for k in range(1, N + 1):
         g.append(2 * sin((2 * k - 1) * pi / (2 * N)))
@@ -876,7 +879,7 @@ def _butterworth_prototype(N: int) -> list[float]:
 
 
 def _chebyshev_prototype(N: int, ripple_dB: float) -> list[float]:
-    """Return Chebyshev lowpass prototype element values g_1 … g_{N+1}.
+    """Return Chebyshev lowpass prototype element values g_1 ... g_{N+1}.
 
     Uses the standard recursion from Pozar / Matthaei-Young-Jones.
 
@@ -924,10 +927,10 @@ def coupled_line_bandpass_filter(
 ) -> gf.Component:
     """Return a coupled-line bandpass filter.
 
-    Synthesises an *N*-th order coupled-line bandpass filter from
-    Butterworth or Chebyshev lowpass prototype coefficients.  Each
+    Synthesises an N-th order coupled-line bandpass filter from
+    Butterworth or Chebyshev lowpass prototype coefficients. Each
     section is realised as a pair of coupled coplanar transmission
-    lines whose even/odd-mode impedances are derived from the
+    lines whose even and odd mode impedances are derived from the
     prototype element values and the fractional bandwidth.
 
     Args:
@@ -940,15 +943,14 @@ def coupled_line_bandpass_filter(
         ground_cross_section: Cross-section for the ground line.
         e_r: Relative permittivity of the substrate.
             Defaults to 4.1 for silicon dioxide.
-        filter_type: Prototype type — ``"butter"`` for Butterworth or
-            ``"cheby"`` for Chebyshev.
-        ripple_dB: Pass-band ripple in dB (only used when
-            *filter_type* is ``"cheby"``).
+        filter_type: Prototype type, either ``"butter"`` for Butterworth
+            or ``"cheby"`` for Chebyshev.
+        ripple_dB: Pass-band ripple in dB (only used when filter_type is
+            ``"cheby"``).
 
     Returns:
         A Component with ports ``e1`` (input) and ``e2`` (output).
     """
-
     c = gf.Component()
     # get filter coefficients
     # g = [g1 g2 ... gN gN+1] for N-th order filter
@@ -1130,14 +1132,33 @@ def hairpin_coupled_line_bandpass_filter(
     filter_type: str = "butter",
     ripple_dB: float = 3,
 ) -> gf.Component:
-    """Return a hairpin-coupled-line bandpass filter.
+    """Return a hairpin coupled-line bandpass filter.
 
-    Synthesises an *N*-th order hairpin-coupled-line bandpass filter from
+    Synthesises an N-th order coupled-line bandpass filter like
+    :func:`coupled_line_bandpass_filter`, but folds the quarter-wave
+    coupled-line sections into a compact hairpin arrangement. Consecutive
+    sections are joined by short corner pieces that alternate between the
+    top and the bottom ends of the sections. A slit ground fill is added
+    on Metal5 around the filter.
 
+    Args:
+        order: Filter order (number of resonators).
+        frequency: Centre frequency (Hz).
+        bandwidth: Absolute bandwidth (Hz).
+        connection_length: Length of the input/output feed lines (um).
+        Z0: Reference characteristic impedance (ohms).
+        signal_cross_section: Cross-section for the signal line.
+        ground_cross_section: Cross-section for the ground line.
+        e_r: Relative permittivity of the substrate.
+            Defaults to 4.1 for silicon dioxide.
+        filter_type: Prototype type, either ``"butter"`` for Butterworth
+            or ``"cheby"`` for Chebyshev.
+        ripple_dB: Pass-band ripple in dB (only used when filter_type is
+            ``"cheby"``).
 
-
+    Returns:
+        A Component with ports ``e1`` (input) and ``e2`` (output).
     """
-
     c = gf.Component()
     # get filter coefficients
     # g = [g1 g2 ... gN gN+1] for N-th order filter
@@ -1355,7 +1376,6 @@ def hairpin_coupled_line_bandpass_filter(
     c.add_port(name="e1", port=input_line.ports["e1"])
     c.add_port(name="e2", port=output_line.ports["e2"])
 
-    # c.add_port(name="e1", port=input_line.ports["e1"])
     c.fill(
         fill_cell=_slit_ground(),
         fill_layers=[(tech.LAYER.Metal5drawing, -15)],

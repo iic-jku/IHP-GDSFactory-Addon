@@ -52,6 +52,8 @@ def bondpad(
         addFillerEx: Exclude metal filler ('t' or 'nil').
         passEncl: Passivation enclosure around the pad, in micrometers.
         padType: Type of pad. Options: 'bondpad', 'probepad'.
+        ground_connection: Add a guard ring under the pad to connect it to
+            'psub' or 'nwell'. False adds no guard ring.
 
     Returns:
         gdsfactory.Component: The generated bondpad layout.
@@ -106,6 +108,32 @@ def bondpad_array(
     padType: Literal["bondpad", "probepad"] = "bondpad",
     ground_connection: Literal["psub", "nwell", False] = False,
 ) -> gf.Component:
+    """Create a linear array of bond or probe pads (e.g. a GSG configuration).
+
+    One pad is placed per character in config. Signal pads ('S') use the
+    signal dimensions and cross-section, all other pads use the ground
+    dimensions and cross-section. Each pad is labeled with its config
+    character and all ports face downwards.
+
+    Args:
+        width_signal: Width of the signal pads in micrometers.
+        width_ground: Width of the ground pads in micrometers.
+        length_signal: Length of the signal pads in micrometers.
+        length_ground: Length of the ground pads in micrometers.
+        pitch: Pad spacing in micrometers. A single value spaces all pads
+            uniformly, a list gives the individual spacings between
+            neighboring pads and must have one entry less than config.
+        config: Pad sequence, one character per pad (e.g. "GSG").
+        shape: Shape for all pads, or a list with one shape per pad.
+        signal_cross_section: Cross-section connected to the signal pads.
+        ground_cross_section: Cross-section connected to the ground pads.
+        padType: Type of pad. Options: 'bondpad', 'probepad'.
+        ground_connection: Add a guard ring under the ground pads to
+            connect them to 'psub' or 'nwell'. False adds no guard ring.
+
+    Returns:
+        gdsfactory.Component: The generated pad array layout.
+    """
     layer_dict = {
         tech.LAYER.TopMetal2drawing: "TM2",
         tech.LAYER.TopMetal1drawing: "TM1",
@@ -119,8 +147,8 @@ def bondpad_array(
     c = gf.Component()
     pad_refs = []
     for i, conf in enumerate(config):
-        ## Preprocessing parameters
-        # Determine the width based on pad type
+        # preprocess parameters
+        # determine the width based on pad type
         width = width_signal if conf == "S" else width_ground
         length = length_signal if conf == "S" else length_ground
         hwQuota = length / width
@@ -181,7 +209,6 @@ def bondpad_array(
             if i > 0:
                 pad_refs[-1].movex(i * pitch)
 
-        # c.add_label(text=config[i], position=pad_refs[-1].center)
         c.add_ref(
             gf.components.text(config[i], size=length / 2, layer=tech.LAYER.TEXTdrawing)
         ).center = pad_refs[-1].center
@@ -195,7 +222,7 @@ def bondpad_array(
         port.center = (
             port.center[0],
             port.center[1] - length_signal / 2,
-        )  # Move port above the pad with a small gap
+        )  # move the port from the pad center to the lower pad edge
     return c
 
 
@@ -204,8 +231,8 @@ if __name__ == "__main__":
     c1 = bondpad(shape="octagon")
     c1.show()
 
-    c2 = bondpad(shape="square", flip_chip=True)
+    c2 = bondpad(shape="square", flipChip="yes")
     c2.show()
 
-    c3 = bondpad_array(n_pads=6)
+    c3 = bondpad_array(config="GSGSG")
     c3.show()

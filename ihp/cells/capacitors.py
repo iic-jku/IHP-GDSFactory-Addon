@@ -55,9 +55,11 @@ def cmim(
         "C": CbCapCalc(
             "C", 0, width * 1e-6, length * 1e-6, "cmim"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Width in μm
-        "l": length * 1e-6,  # Length in μm
-        "Cspec": eng_string_to_float(tech.techParams["cmim_caspec"]),  # Number of gates
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
+        "Cspec": eng_string_to_float(
+            tech.techParams["cmim_caspec"]
+        ),  # specific capacitance
         "Wmin": eng_string_to_float(tech.techParams["cmim_minLW"]),
         "Lmin": eng_string_to_float(tech.techParams["cmim_minLW"]),
         "Cmax": eng_string_to_float(tech.techParams["cmim_maxC"]),
@@ -141,12 +143,12 @@ def rfcmim(
         "C": CbCapCalc(
             "C", 0, width * 1e-6, length * 1e-6, "rfcmim"
         ),  # TODO Is this used?
-        "w": width * 1e-6,  # Width in μm
-        "l": length * 1e-6,  # Length in μm
+        "w": width * 1e-6,  # um to m
+        "l": length * 1e-6,  # um to m
         "wfeed": feed_width * 1e-6,
         "Cspec": eng_string_to_float(
             tech.techParams["rfcmim_caspec"]
-        ),  # Number of gates
+        ),  # specific capacitance
         "Wmin": eng_string_to_float(tech.techParams["rfcmim_minLW"]),
         "Lmin": eng_string_to_float(tech.techParams["rfcmim_minLW"]),
         "Cmax": eng_string_to_float(tech.techParams["rfcmim_maxC"]),
@@ -218,8 +220,8 @@ def svaricap(
         "cdf_version": tech.techParams["CDFVersion"],
         "Display": "Selected",
         "model": tech.techParams["SVaricap_model"],
-        "w": width,  # Width in μm
-        "l": length,  # Length in μm
+        "w": width,  # eng-format string, e.g. "9.74u"
+        "l": length,  # eng-format string, e.g. "0.8u"
         "Nx": Nx,
         "bn": "sub!",
         "trise": "",

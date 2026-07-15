@@ -9,15 +9,10 @@ sys.path.append(
     f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/"
 )
 
-# from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbCapCalc
-
 import gdsfactory as gf
 from sg13g2_pycell_lib.ihp.schottky_code import schottky as schottkyIHP
 
-# from functools import partial
 from .. import tech
-
-# from typing import Literal
 from .utils import *
 
 
@@ -28,10 +23,16 @@ def schottky(
     Nx: int = 1,
     Ny: int = 1,
 ) -> gf.Component:
-    """Returns the IHP schottky diode as a gdsfactory Component.
+    """Returns the IHP Schottky diode as a gdsfactory Component.
+
+    Args:
+        width: Width of a single diode cell in micrometers.
+        length: Length of a single diode cell in micrometers.
+        Nx: Number of diode cells in the x-direction.
+        Ny: Number of diode cells in the y-direction.
 
     Returns:
-        gdsfactory.Component: The generated schottky diode layout.
+        gdsfactory.Component: The generated Schottky diode layout.
     """
 
     params = {
@@ -45,10 +46,11 @@ def schottky(
         "m": 1,
     }
 
-    # add ports to the component
     c = generate_gf_from_ihp(
         cell_name="schottky", cell_params=params, function_name=schottkyIHP()
     )
+
+    # add ports to the component
     gf.add_ports.add_ports_from_boxes(
         c,
         pin_layer=(tech.LAYER.Metal1pin),
@@ -66,8 +68,5 @@ def schottky(
         port_type="electrical",
         ports_on_short_side=False,
     )
-    # c.ports["e1"].name = "B"
-    # c.ports["e2"].name = "C"
-    # c.ports["e3"].name = "E"
 
     return c

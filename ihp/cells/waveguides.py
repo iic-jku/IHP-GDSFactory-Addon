@@ -1,4 +1,4 @@
-"""Primitives."""
+"""Waveguide and transmission line primitives for the IHP PDK."""
 
 import warnings
 from math import exp, log, sqrt
@@ -55,10 +55,12 @@ def _calculate_effective_dielectric_constant(
 
     Uses a common approximation that depends on the ratio of width to stack height.
     Approximation from https://wellerpcb.com/pcb-layout-design/impedance-calculation-for-embedded-microstrip-trace-type/
+
     Args:
         e_r: Relative permittivity of the substrate.
         signal_cross_section: Cross-section spec for the signal layer.
         ground_cross_section: Cross-section spec for the ground layer.
+
     Returns:
         Estimated effective dielectric constant.
     """
@@ -94,7 +96,7 @@ def _calculate_width_from_Z0(
 
     Uses an approximate closed-form formula for microstrip transmission lines.
     For a single ground layer, the IPC-2141 embedded microstrip approximation is
-    used.  For a stripline configuration (two ground layers), a PCBWay-style
+    used. For a stripline configuration (two ground layers), a PCBWay-style
     approximation is applied instead.
 
     Args:
@@ -140,7 +142,7 @@ def _calculate_width_from_Z0(
 
     width = width - width % (
         2 * tech.nm
-    )  # truncate to 2 nm, gdsfactory needs even widths for ports
+    )  # truncate to an even number of grid units (10 nm), ports need even widths
     print(f"Calculated width: {width} um for Z0: {round(Z0, 2)} ohm")
 
     return width
@@ -156,8 +158,8 @@ def _calculate_Z0_from_width(
 
     Computes the vertical stack height between the ground and signal layers
     using the active PDK layer stack, then applies an approximate closed-form
-    formula to estimate Z0.  For a single ground layer, the IPC-2141 embedded
-    microstrip approximation is used.  For a stripline configuration (two
+    formula to estimate Z0. For a single ground layer, the IPC-2141 embedded
+    microstrip approximation is used. For a stripline configuration (two
     ground layers), a PCBWay-style approximation is applied instead.
 
     Args:
@@ -172,7 +174,7 @@ def _calculate_Z0_from_width(
     Returns:
         Estimated characteristic impedance Z0 (ohms). May be very small (or, when
         the closed-form approximation is pushed out of its validity range for a
-        wide line on a thin dielectric, non-physically negative); the geometry is
+        wide line on a thin dielectric, non-physically negative). The geometry is
         still generated and a warning is emitted.
     """
     if isinstance(ground_cross_section, list):
@@ -201,9 +203,9 @@ def _calculate_Z0_from_width(
 
     if Z0 < 0:
         warnings.warn(
-            f"Approximated Z0 is negative ({Z0:.2f} ohm) for width {round(width, 2)} um; "
-            "the microstrip approximation is out of range for this wide line / thin "
-            "dielectric. A negative impedance is not physical - the real Z0 is just very "
+            f"Approximated Z0 is negative ({Z0:.2f} ohm) for width {round(width, 2)} um. "
+            "The microstrip approximation is out of range for this wide line / thin "
+            "dielectric. A negative impedance is not physical, the real Z0 is just very "
             "small. Generating the geometry anyway.",
             stacklevel=2,
         )
@@ -219,7 +221,7 @@ def straight(
     width: float | None = None,
     npoints: int = 2,
 ) -> gf.Component:
-    """Returns a Straight waveguide.
+    """Returns a straight waveguide.
 
     Args:
         length: straight length (um).
@@ -241,7 +243,7 @@ def bend_euler(
     cross_section: CrossSectionSpec = "strip",
     allow_min_radius_violation: bool = False,
 ) -> gf.Component:
-    """Regular degree euler bend.
+    """Returns an Euler bend.
 
     Args:
         radius: in um. Defaults to cross_section_radius.
@@ -273,8 +275,8 @@ def bend_s(
 ) -> gf.Component:
     """Return S bend with bezier curve.
 
-    stores min_bend_radius property in self.info['min_bend_radius']
-    min_bend_radius depends on height and length
+    Stores the min_bend_radius property in self.info['min_bend_radius'].
+    The minimum bend radius depends on the size.
 
     Args:
         size: in x and y direction.
@@ -297,7 +299,7 @@ def wire_corner(
     width: float | None = None,
     radius: float | None = None,
 ) -> gf.Component:
-    """Returns 45 degrees electrical corner wire.
+    """Returns a 90 degree electrical corner wire.
 
     Args:
         cross_section: spec.
@@ -321,13 +323,13 @@ def wire_corner45(
     layer: LayerSpec | None = None,
     with_corner90_ports: bool = True,
 ) -> gf.Component:
-    """Returns 90 degrees electrical corner wire.
+    """Returns a 45 degree electrical corner wire.
 
     Args:
         cross_section: spec.
-        radius: ignored.
+        radius: corner radius (um).
         width: optional width. Defaults to cross_section width.
-        layer: ignored.
+        layer: optional layer override.
         with_corner90_ports: if True, adds ports at 90 degrees.
     """
     return gf.c.wire_corner45(
@@ -350,7 +352,7 @@ def straight_metal(
     cross_section: CrossSectionSpec = "metal_routing",
     width: float | None = None,
 ) -> gf.Component:
-    """Returns a Straight waveguide.
+    """Returns a straight waveguide.
 
     Args:
         length: straight length (um).
@@ -369,7 +371,14 @@ def bend_metal(
     width: float | None = None,
     cross_section: CrossSectionSpec = "metal_routing",
 ) -> gf.Component:
-    """Regular degree euler bend."""
+    """Returns a circular metal bend.
+
+    Args:
+        radius: bend radius (um). Defaults to the cross-section radius or width.
+        angle: total angle of the curve (degrees).
+        width: width to use. Defaults to cross_section.width.
+        cross_section: specification (CrossSection, string or dict).
+    """
     if radius is None:
         if width:
             xs = gf.get_cross_section(cross_section=cross_section, width=width)
@@ -396,8 +405,8 @@ def bend_s_metal(
 ) -> gf.Component:
     """Return S bend with bezier curve.
 
-    stores min_bend_radius property in self.info['min_bend_radius']
-    min_bend_radius depends on height and length
+    Stores the min_bend_radius property in self.info['min_bend_radius'].
+    The minimum bend radius depends on the size.
 
     Args:
         size: in x and y direction.
@@ -414,7 +423,9 @@ def bend_s_metal(
     )
 
 
-# ------------------------------------------------------
+####################
+# Coplanar transmission lines
+####################
 
 
 @gf.cell
@@ -429,9 +440,9 @@ def tline(
     """Return a straight coplanar transmission line.
 
     Creates a signal straight and a wider ground straight aligned around it.
-    The ground plane extends 3x the signal width beyond each end of the
-    signal line and is 7x as wide.  When two ground cross-sections are
-    provided the component produces a stripline (ground above and below).
+    The ground line has the same length as the signal line and is seven
+    times as wide. When two ground cross-sections are provided the
+    component produces a stripline (ground above and below).
 
     Args:
         length: Length of the signal line (um).
@@ -508,7 +519,6 @@ def tline(
                 npoints=npoints,
             )
         )
-        # ground.move(( -3*width, 0))
 
     return c
 
@@ -531,7 +541,7 @@ def tline_bend_circular(
         angle: Bend angle (degrees).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Line width (µm). Mutually exclusive with Z0.
+        width: Line width (um). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
 
@@ -605,7 +615,7 @@ def tline_bend_euler(
     width: float | None = None,
     Z0: float | None = None,
 ) -> gf.Component:
-    """Returns an euler bend coplanar transmission line.
+    """Returns an Euler bend coplanar transmission line.
 
     Creates a signal bend and a wider ground bend aligned around it.
 
@@ -614,7 +624,7 @@ def tline_bend_euler(
         angle: Bend angle (degrees).
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Line width (µm). Mutually exclusive with Z0.
+        width: Line width (um). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
 
@@ -695,7 +705,7 @@ def tline_bend_s(
         size: in x and y direction.
         signal_cross_section: Cross-section for the signal line.
         ground_cross_section: Cross-section for the ground line.
-        width: Line width (µm). Mutually exclusive with Z0.
+        width: Line width (um). Mutually exclusive with Z0.
         Z0: Target characteristic impedance (ohms). Mutually exclusive with width.
     """
 
@@ -739,8 +749,21 @@ def tline_corner(
     width: float | None = None,
     Z0: float | None = None,
 ) -> gf.Component:
-    """Return a straight coplanar transmission line.
-    # TODO
+    """Return a square corner piece for coplanar transmission lines.
+
+    Creates a width x width signal square with ports on all four sides and
+    an oversized ground plate (or two plates for stripline).
+
+    Args:
+        length: Unused, kept for API compatibility.
+        signal_cross_section: Cross-section for the signal layer.
+        ground_cross_section: Cross-section for the ground layer.
+            Accepts a single spec for microstrip or a two-element list
+            ``[lower, upper]`` for stripline.
+        width: Side length of the corner square (um). Mutually exclusive
+            with Z0.
+        Z0: Target characteristic impedance (ohms). Mutually exclusive
+            with width.
     """
     if width is None and Z0 is None:
         raise ValueError("Provide either width or Z0")
@@ -841,29 +864,26 @@ def coupler_tline(
 ) -> gf.Component:
     """Return a straight coupled coplanar transmission line.
 
-    Creates two parallel signal lines separated by a gap, with a shared
-    ground plane underneath (and optionally above for stripline).  The
-    ground plane extends 3x the signal width beyond each end of the
-    signal lines and is wide enough to cover both lines plus margins.
+    Creates two parallel signal lines separated by a gap, each with its
+    own ground line underneath (or above and below for stripline). The
+    line width is derived from the geometric mean of the even and odd
+    mode impedances.
 
     Args:
+        Z0e: Even mode impedance (ohms).
+        Z0o: Odd mode impedance (ohms).
         length: Length of the signal lines (um).
-        gap: Spacing between the two signal lines (um).
         signal_cross_section: Cross-section for the signal lines.
         ground_cross_section: Cross-section for the ground plane.
             Accepts a single spec for microstrip or a two-element list
             ``[lower, upper]`` for stripline.
-        width: Signal line width (um). Mutually exclusive with Z0.
-        Z0: Target characteristic impedance (ohms). Mutually exclusive
-            with width.
+        e_r: Relative permittivity of the substrate. Defaults to 4.1
+            for silicon dioxide.
         npoints: Number of points used to draw the straights.
 
     Returns:
-        A Component containing two coupled signal lines (with ports
-        prefixed ``top_`` and ``bot_``) and ground plane(s).
-
-    Raises:
-        ValueError: If neither or both of *width* and *Z0* are provided.
+        A Component with ports ``e1``/``e2`` on the top line and
+        ``e4``/``e3`` on the bottom line.
     """
     Z0 = sqrt(Z0e * Z0o)
 
@@ -884,7 +904,7 @@ def coupler_tline(
         / 0.98
         * log(1 - (Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
     )
-    d = 8
+    d = 8  # fixed gap override, the analytic value above is currently unused
 
     c = gf.Component()
 
