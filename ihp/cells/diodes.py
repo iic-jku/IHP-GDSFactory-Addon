@@ -1,7 +1,9 @@
 """Diode components for IHP PDK."""
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 # from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbCapCalc
 
@@ -45,6 +47,7 @@ def schottky(
     # add ports to the component
     c = generate_gf_from_ihp(cell_name="schottky", cell_params=params, function_name=schottkyIHP())
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=False)
+    c.ports["e2"].center = (round(c.ports["e2"].center[0], 2), round(c.ports["e2"].center[1], 2))
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_name_prefix="E", port_type="electrical", ports_on_short_side=False)
     # c.ports["e1"].name = "B"
     # c.ports["e2"].name = "C"

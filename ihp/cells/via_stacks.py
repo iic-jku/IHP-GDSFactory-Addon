@@ -1,8 +1,10 @@
 """Via stack components for IHP PDK. Also includes NoFillerStack."""
 #TODO probably not the right place for NoFillerStack
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from ihp.layer_map_ihp import LAYER
 from sg13g2_pycell_lib.ihp.via_stack_code import via_stack as via_stackIHP
@@ -83,8 +85,22 @@ def via_stack(
 
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[bottom_layer]), port_type="electrical", ports_on_short_side=False)
     c.ports["e1"].name = "bottom"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[top_layer]), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
-    c.ports["e1"].name = "top"
+    try:
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(layer_map[top_layer]), port_type="electrical", ports_on_short_side=False, auto_rename_ports=False)
+        c.ports["e1"].name = "top"
+    except ValueError:
+        # gdsfactory >= 9.45 refuses to register a port that geometrically
+        # coincides with an existing one. Derive the top port from the
+        # top-layer pin box instead (same result as the regular inference).
+        lay = gf.get_layer(layer_map[top_layer])
+        bb = c.get_boxes(layer=lay)[0].bbox()
+        snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+        w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+        c.add_port(name="top",
+                   center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
+                   width=w,
+                   orientation=c.ports["bottom"].orientation,
+                   layer=lay, port_type="electrical")
     
     return c
 

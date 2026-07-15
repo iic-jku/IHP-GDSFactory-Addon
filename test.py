@@ -202,13 +202,13 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # diode test
 
-c = gf.Component()
+# c = gf.Component()
 
-diode = c.add_ref(ihp.cells.schottky(width=1, length=0.3, Nx=2, Ny=3))
-c.add_ports(diode.ports, prefix="diode_")
+# diode = c.add_ref(ihp.cells.schottky(width=1, length=0.3, Nx=1, Ny=1))
+# c.add_ports(diode.ports, prefix="diode_")
 
-c.draw_ports()
-c.show()
+# c.draw_ports()
+# c.show()
 
 # ----------------------------------------------------------------
 # inductor test
@@ -352,12 +352,12 @@ c.show()
 # ------------------------------------------------------
 # waveguide test
 
-frequency = 150e9  # 50 GHz
+frequency = 160e9  # 50 GHz
 wavelength = scipy.constants.c / frequency * 1e6 / sqrt(3.85)
 quater_wavelength = wavelength / 4
 quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round to DBU
 
-print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
+print(f"Calculated quarter wave length for {frequency/1e9:.0f} GHz is {quater_wavelength} um")
 # c = gf.Component()
 
 # e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
@@ -558,7 +558,7 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 # -------------------------------------------------------
 # coupled line bandpass filter test
 
-# c = gf.Component()
+c = gf.Component()
 
 # bp = c.add_ref(ihp.cells.coupled_line_bandpass_filter(
 #     order=4,
@@ -574,20 +574,22 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 # c.move((0, 1000))
 
 
-# hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
-#     order=4,
-#     connection_length=50,
-#     frequency=150e9,
-#     bandwidth=10e9,
-#     filter_type="butter",
-#     signal_cross_section="topmetal2_routing",
-#     ground_cross_section="metal5_routing",
-#     Z0=50,
-# ))
+hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
+    order=4,
+    connection_length=50,
+    frequency=160e9,
+    bandwidth=10e9,
+    filter_type="butter",
+    signal_cross_section="topmetal2_routing",
+    ground_cross_section="metal5_routing",
+    Z0=50,
+))
 # c.add_ports(bp.ports, prefix="bp_")
-# c.add_ports(hairpin_bp.ports, prefix="hairpin_")
-# c.draw_ports()
-# c.show()
+c.add_ports(hairpin_bp.ports, prefix="hairpin_")
+c.draw_ports()
+c.show()
+
+
 
 
 # ----------------------------------------
@@ -595,9 +597,9 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c = gf.Component()
 
-# pad = c.add_ref(ihp.cells.probe_pads(
+# pad = c.add_ref(ihp.cells.bondpad_array(
 #     config="GSG", 
-#     spacing=[100, 150], 
+#     pitch=[100, 150], 
 #     shape=["octagon", "square", "octagon"], 
 #     length= 150, 
 #     width_signal=100, 
@@ -605,9 +607,9 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c.move((0,200))
 
-# pad1 = c.add_ref(ihp.cells.probe_pads(
+# pad1 = c.add_ref(ihp.cells.bondpad_array(
 #     config="GSG", 
-#     spacing=100, 
+#     pitch=100, 
 #     shape=["octagon", "square", "octagon"], 
 #     length= 150, 
 #     width_signal=100, 
@@ -615,8 +617,11 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 
 # c.move((0,200))
 
-# pad2 = c.add_ref(ihp.cells.probe_pads())
+# pad2 = c.add_ref(ihp.cells.bondpad_array())
 
+# c.add_ports(pad2.ports, prefix="pad2_")
+# c.pprint_ports()
+# c.draw_ports()
 # c.show()
 
 ## -------------------------------------------------------
@@ -624,3 +629,16 @@ print("Calculated quarter wave length for 150 GHz is", quater_wavelength, "um")
 print(_chebyshev_prototype(N=5, ripple_dB=0.1))
 
 print(_butterworth_prototype(N=3))
+
+
+## ---------------------------------------
+# guardring test
+
+# c = gf.Component()
+# ring = c.add_ref(ihp.cells.guard_ring(width=10, height=10, guardRingType="nwell"))
+# c.show()
+
+
+c = gf.Component()
+pad = c.add_ref(ihp.cells.bondpad_array(config="GSG", pitch=[100, 150], shape=["square", "square", "square"], width_signal=100, width_ground=50, length_ground=150, ground_connection="psub", ground_cross_section="metal1_routing"))
+c.show()

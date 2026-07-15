@@ -1,8 +1,10 @@
 """Bondpad components for IHP PDK."""
 
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from sg13g2_pycell_lib.ihp.bondpad_code import bondpad as bondpadIHP
 
@@ -13,6 +15,7 @@ from typing import Literal
 from .utils import *
 from functools import partial
 from .. import tech
+from ihp.cells.passives import guard_ring
 
 
 
@@ -29,6 +32,7 @@ def bondpad(
     addFillerEx: Literal['t', 'nil'] = 'nil',
     passEncl: float = 2.1,
     padType: Literal['bondpad', 'probepad'] = 'bondpad',
+    ground_connection: Literal['psub', 'nwell', False] = False,
 ) -> gf.Component:
     """Create a bondpad for wire bonding or flip-chip connection.
 
@@ -70,11 +74,16 @@ def bondpad(
         'padType' : padType,
         'padPin': 'PAD'   
     }
-
+    spacing_from_edge = 1.885  # manual measurement from the pad layout
+    width = diameter * hwQuota - 2*spacing_from_edge
+    height = diameter - 2*spacing_from_edge
     c = generate_gf_from_ihp(cell_name="bondpad", cell_params=params, function_name=bondpadIHP())
-    # Adjust port orientations, for metal1 so every other port points in the opposite direction
-    # for i, port in enumerate(c.ports):
-    #     port.orientation = 90 if port.name.startswith("DS_") and i % 2 == 1 else port.orientation
+
+    if ground_connection in ['psub', 'nwell']:
+        # Add guard ring to connect ground to substrate
+        c.center = c.center
+        sub_ring = c.add_ref(guard_ring(width=height, height=width, guardRingType=ground_connection))
+        sub_ring.center = c.center
     return c
 
 
@@ -82,13 +91,15 @@ def bondpad(
 def bondpad_array(
     width_signal: float = 85.0, 
     width_ground: float = 85.0, 
-    length: float = 85.0,
+    length_signal: float = 85.0,
+    length_ground: float = 85.0,
     pitch: float | list[float] = 125.0,
     config: str = "GSG",
     shape: Literal['octagon', 'square', 'circle'] | list[Literal['octagon', 'square', 'circle']] = "square",
     signal_cross_section: str = "topmetal2_routing",
     ground_cross_section: str = "metal5_routing",
     padType: Literal['bondpad', 'probepad'] = 'bondpad',
+    ground_connection: Literal['psub', 'nwell', False] = False,
     ) -> gf.Component:
     
     
@@ -105,12 +116,13 @@ def bondpad_array(
     
     
     c = gf.Component()
-    
+    pad_refs = []
     for i, conf in enumerate(config):
         
         ## Preprocessing parameters
         # Determine the width based on pad type
         width = width_signal if conf == 'S' else width_ground
+        length = length_signal if conf == 'S' else length_ground
         hwQuota = length / width
         
         # Handle shape as a list of shapes or a single shape
@@ -129,7 +141,8 @@ def bondpad_array(
         else:
             topMetal = layer_dict[tech.LAYER.TopMetal2drawing]
             bottomMetal = layer_dict[gf.get_cross_section(ground_cross_section).layer]
-            
+        
+        
         # handle pitch as a list of floats
         if isinstance(pitch, list):
             if len(pitch)+1 != len(config):
@@ -138,37 +151,44 @@ def bondpad_array(
             pad = bondpad(
                 shape=shape_i,
                 stack='t',
-                diameter=length* 1/hwQuota,
+                diameter=width,
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
                 padType=padType,
+                ground_connection=ground_connection if config[i] == 'G' else False,
             )
-            pad_ref = c.add_ref(pad)
+            pad_refs.append(c.add_ref(pad))
             if i > 0:
-                pad_ref.movex(sum(pitch[:i]))
+                pad_refs[-1].movey(sum(pitch[:i]))
                        
         # handle pitch as a single float
         else:
             pad = bondpad(
                 shape=shape_i,
                 stack='t',
-                diameter=length* 1/hwQuota,
+                diameter=width,
                 hwQuota=hwQuota,
                 topMetal=topMetal,
                 bottomMetal=bottomMetal,
-                padType=padType
+                padType=padType,
+                ground_connection=ground_connection if config[i] == 'G' else False,
             )
-            pad_ref = c.add_ref(pad)
+            pad_refs.append(c.add_ref(pad))
             if i > 0:
-                pad_ref.movex(i* pitch)
-                
-        prev_pad_ref = pad_ref
-        # c.add_label(text=config[i], position=pad_ref.center)
-        c.add_ref(gf.components.text(config[i], size=length/2, layer=tech.LAYER.TEXTdrawing)).center = pad_ref.center
+                pad_refs[-1].movex(i* pitch)
+            
         
+        # c.add_label(text=config[i], position=pad_refs[-1].center)
+        c.add_ref(gf.components.text(config[i], size=length/2, layer=tech.LAYER.TEXTdrawing)).center = pad_refs[-1].center
+    
+    gf.add_ports.add_ports_from_boxes(c, pin_layer=tech.LAYER.TopMetal2drawing, port_type="electrical")
+    
+   
+    for port in c.ports:
+        port.orientation = 270
+        port.center = (port.center[0], port.center[1] - length_signal/2)  # Move port above the pad with a small gap
     return c
-
 
 if __name__ == "__main__":
     # Test the components

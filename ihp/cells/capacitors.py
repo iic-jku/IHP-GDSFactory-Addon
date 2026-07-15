@@ -1,7 +1,9 @@
 """Capacitor components for IHP PDK."""
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbCapCalc
 
@@ -68,8 +70,23 @@ def cmim(
     # no pin layers for cmim, so we use drawing layers
     gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal5drawing), port_type="electrical", ports_on_short_side=True)
     c.ports["e1"].name = "B"
-    gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
-    c.ports["e1"].name = "T"
+    try:
+        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.TopMetal1drawing), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        c.ports["e1"].name = "T"
+    except ValueError:
+        # gdsfactory >= 9.45 refuses to register a port that geometrically
+        # coincides with an existing one (the concentric MIM plates share the
+        # same center). Derive the top port from the TopMetal1 plate box, the
+        # same result the regular inference produces.
+        lay = gf.get_layer(tech.LAYER.TopMetal1drawing)
+        bb = c.get_boxes(layer=lay)[0].bbox()
+        snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+        w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+        c.add_port(name="T",
+                   center=((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2),
+                   width=w,
+                   orientation=c.ports["B"].orientation,
+                   layer=lay, port_type="electrical")
     c.ports["B"].orientation = 0
     c.ports["T"].orientation = 180
     

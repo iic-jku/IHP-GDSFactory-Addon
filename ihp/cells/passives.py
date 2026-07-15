@@ -1,7 +1,9 @@
 """Passive components (varicaps, ESD, taps, seal rings) for IHP PDK."""
 import sys
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python")
-sys.path.append("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
+import os
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python")
+sys.path.append(f"{pdk_root}/ihp-sg13g2/libs.tech/klayout/python/pycell4klayout-api/source/python/")
 
 from sg13g2_pycell_lib.ihp.utility_functions import eng_string_to_float, CbTapCalc
 
@@ -9,6 +11,7 @@ from sg13g2_pycell_lib.ihp.esd_code import esd as esdIHP
 from sg13g2_pycell_lib.ihp.ptap1_code import ptap1 as ptap1IHP
 from sg13g2_pycell_lib.ihp.ntap1_code import ntap1 as ntap1IHP
 from sg13g2_pycell_lib.ihp.sealring_code import sealring as sealringIHP
+from sg13g2_pycell_lib.ihp.guard_ring_code import guard_ring as guardringIHP
 
 
 import gdsfactory as gf
@@ -70,7 +73,29 @@ def esd(
         gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal1pin), port_type="electrical", ports_on_short_side=True)
         c.ports["e1"].orientation = 270
         c.ports["e1"].name = "VSS"
-        gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        try:
+            gf.add_ports.add_ports_from_boxes(c, pin_layer=(tech.LAYER.Metal2pin), port_type="electrical", ports_on_short_side=True, auto_rename_ports=False)
+        except ValueError:
+            # gdsfactory >= 9.45 refuses to register a port that geometrically
+            # coincides with an existing one. One Metal2 pin of this model sits
+            # exactly on the Metal1 VSS pin, so recreate the rejected port from
+            # its own Metal2 pin box (the box whose center is not taken by the
+            # Metal2 port that did register).
+            lay = gf.get_layer(tech.LAYER.Metal2pin)
+            taken = [tuple(round(v, 3) for v in pt.center)
+                     for pt in c.ports if pt.name in ("e1", "e2")]
+            missing = "e1" if any(pt.name == "e2" for pt in c.ports) else "e2"
+            for box in c.get_boxes(layer=lay):
+                bb = box.bbox()
+                ctr = ((bb.left + bb.right) / 2, (bb.bottom + bb.top) / 2)
+                if tuple(round(v, 3) for v in ctr) not in taken:
+                    snap = 2 * gf.kcl.dbu  # port widths must be even DBU multiples
+                    w = round(min(bb.right - bb.left, bb.top - bb.bottom) / snap) * snap
+                    c.add_port(name=missing, center=ctr,
+                               width=w,
+                               orientation=c.ports["VSS"].orientation,
+                               layer=lay, port_type="electrical")
+                    break
         c.ports["e1"].orientation = 0
         c.ports["e1"].name = "VDD"
         c.ports["e2"].orientation = 180
@@ -223,6 +248,42 @@ def sealring(
     }
 
     c = generate_gf_from_ihp(cell_name="sealring", cell_params=params, function_name=sealringIHP())
+    
+    # add ports to the component
+    # ports should be added manually if needed
+    
+    return c
+
+
+@gf.cell
+def guard_ring(
+    width: float = 3.0,
+    height: float = 3.0,
+    guardRingType: Literal['nwell', 'psub'] = "psub",
+) -> gf.Component:
+    """Create a guard ring for device isolation.
+
+    This function generates a parametric guard ring around sensitive devices with optional
+    label and slit features. The guard ring helps isolate the device from substrate noise
+    and latch-up.
+
+    Args:
+        width: Inner width of the guard ring in micrometers.
+        height: Inner height of the guard ring in micrometers.
+        guardRingType: Type of guard ring. Options: 'nwell' (N-well guard ring), 'psub' (P-substrate guard ring).
+
+    Returns:
+        gdsfactory.Component: The generated guard ring layout.
+    """
+
+    params = {
+        'cdf_version': tech.techParams['CDFVersion'],
+        'h': height*1e-6,    # Length in μm
+        'w': width*1e-6,   # Length in μm
+        'type': guardRingType,
+    }
+
+    c = generate_gf_from_ihp(cell_name="guardring", cell_params=params, function_name=guardringIHP())
     
     # add ports to the component
     # ports should be added manually if needed

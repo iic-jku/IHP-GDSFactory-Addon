@@ -1,6 +1,8 @@
 """Primitives."""
 
 
+import warnings
+
 import gdsfactory as gf
 from gdsfactory.cross_section import port_names_electrical, port_types_electrical
 from gdsfactory.typings import CrossSectionSpec, LayerSpec, Size
@@ -136,6 +138,8 @@ def _calculate_width_from_Z0(
         raise ValueError("Calculated width is negative. Check Z0 and cross-section choices.")
     
     width = width - width%(2*tech.nm)  # truncate to 2 nm, gdsfactory needs even widths for ports
+    print(f"Calculated width: {width} um for Z0: {round(Z0, 2)} ohm")
+    
     
     return width
 
@@ -164,10 +168,10 @@ def _calculate_Z0_from_width(
             for silicon dioxide.
 
     Returns:
-        Estimated characteristic impedance Z0 (ohms).
-
-    Raises:
-        ValueError: If the calculated Z0 is negative.
+        Estimated characteristic impedance Z0 (ohms). May be very small (or, when
+        the closed-form approximation is pushed out of its validity range for a
+        wide line on a thin dielectric, non-physically negative); the geometry is
+        still generated and a warning is emitted.
     """
     if isinstance(ground_cross_section, list):
         h_below, t = _get_stack_geometry(
@@ -189,8 +193,15 @@ def _calculate_Z0_from_width(
         Z0 = 87.0/sqrt(e_r+1.41) * log(5.98*stack_height/(0.8*width + signal_layer_thickness))
     
     if Z0 < 0:
-        raise ValueError("Calculated Z0 is negative. Check width and cross-section choices.")
-    
+        warnings.warn(
+            f"Approximated Z0 is negative ({Z0:.2f} ohm) for width {round(width, 2)} um; "
+            "the microstrip approximation is out of range for this wide line / thin "
+            "dielectric. A negative impedance is not physical - the real Z0 is just very "
+            "small. Generating the geometry anyway.",
+            stacklevel=2,
+        )
+    else:
+        print(f"Calculated Z0: {Z0} ohm for width: {round(width, 2)} um")
     return Z0
         
 
@@ -275,13 +286,14 @@ def bend_s(
 
 @gf.cell
 def wire_corner(
-    cross_section: CrossSectionSpec = "metal_routing", width: float | None = None
+    cross_section: CrossSectionSpec = "metal_routing", width: float | None = None, radius: float | None = None
 ) -> gf.Component:
     """Returns 45 degrees electrical corner wire.
 
     Args:
         cross_section: spec.
         width: optional width. Defaults to cross_section width.
+        radius: is ignored. Defaults to None.
     """
     return gf.c.wire_corner(
         cross_section=cross_section,
@@ -462,23 +474,23 @@ def tline(
     if isinstance(ground_cross_section, list):
         ground_low = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section[0], width=7*width, npoints=npoints
             )
         )
-        ground_low.move(( -3*width, 0))
+        # ground_low.move(( -3*width, 0))
         ground_high = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section[1], width=7*width, npoints=npoints
             )
         )
-        ground_high.move(( -3*width, 0))
+        # ground_high.move(( -3*width, 0))
     else:
         ground = c.add_ref(
             gf.c.straight(
-                length=length+6*width, cross_section=ground_cross_section, width=7*width, npoints=npoints
+                length=length, cross_section=ground_cross_section, width=7*width, npoints=npoints
             )
         )
-        ground.move(( -3*width, 0))
+        # ground.move(( -3*width, 0))
     
     return c
 
@@ -832,7 +844,7 @@ def coupler_tline(
     # https://www.dmcrf.com/microstrip-calculators/differential-microstrip-impedance-calculator/
     Z_d = 2 * Z0o
     d = -h/0.98 * log(1-(Z_d * sqrt(e_r + 1.41)) / (174 * log(5.98 * h / (0.8 * width + t))))
-    
+    d = 8
     
     c = gf.Component()
 

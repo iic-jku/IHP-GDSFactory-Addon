@@ -14,7 +14,7 @@ from functools import partial
 from typing import Any
 
 import gdsfactory as gf
-#from doroutes.bundles import add_bundle_astar
+from doroutes.bundles import add_bundle_astar
 from gdsfactory import typings
 from gdsfactory.component import Component
 from gdsfactory.cross_section import (
@@ -31,12 +31,12 @@ from gdsfactory.technology import lyp_to_dataclass
 from ihp.config import PATH
 
 nm = 0.005  # 1 grid unit = 5nm
-gf.kcl.dbu = nm
+gf.kcl.dbu = 0.001
 pin_length = 10 * nm
 heater_width = 4
 
-
-ihp_filepath = "/foss/pdks/ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp"
+pdk_root = os.environ.get("PDK_ROOT", "/foss/pdks")
+ihp_filepath = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp")
 
 package_folder = os.path.dirname(os.path.abspath(__file__))
 
@@ -312,7 +312,7 @@ techName: str = "sg13g2"
 techNameParam: str = "techName"
 jsonTechFile: str = techName + "_tech.json"
 
-techFilePath: str = os.path.join("/foss/pdks/ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile) #TODO hardcoded path, böse
+techFilePath: str = os.path.join(pdk_root, "ihp-sg13g2/libs.tech/klayout/python/sg13g2_pycell_lib/", jsonTechFile)  # patched: was hardcoded /foss/pdks
 
 with open(techFilePath, "r") as tech_file:
     jsData = json.load(tech_file)
@@ -422,6 +422,15 @@ def metal_routing(
     )
 
 
+gatpoly_routing = partial(
+    metal_routing,
+    layer=LAYER.GatPolydrawing,
+    width=0.13,
+    port_names=gf.cross_section.port_names_electrical,
+    port_types=gf.cross_section.port_types_electrical,
+    radius=None,
+)
+
 # Metal routing cross-sections
 metal1_routing = partial(
     metal_routing,
@@ -517,30 +526,30 @@ route_bundle_metal_corner = partial(
     port_type="electrical",
 )
 
-# route_astar = partial(
-#     add_bundle_astar,
-#     layers=["TOPMETAL2"],
-#     bend="bend_euler",
-#     straight="straight",
-#     grid_unit=500,
-#     spacing=3,
-# )
+route_astar = partial(
+    add_bundle_astar,
+    layers=["TOPMETAL2"],
+    bend="bend_euler",
+    straight="straight",
+    grid_unit=500,
+    spacing=3,
+)
 
-# route_astar_metal = partial(
-#     add_bundle_astar,
-#     layers=["TOPMETAL2"],
-#     bend="wire_corner",
-#     straight="straight_metal",
-#     grid_unit=500,
-#     spacing=15,
-# )
+route_astar_metal = partial(
+    add_bundle_astar,
+    layers=["TOPMETAL2"],
+    bend="wire_corner",
+    straight="straight_metal",
+    grid_unit=500,
+    spacing=15,
+)
 
 
-# routing_strategies = dict(
-#     route_bundle=route_bundle,
-#     route_bundle_rib=route_bundle_rib,
-#     route_bundle_metal=route_bundle_metal,
-#     route_bundle_metal_corner=route_bundle_metal_corner,
-#     route_astar=route_astar,
-#     route_astar_metal=route_astar_metal,
-# )
+routing_strategies = dict(
+    route_bundle=route_bundle,
+    route_bundle_rib=route_bundle_rib,
+    route_bundle_metal=route_bundle_metal,
+    route_bundle_metal_corner=route_bundle_metal_corner,
+    route_astar=route_astar,
+    route_astar_metal=route_astar_metal,
+)
