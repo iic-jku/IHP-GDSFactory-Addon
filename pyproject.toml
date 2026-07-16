@@ -12,11 +12,11 @@ classifiers = [
   "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-  "gdsfactory~=9.18.1",
-  "gplugins[sax]~=1.4.2",
-  "doroutes>=0.2.0"
+  "gdsfactory>=9.18.1,<10",
+  "doroutes>=0.2.0",
+  "scipy"
 ]
-description = "IHP SG13G2 PDK for GDSFactory"
+description = "GDSFactory Addon for the IHP Open-PDK"
 keywords = ["python"]
 license = {file = "LICENSE"}
 name = "ihp"
