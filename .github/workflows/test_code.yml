@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - uses: pre-commit/action@v3.0.1
   test_code:
     runs-on: ubuntu-latest
@@ -20,7 +22,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install package
-        # Importing ihp needs the IHP Open PDK (sg13g2_pycell_lib), which is not
+        # importing ihp needs the IHP Open PDK (not on PyPI), so CI only checks the install
 
-        # available on PyPI, so CI only checks that the package installs.
         run: pip install .
