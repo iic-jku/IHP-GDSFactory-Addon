@@ -1,12 +1,9 @@
 import gdsfactory as gf
-from numpy import sqrt
 import scipy
-import ihp
-import sys
-import os
+from numpy import sqrt
 
+import ihp
 from ihp import tech
-from ihp.cells.utils import add_port_group, change_port_orientation
 from ihp.cells.rf_devices import _butterworth_prototype, _chebyshev_prototype
 
 # paths_to_remove = [
@@ -126,7 +123,7 @@ ihp.PDK.activate()
 # # new function add_port_group test
 # c.move((0,6))
 # dpa2 = c.add_ref(ihp.cells.dpantenna(guardRingType="psub", guardRingDistance=2))
-# add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function  
+# add_port_group(c, dpa2, ports=["e1", "e3"], prefix="dpa2_")   # adding specific ports using the new function
 
 # c.pprint_ports()
 # c.draw_ports()
@@ -226,7 +223,7 @@ ihp.PDK.activate()
 # c.show()
 
 # ----------------------------------------------------------------
-# test mos_transistors.py 
+# test mos_transistors.py
 
 # c = gf.Component()
 
@@ -347,7 +344,7 @@ ihp.PDK.activate()
 # -----------------------------------------------------------------
 # test of Tlines
 
-# 
+#
 
 # ------------------------------------------------------
 # waveguide test
@@ -357,7 +354,9 @@ wavelength = scipy.constants.c / frequency * 1e6 / sqrt(3.85)
 quater_wavelength = wavelength / 4
 quater_wavelength = quater_wavelength - quater_wavelength % (tech.nm)  # round to DBU
 
-print(f"Calculated quarter wave length for {frequency/1e9:.0f} GHz is {quater_wavelength} um")
+print(
+    f"Calculated quarter wave length for {frequency / 1e9:.0f} GHz is {quater_wavelength} um"
+)
 # c = gf.Component()
 
 # e_eff = ihp.cells.waveguides._calculate_effective_dielectric_constant(
@@ -369,52 +368,52 @@ print(f"Calculated quarter wave length for {frequency/1e9:.0f} GHz is {quater_wa
 # print("Calculated effective dielectric constant is", e_eff)
 # wave_length = 3e8 / 50e9 * 1e6 / sqrt(3.846775)  # in microns, assuming e_r = 4.1
 # quater_wave_length = wave_length / 4
-# quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm) 
+# quater_wave_length = quater_wave_length - quater_wave_length % (tech.nm)
 
 # print("Calculated quarter wave length for 50 GHz is", quater_wave_length, "um")
 
 # tline = c.add_ref(ihp.cells.tline(
-#     length=quater_wave_length, 
+#     length=quater_wave_length,
 #     Z0=50,
-#     signal_cross_section="topmetal2_routing", 
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing"))
 
 # # c.add_ports(tline.ports)
 
 # tline2 = c.add_ref(ihp.cells.tline(
-#     length=500, 
+#     length=500,
 #     width=7.2,
-#     signal_cross_section="topmetal2_routing", 
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing"))
 
 # tline2.move((0, 40))
 # c.add_ports(tline2.ports)
 
 # tbend_circular = c.add_ref(ihp.cells.tline_bend_circular(
-#     angle=90, 
+#     angle=90,
 #     Z0=50,
-#     signal_cross_section="topmetal2_routing", 
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing",
 #     radius=100))
 # c.add_ports(tbend_circular.ports)
 # c.pprint_ports()
 
 # tline.connect("e2", tbend_circular.ports["e1"], allow_width_mismatch=True)
-# tline2.connect("e1", tbend_circular.ports["e2"], allow_width_mismatch=True) 
+# tline2.connect("e1", tbend_circular.ports["e2"], allow_width_mismatch=True)
 
 # c.add_ref(ihp.cells.bend_s_metal(width=7.5))
 
 # c.add_ref_off_grid(ihp.cells.tline_bend_euler(
-#     angle=45, 
+#     angle=45,
 #     Z0=50,
-#     signal_cross_section="topmetal2_routing", 
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing",
 #     radius=100))
 
 # c.add_ref(ihp.cells.tline_bend_s(
 #     size=(100, 50),
 #     Z0=50,
-#     signal_cross_section="topmetal2_routing", 
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing",))
 
 # c.show()
@@ -458,7 +457,6 @@ print(f"Calculated quarter wave length for {frequency/1e9:.0f} GHz is {quater_wa
 # c.show()
 
 
-
 # -------------------------------------------------------
 # coupler_tline test
 # c = gf.Component()
@@ -498,12 +496,10 @@ print(f"Calculated quarter wave length for {frequency/1e9:.0f} GHz is {quater_wa
 # c.show()
 
 
-
-
 # c = gf.Component()
 # corner = c.add_ref(ihp.cells.tline_corner(
-#     Z0=50, 
-#     signal_cross_section="topmetal2_routing", 
+#     Z0=50,
+#     signal_cross_section="topmetal2_routing",
 #     ground_cross_section="metal5_routing"
 # ))
 
@@ -574,22 +570,22 @@ c = gf.Component()
 # c.move((0, 1000))
 
 
-hairpin_bp = c.add_ref(ihp.cells.hairpin_coupled_line_bandpass_filter(
-    order=4,
-    connection_length=50,
-    frequency=160e9,
-    bandwidth=10e9,
-    filter_type="butter",
-    signal_cross_section="topmetal2_routing",
-    ground_cross_section="metal5_routing",
-    Z0=50,
-))
+hairpin_bp = c.add_ref(
+    ihp.cells.hairpin_coupled_line_bandpass_filter(
+        order=4,
+        connection_length=50,
+        frequency=160e9,
+        bandwidth=10e9,
+        filter_type="butter",
+        signal_cross_section="topmetal2_routing",
+        ground_cross_section="metal5_routing",
+        Z0=50,
+    )
+)
 # c.add_ports(bp.ports, prefix="bp_")
 c.add_ports(hairpin_bp.ports, prefix="hairpin_")
 c.draw_ports()
 c.show()
-
-
 
 
 # ----------------------------------------
@@ -598,21 +594,21 @@ c.show()
 # c = gf.Component()
 
 # pad = c.add_ref(ihp.cells.bondpad_array(
-#     config="GSG", 
-#     pitch=[100, 150], 
-#     shape=["octagon", "square", "octagon"], 
-#     length= 150, 
-#     width_signal=100, 
+#     config="GSG",
+#     pitch=[100, 150],
+#     shape=["octagon", "square", "octagon"],
+#     length= 150,
+#     width_signal=100,
 #     width_ground=50))
 
 # c.move((0,200))
 
 # pad1 = c.add_ref(ihp.cells.bondpad_array(
-#     config="GSG", 
-#     pitch=100, 
-#     shape=["octagon", "square", "octagon"], 
-#     length= 150, 
-#     width_signal=100, 
+#     config="GSG",
+#     pitch=100,
+#     shape=["octagon", "square", "octagon"],
+#     length= 150,
+#     width_signal=100,
 #     width_ground=50))
 
 # c.move((0,200))
@@ -640,5 +636,16 @@ print(_butterworth_prototype(N=3))
 
 
 c = gf.Component()
-pad = c.add_ref(ihp.cells.bondpad_array(config="GSG", pitch=[100, 150], shape=["square", "square", "square"], width_signal=100, width_ground=50, length_ground=150, ground_connection="psub", ground_cross_section="metal1_routing"))
+pad = c.add_ref(
+    ihp.cells.bondpad_array(
+        config="GSG",
+        pitch=[100, 150],
+        shape=["square", "square", "square"],
+        width_signal=100,
+        width_ground=50,
+        length_ground=150,
+        ground_connection="psub",
+        ground_cross_section="metal1_routing",
+    )
+)
 c.show()
