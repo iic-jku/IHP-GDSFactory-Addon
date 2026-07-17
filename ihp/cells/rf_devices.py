@@ -958,6 +958,8 @@ def coupled_line_bandpass_filter(
         g = _butterworth_prototype(order)
     elif filter_type == "cheby":
         g = _chebyshev_prototype(order, ripple_dB)
+    else:
+        raise ValueError("Invalid filter_type. Must be either 'butter' or 'cheby'.")
 
     fractional_bandwidth = bandwidth / frequency
     f_2 = frequency * (1 + fractional_bandwidth / 2)
@@ -1166,6 +1168,8 @@ def hairpin_coupled_line_bandpass_filter(
         g = _butterworth_prototype(order)
     elif filter_type == "cheby":
         g = _chebyshev_prototype(order, ripple_dB)
+    else:
+        raise ValueError("Invalid filter_type. Must be either 'butter' or 'cheby'.")
 
     fractional_bandwidth = bandwidth / frequency
     f_2 = frequency * (1 + fractional_bandwidth / 2)
