@@ -42,7 +42,7 @@ def inductor2(
         width: Width of the inductor trace in micrometers.
         space: Spacing between turns of the inductor in micrometers.
         distance: Outer diameter of the inductor in micrometers.
-        resistance: Target series resistance in Ohms.
+        resistance: Target series resistance in Ohm.
         inductance: Target inductance in nH (used for layout optimization).
         num_turns: Number of turns in the inductor.
         block_qrc: Whether to add the noQRC layer that blocks parasitic (QRC)
@@ -124,7 +124,7 @@ def inductor3(
         width: Width of the inductor trace in micrometers.
         space: Spacing between turns of the inductor in micrometers.
         distance: Outer diameter of the inductor in micrometers.
-        resistance: Target series resistance in Ohms.
+        resistance: Target series resistance in Ohm.
         inductance: Target inductance in nH (used for layout optimization).
         num_turns: Number of turns in the inductor.
         block_qrc: Whether to add the noQRC layer that blocks parasitic (QRC)
