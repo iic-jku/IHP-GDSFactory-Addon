@@ -191,7 +191,7 @@ def bondpad_array(
             )
             pad_refs.append(c.add_ref(pad))
             if i > 0:
-                pad_refs[-1].movey(sum(pitch[:i]))
+                pad_refs[-1].movex(sum(pitch[:i]))
 
         # handle pitch as a single float
         else:
