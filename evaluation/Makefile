@@ -92,6 +92,12 @@ plot-tline-z0-3d: ## 3D surface of Zc over (freq, width) for one stack (SIGNAL=/
 	cd $(MAKEFILE_DIR) && $(PYTHON) plot_tline.py z0-3d $(GDS_DIR)/tline_z0 --signal $(SIGNAL) --ground $(GROUND) $(Z0_SHOW)
 .PHONY: plot-tline-z0-3d
 
+plot-tline-mismatch: ## Loss from |S21| vs NRW-extracted loss against Zc, single line (FREQ=/EVAL_FREQ=, Z0_SHOW= for batch)
+	cd $(MAKEFILE_DIR) && for f in $(if $(FREQ),$(FREQ),$$(ls -d $(GDS_DIR)/tline_z0/*GHz 2>/dev/null | sed -E 's/.*_([0-9.]+)GHz$$/\1/' | sort -n -u)); do \
+		$(PYTHON) plot_tline.py mismatch $(GDS_DIR)/tline_z0 --freq $$f $(if $(EVAL_FREQ),--eval-freq $(EVAL_FREQ)) --length-um 1000 $(Z0_SHOW); \
+	done
+.PHONY: plot-tline-mismatch
+
 plot-tline-loss: ## Plot loss(w)/mm faceted by ground layer, for every simulated frequency (two-length de-embedded)
 	cd $(MAKEFILE_DIR) && for f in $(if $(FREQ),$(FREQ),$$(ls -d $(GDS_DIR)/tline_loss/*GHz 2>/dev/null | sed -E 's/.*_([0-9.]+)GHz$$/\1/' | sort -n -u)); do \
 		$(PYTHON) plot_tline.py loss $(GDS_DIR)/tline_loss --freq $$f $(if $(EVAL_FREQ),--eval-freq $(EVAL_FREQ)) --length1-um 500 --length2-um 1000; \
@@ -110,7 +116,7 @@ plot-tline-sparams: ## Overlay raw S21/S11 vs freq for hand-picked files (set FI
 .PHONY: plot-tline-sparams
 
 plot-tline: Z0_SHOW :=
-plot-tline: plot-tline-z0 plot-tline-z0-freq plot-tline-z0-3d plot-tline-loss plot-tline-design ## Generate all tline plots into images/
+plot-tline: plot-tline-z0 plot-tline-z0-freq plot-tline-z0-3d plot-tline-mismatch plot-tline-loss plot-tline-design ## Generate all tline plots into images/
 .PHONY: plot-tline
 
 plot-blc: ## Plot branch-line-coupler S-params, imbalance, phase + summary (images/)

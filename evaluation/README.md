@@ -21,7 +21,7 @@ generate  ->  sim  ->  plot
 
 ## Quick start
 
-Do one sweep end to end (the z0 sweep is the cheapest — a single frequency point per line):
+Do one sweep end to end (the z0 sweep is the cheapest — one design frequency per line):
 
 ```bash
 make generate-tline-z0
@@ -39,20 +39,25 @@ The same three-step pattern works for every sweep (`-tline-loss`, `-blc`, …).
 
 ## The sweeps
 
-| Sweep | Structure | What it measures | Ports | Frequency |
-|-------|-----------|------------------|-------|-----------|
-| `tline-z0` | straight line, width swept | characteristic impedance `Zc(w)` | 2 | single point |
-| `tline-loss` | straight line, two lengths per point | loss per mm `α(w, f)` | 2 | full band |
-| `tline-sparams` | fixed-50 Ω line, length swept | raw S-parameters (verification) | 2 | full band |
-| `blc` | branch-line coupler, one per design freq | coupling / isolation / phase balance | 4 | full band |
-| `wpd` | Wilkinson power divider (U-shape), one per design freq | split / match / phase balance | 3 | full band |
+| Sweep | Structure | What it measures | Ports | Design frequencies |
+|-------|-----------|------------------|-------|--------------------|
+| `tline-z0` | straight line, width swept, `L = 1000 µm` | characteristic impedance `Zc(w)`, single-line loss | 2 | 200 GHz |
+| `tline-loss` | straight line, two lengths per point (`500`/`1000 µm`) | loss per mm `α(w)` | 2 | 200 GHz |
+| `tline-sparams` | fixed-50 Ω line, `L = 1000 µm` | raw S-parameters (verification) | 2 | 200 GHz |
+| `blc` | branch-line coupler, one per design freq | coupling / isolation / phase balance | 4 | 60–300 GHz, step 20 |
+| `wpd` | Wilkinson power divider (U-shape), one per design freq | split / match / phase balance | 3 | 60–300 GHz, step 20 |
 
-All sweeps are restricted to **RF-viable metal stacks** — signal on `TopMetal1` or
-`TopMetal2` (the thick, low-resistance top metals), any lower metal as ground
-(`RF_METAL_STACKS` in [`tline_common.py`](tline_common.py)). The thin `Metal1`–`Metal5`
-layers are logic/routing layers and aren't sensible RF signal lines, so they're
-excluded. Sweep parameters (widths, lengths, frequencies) live at the top of each
-`generate_*.py` and are the intended place to edit.
+Each Palace run sweeps **0.5×–1.5× its design frequency**, so a 200 GHz sim covers
+100–300 GHz and any value in that band can be read back without re-simulating.
+
+Signal widths for both tline sweeps are
+`1.64, 2, 2.5, 3, 5, 7, 7.2, 7.5, 8, 8.5, 9, 10, 12.5, 15, 20 µm` (1.64 µm is the
+TopMetal1 minimum). All sweeps are restricted to **RF-viable metal stacks** — signal
+on `TopMetal1` or `TopMetal2` (the thick, low-resistance top metals), any lower metal
+as ground (`RF_METAL_STACKS` in [`tline_common.py`](tline_common.py)). The thin
+`Metal1`–`Metal5` layers are logic/routing layers and aren't sensible RF signal lines,
+so they're excluded. Sweep parameters live at the top of each `generate_*.py` and are
+the intended place to edit.
 
 ---
 
@@ -67,7 +72,8 @@ has been run.
 
 ### Transmission lines
 
-Characteristic impedance vs signal width, faceted by ground layer (`plot-tline-z0`):
+Characteristic impedance vs signal width — colour = ground layer, line style = signal
+layer (`plot-tline-z0`):
 
 <p align="center">
   <img src="images/tline_z0_150GHz_from200GHz.png" alt="Zc(w) at 150 GHz, by ground layer" width="500">
@@ -80,7 +86,15 @@ Metal5 (`plot-tline-z0-3d`):
   <img src="images/tline_z0_3d_topmetal2_over_metal5.png" alt="Zc surface over (frequency, width), TopMetal2/Metal5" width="500">
 </p>
 
-Loss per mm vs width, two-length de-embedded (`plot-tline-loss`):
+Why the NRW extraction is needed: raw `−20·log|S21|` vs the extracted propagation loss,
+plotted against `Zc` (`plot-tline-mismatch`). The gap is pure reference mismatch and
+vanishes at 50 Ω:
+
+<p align="center">
+  <img src="images/tline_mismatch_160GHz_from200GHz.png" alt="Loss from |S21| vs NRW extraction, against Zc" width="500">
+</p>
+
+Loss per mm vs width (`plot-tline-loss`):
 
 <p align="center">
   <img src="images/tline_loss_200GHz.png" alt="Loss per mm at 200 GHz, by ground layer" width="500">
@@ -118,38 +132,141 @@ z0/loss sweeps (here 20 µm wide, 500 µm long):
 ## How the extraction works
 
 The Palace ports are **lumped ports referenced to 50 Ω**, so the solver returns
-S-parameters normalized to 50 Ω, not to the line's own impedance. The post-processing
-corrects for that:
+S-parameters normalized to 50 Ω — not to the line's own impedance. Reading `Zc` or the
+propagation loss straight off those numbers would be wrong for every line that isn't
+50 Ω, which is most of the sweep. `extract_line()` in [`plot_tline.py`](plot_tline.py)
+removes that reference mismatch analytically.
 
-- **`Zc(w)` — single-line extraction** (Eul-Schiek / Bianco). A uniform, symmetric,
-  reciprocal 2-port has a closed-form solution for `Zc` and `γ` from its 50 Ω
-  S-parameters, so a single line is enough. Correct even though the lines are not 50 Ω
-  (which is the whole point of the width sweep).
+### Single-line (NRW) extraction
 
-- **`α(w,f)` — two-length de-embedding.** Two lines of identical width/stack/frequency
-  but different length (`length1`, `length2`) are simulated with the *same* port
-  launch. Eigenvalues of `T2·T1⁻¹` (the ratio of the two ABCD matrices) equal
-  `e^(±γ·ΔL)` regardless of what the port launch does, so port/launch effects cancel
-  **exactly** — no assumed port model. Only the real part (loss) is used; the phase
-  wraps over `ΔL` and isn't recovered here.
+Every tline structure is a uniform, symmetric, reciprocal 2-port, so its S-parameters
+are fully described by two unknowns — the interface reflection coefficient
+`Γ = (Zc − Z0)/(Zc + Z0)` and the propagation factor `T = e^(−γL)`:
 
-- **BLC — data-driven port roles.** Input is assumed to be port 1. Rather than
-  hard-coding which port is through/coupled/isolated, the two ports with the largest
-  `|Sx1|` at the design frequency are taken as the outputs and the weakest as the
-  isolated port. The design frequency is read from the *directory* name
-  (`blc_<N>GHz/…`), not the leaf filename (runs before the `model_basename` fix all
-  wrote the same leaf name, so path-based keying reads old and new results alike).
+```
+S11 = Γ·(1 − T²) / (1 − Γ²·T²)
+S21 = T·(1 − Γ²) / (1 − Γ²·T²)
+```
 
-- **WPD — fixed port roles.** Unlike the BLC there is nothing to classify: port 1 is
-  the input, ports 2/3 the outputs (as tagged in `generate_wpd.py`), and the outputs
-  of a Wilkinson are ideally *in phase* (0°, not 90°). Note the PDK cell does **not**
-  place the isolation resistor (its placement is commented out upstream), so the
-  simulated structure is the resistor-less divider: |S32| and the output match will
-  look poor — that is physical, not a sim error. Split, input match and output
-  balance are the meaningful metrics.
+Two equations, two unknowns, so both invert in closed form from a **single** line.
+Eliminating `T` gives a quadratic in `Γ`, which is the Nicolson–Ross–Weir (NRW)
+inversion in the form given by [Weir 1974][weir74]:
 
-See the module docstrings in [`plot_tline.py`](plot_tline.py),
-[`plot_blc.py`](plot_blc.py) and [`plot_wpd.py`](plot_wpd.py) for the equations.
+```
+K  = (S11² − S21² + 1) / (2·S11)
+Γ  = K ± √(K² − 1)                       root with |Γ| ≤ 1  (passive: Re Zc ≥ 0)
+Zc = Z0 · (1 + Γ) / (1 − Γ)              Z0 = 50 Ω
+T  = e^(−γL) = (S11 + S21 − Γ) / (1 − (S11 + S21)·Γ)
+loss [dB/mm] = −20·log10|T| / L[mm]
+```
+
+The two roots of the quadratic are reciprocals, so exactly one satisfies `|Γ| ≤ 1`;
+that is the passive one (`Re Zc ≥ 0`), which is what the code selects. Before
+inverting, `extract_line()` symmetrises the data (`S11 ← (S11+S22)/2`,
+`S21 ← (S21+S12)/2`) so solver asymmetry between the two ports doesn't bias the result.
+
+NRW was written for a material slab in a waveguide, but a slab *is* a uniform
+symmetric reciprocal 2-port, so the algebra carries over unchanged.
+[Eisenstadt & Eo 1992][ee92] derive the equivalent extraction specifically for on-chip
+interconnect by solving for `T` first and writing
+
+```
+Zc = Z0 · √( ((1+S11)² − S21²) / ((1−S11)² − S21²) )
+```
+
+directly. Both formulations share the same discriminant
+(`(S11²−S21²+1)² − 4·S11² = (1−S11²+S21²)² − 4·S21²`) and give identical results; they
+differ only in which unknown is eliminated first. The `Γ` route divides by `S11`, so
+`extract_line()` special-cases an exactly matched line (`Zc = Z0`, `T = S21`).
+
+### What the extraction does and doesn't remove
+
+- It **does** remove the 50 Ω reference mismatch, so `Zc` is correct even though the
+  lines are nowhere near 50 Ω — which is the whole point of the width sweep.
+- It does **not** remove the port launch. Whatever parasitic the lumped port adds is
+  folded into the extracted line, so single-line loss is an upper bound on the true
+  conductor + dielectric loss.
+- Like every single-line method it is **ill-conditioned where `|S11| → 0`**, i.e. at
+  `L = n·λg/2`, where the S-parameters carry almost no impedance information (error
+  amplification ≈ `2·Z0·δS11 / |1 − T²|`). For the 1000 µm z0 lines the `n = 2` point
+  lands near 150 GHz, where `Zc` of the near-50 Ω stacks shows a ~0.5–1 Ω wobble. Read
+  `Zc` slightly off that frequency (`EVAL_FREQ=130` or `160`) when it matters.
+
+### Why it matters: `mismatch`
+
+`make plot-tline-mismatch` makes the reference-mismatch correction visible. For each
+line it plots two losses against `Zc`:
+
+- `−20·log|S21| / L` (hollow marker) — raw insertion loss, straight off the solver
+- `−20·log|T| / L` (filled marker) — the NRW-extracted propagation loss
+
+and their difference `−20·log|S21/T|` in the lower panel. That difference is the
+**mismatch term**: power reflected at the 50 Ω reference interfaces rather than
+dissipated in the line. It goes to zero at `Zc = 50 Ω` (marked) and grows in both
+directions, so raw `|S21|` systematically overstates loss for every line that isn't
+50 Ω. The CSV carries `Zc`, `loss_s21` and `loss_nrw` per (stack, width).
+
+### Which Touchstone variant is read
+
+`combine_snp.py` writes raw, `_dc` (DC-extrapolation helper) and `_deembedded` files
+side by side. The plot scripts pick one per model, keyed on the `tline_..._GHz` /
+`blc_<N>GHz` / `wpd_<N>GHz` tag anywhere in the *path* (runs before the
+`model_basename` fix all wrote the same leaf name, so path-based keying reads old and
+new results alike); `_dc` is always dropped.
+
+- **`loss`, `sparams`, BLC and WPD** prefer the `_deembedded` file.
+- **`z0`, `z0-freq`, `z0-3d`, `mismatch` and the `Zc` side of `design`** deliberately
+  read the **raw** file. The analytic port de-embedding cascades a negative series
+  inductance whose reactance grows with frequency and blows up at the low-loss lines'
+  half-wave resonances. For the low-loss TopMetal2 lines that instability bleeds into
+  nearby frequencies and makes the de-embedded `Zc` a few ohms erratic even at the
+  design frequency; across a 3:1 band it adds a large sawtooth. Raw leaves a small,
+  smooth port-inductance offset instead, consistent across every stack.
+
+### BLC and WPD figures of merit
+
+- **BLC — data-driven port roles.** Input is port 1 (the `e1` feed in
+  `generate_blc.py`). Of ports 2–4, the two with the largest `|Sx1|` at the design
+  frequency are the outputs and the weakest is the isolated port, so the labelling
+  doesn't depend on port-ordering conventions.
+- **WPD — fixed port roles.** Port 1 is the input, ports 2/3 the outputs (as tagged in
+  `generate_wpd.py`); the outputs of a Wilkinson are ideally *in phase* (0°, not 90°).
+  The PDK cell does **not** place the isolation resistor (its placement is commented
+  out upstream), so the simulated structure is the resistor-less divider: `|S32|` and
+  the output match will look poor — that is physical, not a sim error. Split, input
+  match and output balance are the meaningful metrics.
+
+Columns of `blc_summary.csv` / `wpd_summary.csv`, all at the design frequency, dB
+unless noted:
+
+- `return_loss` — `|S11|`, lower is better
+- `isolation` — BLC: `|S(iso)1|`; WPD: `|S32|` (output–output)
+- `excess_loss` — `−10·log10(|Sa1|² + |Sb1|²)`; 0 dB is a lossless split
+- `imbalance` — `|Sa1|dB − |Sb1|dB`; 0 dB is an equal split
+- `phase_diff` (BLC only) — `|arg Sa1 − arg Sb1|` in degrees; the magnitude, because
+  the sign only depends on which output is called A
+- `phase_err` — BLC: `phase_diff − 90°`; WPD: `arg S21 − arg S31` wrapped to ±180°,
+  ideally 0
+
+### Reading the transmission-line plots
+
+Colour is the **ground** layer, using the PDK's KLayout layer colours (`layers.lyp`;
+the pale ones darkened so thin lines read on the light background); line style is the
+**signal** layer (TopMetal2 solid, TopMetal1 dashed). `z0-freq` / `z0-3d` colour by
+width instead (viridis, narrow = dark). With `--show`, clicking near a point on the
+`z0`, `loss`, `mismatch` and `design` plots labels its exact value.
+
+### References
+
+- **[Weir 1974][weir74]** — W. B. Weir, "Automatic measurement of complex dielectric
+  constant and permeability at microwave frequencies," *Proc. IEEE*, vol. 62, no. 1,
+  pp. 33–36, Jan. 1974. doi:10.1109/PROC.1974.9382 — the equations used above, in
+  swept-frequency form. (The method is conventionally named after Nicolson & Ross's
+  1970 time-domain paper as well; the closed forms implemented here are Weir's.)
+- **[Eisenstadt & Eo 1992][ee92]** — W. R. Eisenstadt and Y. Eo, "S-parameter-based IC
+  interconnect transmission line characterization," *IEEE Trans. Compon., Hybrids,
+  Manuf. Technol.*, vol. 15, no. 4, pp. 483–490, Aug. 1992. doi:10.1109/33.159877 —
+  the same inversion arranged for on-chip interconnect.
 
 ---
 
@@ -161,7 +278,7 @@ Run `make help` for the live list. Grouped:
 |-------|---------|
 | generate | `generate-blc`, `generate-wpd`, `generate-tline-{sparams,z0,loss}`, `generate-tline`, `generate` |
 | sim | `sim-blc`, `sim-wpd`, `sim-tline-{sparams,z0,loss}`, `sim-tline`, `sim` |
-| plot | `plot-tline-{z0,z0-freq,z0-3d,loss,design}`, `plot-tline-sparams`, `plot-tline`, `plot-blc`, `plot-wpd`, `plot` |
+| plot | `plot-tline-{z0,z0-freq,z0-3d,mismatch,loss,design}`, `plot-tline-sparams`, `plot-tline`, `plot-blc`, `plot-wpd`, `plot` |
 | img (layout previews) | `img-blc`, `img-wpd`, `img-tline`, `img`, `img-all` |
 | all-in-one | `all` (generate + sim + plot) |
 | cleanup (keeps `.sNp`) | `clean-sim-raw` (meshes + raw Palace output + JSON configs), `clean-layouts` (`.gds` files), `clean-intermediates` (both) |
@@ -176,45 +293,62 @@ don't clean, so partial reruns keep their raw data — run `make clean-intermedi
 manually when you're done. Note that re-running `combine_snp.py` needs the raw CSVs
 and `port_information.json`, so only clean once the `.sNp` files exist.
 
-The three z0 plot targets are different views of the same `tline-z0` sim data:
-`plot-tline-z0` is `Zc(w)` at one frequency, `plot-tline-z0-freq` shows the dispersion
-`Zc(f)` per stack (curve per width), and `plot-tline-z0-3d` renders a 3D surface of
-`Zc` over (frequency, width) for a single stack — TopMetal2/Metal5 by default,
-`make plot-tline-z0-3d SIGNAL=topmetal1 GROUND=metal3` for another.
+### The tline plot targets
 
-Each sim spans 0.5–1.5× its design frequency, so `plot-tline-z0` can also read `Zc`
-anywhere in that band, not just at the design tag:
+All of them read the same sim data; they differ in what they project out of it.
+
+| Target | Sweep read | Output |
+|--------|-----------|--------|
+| `plot-tline-z0` | `tline_z0` | `Zc(w)` at one frequency |
+| `plot-tline-z0-freq` | `tline_z0` | `Zc(f)` per stack, curve per width (dispersion) |
+| `plot-tline-z0-3d` | `tline_z0` | 3D surface of `Zc` over (frequency, width), one stack |
+| `plot-tline-mismatch` | `tline_z0` | raw vs NRW loss against `Zc` (see above) |
+| `plot-tline-loss` | `tline_loss` | `loss(w)` from the 500/1000 µm length pair |
+| `plot-tline-design` | both | `Zc`-vs-loss scatter, one point per (stack, width) |
+| `plot-tline-sparams` | any | raw `S21`/`S11` vs frequency for hand-picked files |
+
+`plot-tline-z0-3d` defaults to TopMetal2/Metal5; pick another with
+`make plot-tline-z0-3d SIGNAL=topmetal1 GROUND=metal3`.
+
+Because each sim spans 0.5–1.5× its design frequency, `plot-tline-z0`,
+`plot-tline-mismatch` and `plot-tline-loss` can read any in-band frequency without
+re-simulating:
 
 ```bash
-make plot-tline-z0 EVAL_FREQ=150      # Zc(w) @ 150 GHz, read from the 200 GHz sweep
-make plot-tline-z0 FREQ=200           # restrict to one design tag (if several exist)
-```
-
-`plot-tline-loss` takes the same `EVAL_FREQ`/`FREQ` knobs — the loss sims span the
-same 0.5–1.5× band, so loss can be read at any in-band frequency without re-simulating:
-
-```bash
-make plot-tline-loss EVAL_FREQ=160    # loss(w) @ 160 GHz, read from the 200 GHz sweep
+make plot-tline-z0 EVAL_FREQ=150         # Zc(w) @ 150 GHz, read from the 200 GHz sweep
+make plot-tline-mismatch EVAL_FREQ=160   # raw-vs-NRW loss @ 160 GHz
+make plot-tline-loss EVAL_FREQ=160       # loss(w) @ 160 GHz
+make plot-tline-z0 FREQ=200              # restrict to one design tag (if several exist)
 ```
 
 When `EVAL_FREQ` differs from the design tag the PNG/CSV are named
-`tline_loss_<eval>GHz_from<tag>GHz` (e.g. `tline_loss_160GHz_from200GHz.png`), so they
-don't clobber a genuine `<eval>GHz` sweep's output.
+`tline_<kind>_<eval>GHz_from<tag>GHz` (e.g. `tline_loss_160GHz_from200GHz.png`), so
+they don't clobber a genuine `<eval>GHz` sweep's output.
 
-`plot-tline-z0`, `plot-tline-z0-freq`, `plot-tline-z0-3d` and `plot-tline-design` open
-an interactive matplotlib window by default (they still write the PNG too). Pass an
-empty `Z0_SHOW=` for a non-blocking batch run — the aggregate `plot-tline` target sets
-it empty for you, so only direct invocations block:
+`plot_tline.py loss` also takes `--single-length-um`, which computes loss by NRW
+extraction from a **single** line of that length instead of the two-length pair. The
+port launch is not removed in that mode, so it reads high; it exists for comparison
+against the pair and for the case where only one length was simulated:
+
+```bash
+python plot_tline.py loss gds/tline_z0 --freq 200 --eval-freq 160 --single-length-um 1000
+```
+
+`plot-tline-z0`, `plot-tline-z0-freq`, `plot-tline-z0-3d`, `plot-tline-mismatch` and
+`plot-tline-design` open an interactive matplotlib window by default (they still write
+the PNG too; click a point to read its exact value). Pass an empty `Z0_SHOW=` for a
+non-blocking batch run — the aggregate `plot-tline` target sets it empty for you, so
+only direct invocations block:
 
 ```bash
 make plot-tline-z0 Z0_SHOW=           # write the PNG, don't open a window (headless)
 ```
 
 `plot-tline-design` is the synthesis view: a **Zc-vs-loss scatter** with one point per
-(stack, width), joining the z0 sweep (Zc) with the loss sweep (two-length de-embedded
-loss), so it needs sim results from both. "I need 70 Ω — what's the cheapest way to
-get it?" is a vertical slice: find 70 Ω on the x-axis, take the lowest point. A dotted
-envelope marks the lowest loss achievable per impedance bin.
+(stack, width), joining the z0 sweep (`Zc`) with the loss sweep (loss), so it needs sim
+results from both. "I need 70 Ω — what's the cheapest way to get it?" is a vertical
+slice: find 70 Ω on the x-axis, take the lowest point. A dotted envelope marks the
+lowest loss achievable per impedance bin.
 
 `plot-tline-sparams` overlays raw S21/S11 for a **hand-picked** set of files (it gets
 unreadable past ~8), so pass them explicitly:
@@ -227,14 +361,14 @@ make plot-tline-sparams FILES="gds/tline_sparams/lineA gds/tline_sparams/lineB"
 
 `img-blc`, `img-wpd` and `img-tline` render a generated GDS to a `<name>_black.png`
 in `images/` via `lay2img.py`, so you can eyeball a layout without opening KLayout.
-They render `lay2img.py` with the PDK layer properties, so **`PDK_ROOT`/`PDK` must
-point at the IHP PDK** (defaults `PDK_ROOT=IHP-Open-PDK`, `PDK=ihp-sg13g2`; override
-in the environment if elsewhere). Previews land in `images/`, so `make clean-images`
-removes them too.
+They render with the PDK layer properties, so **`PDK_ROOT`/`PDK` must point at the IHP
+PDK** (defaults `PDK_ROOT=IHP-Open-PDK`, `PDK=ihp-sg13g2`; override in the
+environment if elsewhere). Previews land in `images/`, so `make clean-images` removes
+them too.
 
 The three named targets are scoped to the **TopMetal2/Metal5** stack at one design
 frequency (`img-all` does all three; `blc`/`wpd` are TM2/M5 at every frequency, the
-tline is filtered to `*topmetal2_over_metal5*`):
+tline is the `w20um_l500um` line from the loss sweep):
 
 ```bash
 make img-all IMG_FREQ=160     # blc + wpd + tline at 160 GHz (default IMG_FREQ=200)
@@ -266,11 +400,12 @@ default `black`).
 | [`run_more_sims.sh`](run_more_sims.sh) | loop `run_sim.sh` over a folder, then `combine_snp.py` |
 | [`palace_sim.py`](palace_sim.py) | GDS + stackup → Gmsh mesh + Palace `config.json` (via `gds2palace`) |
 | [`combine_snp.py`](combine_snp.py) | Palace/Elmer raw output → Touchstone `.sNp` (+ DC extrap, port de-embed) |
-| [`plot_tline.py`](plot_tline.py) | `z0` / `z0-freq` / `z0-3d` / `loss` / `design` / `sparams` plotting + extraction |
+| [`lay2img.py`](lay2img.py) | render a GDS to PNG with the PDK layer properties |
+| [`plot_tline.py`](plot_tline.py) | `z0` / `z0-freq` / `z0-3d` / `mismatch` / `loss` / `design` / `sparams` plotting + extraction |
 | [`plot_blc.py`](plot_blc.py) | coupler S-params, imbalance, phase, and cross-design summary |
 | [`plot_wpd.py`](plot_wpd.py) | divider S-params, imbalance, phase, and cross-design summary |
-| `SG13G2_200um.xml` | **active** stackup (200 µm conductive substrate) used by `palace_sim.py` |
-| `SG13G2_nosub.xml` | alternative stackup without the substrate (faster, no substrate loss) |
+| `SG13G2_nosub.xml` | **active** stackup (no substrate) used by `palace_sim.py` |
+| `SG13G2_200um.xml` | alternative stackup with the 200 µm conductive silicon substrate |
 
 `combine_snp.py` and `palace_sim.py` are adapted from the upstream `gds2palace`
 project — re-syncing them from upstream will overwrite local edits/comments.
@@ -280,22 +415,27 @@ project — re-syncing them from upstream will overwrite local edits/comments.
 ## Configuration notes
 
 - **Stackup**: set by `XML_filename` in [`palace_sim.py`](palace_sim.py)
-  (currently `SG13G2_200um.xml`, which includes the conductive silicon substrate).
-  Switch to `SG13G2_nosub.xml` to drop the substrate (faster, no substrate loss).
+  (currently `SG13G2_nosub.xml`, i.e. **no substrate** — faster, and no substrate
+  loss). Switch to `SG13G2_200um.xml` to include the 200 µm conductive silicon
+  substrate. Results in `gds/` are only comparable if they were simulated with the
+  same stackup, so change it deliberately and re-run the affected sweep.
 - **Port markers**: the generators tag port locations on GDS layers 201–204;
   `palace_sim.py` turns layer `200+n` into lumped port `n` (50 Ω reference).
-- **Palace parallelism**: `run_sim.sh` runs Palace on all machine cores minus 12
-  (kept free for other users), with a floor of 1 — see the `-np` line to adjust.
-  It also passes `--allow-run-as-root` (needed in the container).
+- **Palace parallelism**: `run_sim.sh` runs Palace on all machine cores (`nproc`)
+  by default. Set `PALACE_NP` to override, e.g. `PALACE_NP=8 make sim-tline-z0` to
+  leave cores free for other users.
 - **Simulation band**: each Palace run sweeps `0.5×–1.5×` its center frequency; the
   center comes from the `_<N>GHz` tag in the GDS filename.
+- **Matplotlib backend**: the plot scripts pin `Agg` (no display needed). With `--show`,
+  `plot_tline.py` names `TkAgg` explicitly because matplotlib's automatic GTK/Qt probe
+  hangs in the IIC-OSIC-TOOLS image; set `MPLBACKEND` to override either choice.
 
 ## Output layout
 
 ```
-gds/<sweep>/*.gds                              # layouts (dropped by clean-intermediates)
-gds/<sweep>/<model>/<model>_data/      # mesh, config.json, Palace output, .sNp
-images/*.png, *.csv                             # extracted results
+gds/<sweep>/*.gds                       # layouts (dropped by clean-intermediates)
+gds/<sweep>/<model>/<model>_data/       # mesh, config.json, Palace output, .sNp
+images/*.png, *.csv                     # extracted results
 ```
 
 ## Data
@@ -321,3 +461,5 @@ commits/pushes after big simulation runs. `make clean` *deletes* `gds/` from dis
 [IHP PDK]: https://github.com/IHP-GmbH/IHP-Open-PDK
 [Palace]: https://awslabs.github.io/palace/
 [scikit-rf]: https://scikit-rf.readthedocs.io/
+[weir74]: https://doi.org/10.1109/PROC.1974.9382
+[ee92]: https://doi.org/10.1109/33.159877
