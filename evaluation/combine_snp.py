@@ -6,6 +6,7 @@
 # updated 08-Nov-2025 Mue: added evaluation for optional port impedance file port_information.json that is created by new gds2palace code
 # updated 13-Nov-2025 Mue: added simple de-embedding of parasitic port inductance (flat ribbon calculation)
 # updated 26-Nov-2025 Mue: also read Elmer FEM files
+# updated 20-Oct-2026: port de-embedding puts each port's L at its own port (was all at port 1)
 
 import json
 import math
@@ -14,7 +15,7 @@ import re
 
 import numpy as np
 import skrf as rf
-from skrf.network import connect
+from skrf.circuit import Circuit
 
 
 def todb(x):
@@ -309,26 +310,32 @@ def port_deembedding(snp_filename, port_info_available, port_info_data):
                 # store into dict for this port number, just in case the port numbers in the file are in wrong sorting order
                 Lport[str(portnum)] = L
 
-        # convert the dict with port L into a list, to have the final values in correct order
-        L_values = []
-        for key in Lport.keys():
-            L_values.append(-Lport[key])
-
         # load SnP data and apply negative series L at each port
         ntwk = rf.Network(snp_filename)
         freq = ntwk.frequency
+        ntwk.name = "dut"
 
-        # Create a Media object (needed for Media.inductor)
-        media = rf.media.DefinedGammaZ0(frequency=freq, z0=50)
-
-        for n, L in enumerate(L_values):
+        # Build the de-embedding circuit with explicit, named connections:
+        # external port n -- series L of port n -- DUT port n.
+        # Chaining connect(inductor, 0, ntwk, 0) instead put every L at port 1, because
+        # connect() puts the inductor's free port first, not last (fixed upstream in
+        # gds2palace combine_extend_snp.py, 12-Oct-2026). The L values are looked up by
+        # port number, a port without geometry data is connected directly (not de-embedded).
+        connections = []
+        for n in range(ntwk.nports):
+            z0 = ntwk.z0[0, n]
+            port = Circuit.Port(freq, f"P{n + 1}", z0=z0)
+            if str(n + 1) not in Lport:
+                print(f"No geometry data for port {n + 1}, port not de-embedded")
+                connections.append([(port, 0), (ntwk, n)])
+                continue
+            L = -Lport[str(n + 1)]
             print(f"Cascading L= {L * 1e12:.2f} pH at port {n + 1}")
-            # series inductor
-            inductor = media.inductor(L=L)
-            # cascade with the main network
-            # due to internal renumbering the new port always appears at the end
-            # after iterating over all ports we have the correct order again
-            ntwk = connect(inductor, 0, ntwk, 0)
+            media = rf.media.DefinedGammaZ0(frequency=freq, z0=z0)
+            inductor = media.inductor(L=L, name=f"L{n + 1}")
+            connections.append([(port, 0), (inductor, 0)])
+            connections.append([(inductor, 1), (ntwk, n)])
+        ntwk = Circuit(connections).network
 
         filename, file_extension = os.path.splitext(snp_filename)
         out_filename = filename + "_deembedded"  # without extension

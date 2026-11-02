@@ -2,8 +2,23 @@ import os
 import re
 import sys
 
+import gds2palace
 import gdspy
 from gds2palace import *
+
+# conductor model (gds2palace >= 0.9.0): 'surface' (surface impedance, fastest),
+# 'solve_inside' (metals meshed as volumes) or 'solve_inside_skin' (volumes plus thin
+# skin layers along all faces, most accurate for loss). Set from the Makefile / environment.
+CONDUCTOR_MODEL = os.environ.get("CONDUCTOR_MODEL", "solve_inside_skin")
+# mesh cell size in the conductor region (um)
+REFINED_CELLSIZE = float(os.environ.get("REFINED_CELLSIZE", "2"))
+
+# older gds2palace ignores settings['conductor_model'] silently and simulates 'surface'
+if CONDUCTOR_MODEL != "surface" and tuple(int(x) for x in gds2palace.__version__.split(".")[:2]) < (0, 9):
+    sys.exit(
+        f"conductor_model '{CONDUCTOR_MODEL}' needs gds2palace >= 0.9.0, found {gds2palace.__version__} "
+        f"({gds2palace.__file__}). Use the nightly IIC-OSIC-TOOLS image or `pip install -U gds2palace`."
+    )
 
 
 def _get_number_of_ports(gds_filename):
@@ -112,11 +127,16 @@ settings["fstop"] = f_center * 1.5
 
 settings["fstep"] = f_center / 100
 
-settings["refined_cellsize"] = 2  # mesh cell size in conductor region
+settings["refined_cellsize"] = REFINED_CELLSIZE  # mesh cell size in conductor region
 settings["cells_per_wavelength"] = 10  # how many mesh cells per wavelength, must be 10 or more
 
 settings["meshsize_max"] = 70  # microns, override cells_per_wavelength
 settings["adaptive_mesh_iterations"] = 0
+
+settings["conductor_model"] = CONDUCTOR_MODEL
+print(
+    f"gds2palace {gds2palace.__version__}, conductor_model: {CONDUCTOR_MODEL}, refined_cellsize: {REFINED_CELLSIZE} um"
+)
 
 settings["no_gui"] = True  # create files without showing 3D model
 # settings['no_gui'] = ('nogui' in sys.argv)  # check if nogui specified on command line, then create files without showing 3D model

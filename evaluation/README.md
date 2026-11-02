@@ -35,6 +35,41 @@ The same three-step pattern works for every sweep (`-tline-loss`, `-blc`, …).
 > full tline sweeps are hundreds–thousands of runs (hours of compute). Generate and
 > simulate one sweep at a time; don't run `make all` unattended.
 
+### Re-running everything on a server
+
+[`server_run.sh`](server_run.sh) (also `make server`) is the unattended version: it
+checks the environment, then generates, simulates and plots every sweep, logging to
+`logs/server_<date>.log`. Inside an IIC-OSIC-TOOLS container with gds2palace ≥ 0.9.0
+(the nightly image `ghcr.io/iic-jku/iic-osic-tools:nightly`, or 2026.11 and later):
+
+```bash
+cd <repo>/evaluation
+git pull
+nohup ./server_run.sh > /dev/null 2>&1 &   # or run it in tmux/screen
+tail -f logs/server_*.log
+```
+
+The image does not ship the `ihp` package: the script puts this checkout on
+`PYTHONPATH` and installs its missing dependency `doroutes` into the user site.
+Each finished model gets a `.sim_done` marker with the settings it was simulated
+with, so after an interruption just start the script again — finished models are
+skipped, unfinished ones start over. A failed model doesn't stop the sweep; the
+failures are listed at the end and the raw data is kept for debugging. Override the
+defaults with environment variables, e.g. `SWEEPS="tline-loss" PALACE_NP=32 ./server_run.sh`.
+
+### Conductor model
+
+`CONDUCTOR_MODEL` (default `solve_inside_skin`) selects gds2palace's conductor model:
+`surface` (surface impedance on all faces, fastest), `solve_inside` (metals meshed as
+volumes) or `solve_inside_skin` (volumes plus thin layers along all faces for the
+skin effect). The surface model gets thick top-metal lines 8–22 % too low in
+resistance at 50–150 GHz and up to doubles the loss of thin Metal1–Metal5 ground
+planes, so the loss figures need a volume model; Zc, match and balance agree within
+about 1 % between the models (see gds2palace's
+[conductor model study](https://github.com/VolkerMuehlhaus/gds2palace_ihp_sg13g2/tree/main/more_examples/conductor_models)).
+`REFINED_CELLSIZE` (default 2 µm) is the mesh size in the conductors. Both are
+`make` variables too: `make sim-tline-loss CONDUCTOR_MODEL=surface`.
+
 ---
 
 ## The sweeps
@@ -281,12 +316,13 @@ Run `make help` for the live list. Grouped:
 | plot | `plot-tline-{z0,z0-freq,z0-3d,mismatch,loss,design}`, `plot-tline-sparams`, `plot-tline`, `plot-blc`, `plot-wpd`, `plot` |
 | img (layout previews) | `img-blc`, `img-wpd`, `img-tline`, `img`, `img-all` |
 | all-in-one | `all` (generate + sim + plot) |
-| cleanup (keeps `.sNp`) | `clean-sim-raw` (meshes + raw Palace output + JSON configs), `clean-layouts` (`.gds` files), `clean-intermediates` (both) |
+| cleanup (keeps `.sNp`) | `clean-sim-raw` (meshes + raw Palace output + JSON configs, keeps `port_information.json`), `clean-layouts` (`.gds` files), `clean-intermediates` (both) |
 | cleanup (destructive) | `clean` (all of gds/, **incl. `.sNp`**), `clean-images` (images/), `clean-all` (both) |
 
 The aggregate `sim` target runs `clean-intermediates` when all sweeps are done, so a
-full simulation run leaves only the `.sNp` results on disk — meshes, raw Palace
-output, JSON configs and the `.gds` layouts are all dropped (layouts are regenerated
+full simulation run leaves only the `.sNp` results (and the small
+`port_information.json` port geometry files) on disk — meshes, raw Palace output,
+the other JSON files and the `.gds` layouts are all dropped (layouts are regenerated
 by `make generate`; the plot targets read the design frequencies from the model
 directory names, so they don't need the `.gds` files). The per-sweep `sim-*` targets
 don't clean, so partial reruns keep their raw data — run `make clean-intermediates`
@@ -421,8 +457,8 @@ project — re-syncing them from upstream will overwrite local edits/comments.
   same stackup, so change it deliberately and re-run the affected sweep.
 - **Port markers**: the generators tag port locations on GDS layers 201–204;
   `palace_sim.py` turns layer `200+n` into lumped port `n` (50 Ω reference).
-- **Palace parallelism**: `run_sim.sh` runs Palace on all machine cores (`nproc`)
-  by default. Set `PALACE_NP` to override, e.g. `PALACE_NP=8 make sim-tline-z0` to
+- **Palace parallelism**: `run_sim.sh` runs Palace on all physical cores by default
+  (not `nproc`, which counts hyperthreads that Open MPI won't oversubscribe). Set `PALACE_NP` to override, e.g. `PALACE_NP=8 make sim-tline-z0` to
   leave cores free for other users.
 - **Simulation band**: each Palace run sweeps `0.5×–1.5×` its center frequency; the
   center comes from the `_<N>GHz` tag in the GDS filename.

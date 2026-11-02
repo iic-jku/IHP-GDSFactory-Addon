@@ -8,6 +8,12 @@ PYTHON := python3
 GDS_DIR    := $(MAKEFILE_DIR)/gds
 IMAGES_DIR := $(MAKEFILE_DIR)/images
 
+# Palace model settings, read by palace_sim.py (CONDUCTOR_MODEL needs gds2palace >= 0.9.0):
+# surface | solve_inside | solve_inside_skin, and the mesh cell size in the conductors (um)
+CONDUCTOR_MODEL  ?= solve_inside_skin
+REFINED_CELLSIZE ?= 2
+export CONDUCTOR_MODEL REFINED_CELLSIZE
+
 .DEFAULT_GOAL := help
 
 help: ## Show this help message
@@ -71,6 +77,10 @@ sim-tline: sim-tline-sparams sim-tline-z0 sim-tline-loss ## Run Palace simulatio
 sim: sim-blc sim-wpd sim-tline ## Run all Palace simulations, then drop intermediates (keeps .sNp)
 	$(MAKE) clean-intermediates
 .PHONY: sim
+
+server: ## Unattended full re-run inside the IIC-OSIC-TOOLS image: generate + sim (resumable) + plot, see server_run.sh
+	cd $(MAKEFILE_DIR) && ./server_run.sh
+.PHONY: server
 
 # --- plot ---
 Z0_SHOW ?= --show
@@ -172,11 +182,11 @@ all: generate sim plot ## Generate every GDS sweep, simulate, and plot all of it
 .PHONY: all
 
 # --- cleanup ---
-clean-sim-raw: ## Delete meshes + raw Palace output, keep .sNp results (saves most disk)
+clean-sim-raw: ## Delete meshes + raw Palace output, keep .sNp results + port_information.json (saves most disk)
 	find $(GDS_DIR) -type f -name '*.msh' -delete 2>/dev/null || true
 	find $(GDS_DIR) -type d -name 'paraview' -prune -exec rm -rf {} + 2>/dev/null || true
 	find $(GDS_DIR) -type f \( -name 'port-*.csv' -o -name 'domain-E.csv' -o -name 'error-indicators.csv' \) -delete 2>/dev/null || true
-	find $(GDS_DIR) -type f -name '*.json' -delete 2>/dev/null || true
+	find $(GDS_DIR) -type f -name '*.json' ! -name 'port_information*.json' -delete 2>/dev/null || true
 .PHONY: clean-sim-raw
 
 clean-layouts: ## Delete the generated .gds layout files (regenerate with `make generate`)
