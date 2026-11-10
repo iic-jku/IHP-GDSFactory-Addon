@@ -1,0 +1,48 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -3.6,
+            "ymax": 3.6,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 205.09,
+            "xmax": 212.29,
+            "ymin": 106.05,
+            "ymax": 106.14999999999999,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 205.09,
+            "xmax": 212.29,
+            "ymin": -106.15,
+            "ymax": -106.05000000000001,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "wpd_120GHz"
+}

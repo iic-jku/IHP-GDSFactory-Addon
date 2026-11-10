@@ -1,0 +1,48 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -3.6,
+            "ymax": 3.6,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 90.78,
+            "xmax": 97.98,
+            "ymin": 48.89,
+            "ymax": 48.99,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 90.78,
+            "xmax": 97.98,
+            "ymin": -48.99,
+            "ymax": -48.89,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "wpd_260GHz"
+}

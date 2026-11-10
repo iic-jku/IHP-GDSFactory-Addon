@@ -1,0 +1,34 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 6.6803,
+            "width": 9.200000000000001,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -4.6000000000000005,
+            "ymax": 4.6000000000000005,
+            "zmin": 6.55,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 6.6803,
+            "width": 9.200000000000001,
+            "xmin": 999.9,
+            "xmax": 1000.0,
+            "ymin": -4.6000000000000005,
+            "ymax": 4.6000000000000005,
+            "zmin": 6.55,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "tline_topmetal2_over_metal4_l1000um_120GHz"
+}

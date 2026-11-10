@@ -1,0 +1,48 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -3.6,
+            "ymax": 3.6,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 77.72,
+            "xmax": 84.92,
+            "ymin": 42.36,
+            "ymax": 42.46,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 77.72,
+            "xmax": 84.92,
+            "ymin": -42.46,
+            "ymax": -42.36,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "wpd_300GHz"
+}

@@ -1,0 +1,62 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": 0.0,
+            "ymax": 7.2,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 143.57500000000002,
+            "xmax": 143.675,
+            "ymin": 0.0,
+            "ymax": 7.2,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 143.57500000000002,
+            "xmax": 143.675,
+            "ymin": -131.165,
+            "ymax": -123.96499999999999,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 4,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.200000000000003,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -131.165,
+            "ymax": -123.96499999999999,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "blc_280GHz"
+}

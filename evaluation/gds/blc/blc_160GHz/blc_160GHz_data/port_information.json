@@ -1,0 +1,62 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": 0.0,
+            "ymax": 7.2,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 245.93,
+            "xmax": 246.03,
+            "ymin": 0.0,
+            "ymax": 7.2,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 245.93,
+            "xmax": 246.03,
+            "ymin": -233.52,
+            "ymax": -226.32000000000002,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 4,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -233.52,
+            "ymax": -226.32000000000002,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "blc_160GHz"
+}

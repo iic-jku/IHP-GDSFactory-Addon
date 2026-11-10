@@ -1,0 +1,48 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.2,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -3.6,
+            "ymax": 3.6,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 247.55,
+            "xmax": 254.75,
+            "ymin": 127.28,
+            "ymax": 127.38,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        },
+        {
+            "portnumber": 3,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 5.6503,
+            "width": 7.199999999999989,
+            "xmin": 247.55,
+            "xmax": 254.75,
+            "ymin": -127.38000000000001,
+            "ymax": -127.28000000000002,
+            "zmin": 7.58,
+            "zmax": 13.2303,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "wpd_100GHz"
+}

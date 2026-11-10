@@ -1,0 +1,34 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 2.5999999999999996,
+            "width": 4.43,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -2.215,
+            "ymax": 2.215,
+            "zmin": 3.46,
+            "zmax": 6.06,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 2.5999999999999996,
+            "width": 4.43,
+            "xmin": 999.9,
+            "xmax": 1000.0,
+            "ymin": -2.215,
+            "ymax": 2.215,
+            "zmin": 3.46,
+            "zmax": 6.06,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "tline_metal4_over_metal1_l1000um_280GHz"
+}

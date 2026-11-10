@@ -1,0 +1,34 @@
+{
+    "ports": [
+        {
+            "portnumber": 1,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 4.970299999999999,
+            "width": 12.5,
+            "xmin": 0.0,
+            "xmax": 0.1,
+            "ymin": -6.25,
+            "ymax": 6.25,
+            "zmin": 3.46,
+            "zmax": 8.430299999999999,
+            "element": 1
+        },
+        {
+            "portnumber": 2,
+            "Z0": 50,
+            "direction": "Z",
+            "length": 4.970299999999999,
+            "width": 12.5,
+            "xmin": 999.9,
+            "xmax": 1000.0,
+            "ymin": -6.25,
+            "ymax": 6.25,
+            "zmin": 3.46,
+            "zmax": 8.430299999999999,
+            "element": 1
+        }
+    ],
+    "unit": 1e-06,
+    "name": "tline_topmetal1_over_metal1_w12.5um_l1000um_200GHz"
+}
