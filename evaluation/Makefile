@@ -32,6 +32,11 @@ generate-wpd: ## Generate the Wilkinson-power-divider GDS sweep (gds/wpd)
 	cd $(MAKEFILE_DIR) && $(PYTHON) generate_wpd.py
 .PHONY: generate-wpd
 
+BPF_FREQS ?= 60 160 300
+generate-bpf: ## Generate the hairpin BPF of the paper (gds/bpf; Butterworth, order 3, 5 % BW; BPF_FREQS in GHz)
+	cd $(MAKEFILE_DIR) && $(PYTHON) generate_bpf.py $(BPF_FREQS)
+.PHONY: generate-bpf
+
 generate-tline-sparams: ## Generate the tline S-parameter verification sweep (gds/tline_sparams)
 	cd $(MAKEFILE_DIR) && $(PYTHON) generate_tline_sparams.py
 .PHONY: generate-tline-sparams
@@ -58,6 +63,10 @@ sim-blc: ## Run Palace simulations on all generated BLC GDS files
 sim-wpd: ## Run Palace simulations on all generated WPD GDS files
 	cd $(MAKEFILE_DIR) && ./run_more_sims.sh $(GDS_DIR)/wpd
 .PHONY: sim-wpd
+
+sim-bpf: ## Run Palace simulations on all generated BPF GDS files
+	cd $(MAKEFILE_DIR) && ./run_more_sims.sh $(GDS_DIR)/bpf
+.PHONY: sim-bpf
 
 sim-tline-sparams: ## Run Palace simulations on the tline S-parameter verification sweep
 	cd $(MAKEFILE_DIR) && ./run_more_sims.sh $(GDS_DIR)/tline_sparams
@@ -136,6 +145,10 @@ plot-blc: ## Plot branch-line-coupler S-params, imbalance, phase + summary (imag
 plot-wpd: ## Plot Wilkinson-divider S-params, imbalance, phase + summary (images/)
 	cd $(MAKEFILE_DIR) && $(PYTHON) plot_wpd.py $(GDS_DIR)/wpd
 .PHONY: plot-wpd
+
+plot-bpf: ## Plot BPF S11/S21 over f/f0 + summary, curve CSVs in images/bpf_curves (BPF_PLOT_ARGS=--raw for raw files)
+	cd $(MAKEFILE_DIR) && $(PYTHON) plot_bpf.py $(GDS_DIR)/bpf $(BPF_PLOT_ARGS)
+.PHONY: plot-bpf
 
 plot: plot-tline plot-blc plot-wpd ## Generate every plot (tline + blc + wpd)
 .PHONY: plot

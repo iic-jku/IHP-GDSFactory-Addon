@@ -81,6 +81,7 @@ about 1 % between the models (see gds2palace's
 | `tline-sparams` | fixed-50 Ω line, `L = 1000 µm` | raw S-parameters (verification) | 2 | 200 GHz |
 | `blc` | branch-line coupler, one per design freq | coupling / isolation / phase balance | 4 | 60–300 GHz, step 20 |
 | `wpd` | Wilkinson power divider (U-shape), one per design freq | split / match / phase balance | 3 | 60–300 GHz, step 20 |
+| `bpf` | hairpin coupled-line BPF of the NorCAS paper (Butterworth, order 3, 5 % BW, TM2/M5) | S11 / S21, insertion loss, −3 dB bandwidth | 2 | 60, 160, 300 GHz (`BPF_FREQS`) |
 
 Each Palace run sweeps **0.5×–1.5× its design frequency**, so a 200 GHz sim covers
 100–300 GHz and any value in that band can be read back without re-simulating.
@@ -311,9 +312,9 @@ Run `make help` for the live list. Grouped:
 
 | Group | Targets |
 |-------|---------|
-| generate | `generate-blc`, `generate-wpd`, `generate-tline-{sparams,z0,loss}`, `generate-tline`, `generate` |
-| sim | `sim-blc`, `sim-wpd`, `sim-tline-{sparams,z0,loss}`, `sim-tline`, `sim` |
-| plot | `plot-tline-{z0,z0-freq,z0-3d,mismatch,loss,design}`, `plot-tline-sparams`, `plot-tline`, `plot-blc`, `plot-wpd`, `plot` |
+| generate | `generate-blc`, `generate-wpd`, `generate-bpf`, `generate-tline-{sparams,z0,loss}`, `generate-tline`, `generate` |
+| sim | `sim-blc`, `sim-wpd`, `sim-bpf`, `sim-tline-{sparams,z0,loss}`, `sim-tline`, `sim` |
+| plot | `plot-tline-{z0,z0-freq,z0-3d,mismatch,loss,design}`, `plot-tline-sparams`, `plot-tline`, `plot-blc`, `plot-wpd`, `plot-bpf`, `plot` |
 | img (layout previews) | `img-blc`, `img-wpd`, `img-tline`, `img`, `img-all` |
 | all-in-one | `all` (generate + sim + plot) |
 | cleanup (keeps `.sNp`) | `clean-sim-raw` (meshes + raw Palace output + JSON configs, keeps `port_information.json`), `clean-layouts` (`.gds` files), `clean-intermediates` (both) |
@@ -429,6 +430,7 @@ default `black`).
 | [`tline_common.py`](tline_common.py) | shared: metal stack list, `RF_METAL_STACKS`, GDS-writing helper |
 | [`generate_blc.py`](generate_blc.py) | build the branch-line-coupler sweep |
 | [`generate_wpd.py`](generate_wpd.py) | build the Wilkinson-power-divider sweep |
+| [`generate_bpf.py`](generate_bpf.py) | build the hairpin BPF of the paper / thesis BPF figure |
 | [`generate_tline_z0.py`](generate_tline_z0.py) | build the `Zc(w)` line sweep |
 | [`generate_tline_loss.py`](generate_tline_loss.py) | build the two-length loss sweep |
 | [`generate_tline_sparams.py`](generate_tline_sparams.py) | build the fixed-50 Ω verification sweep |
@@ -440,6 +442,7 @@ default `black`).
 | [`plot_tline.py`](plot_tline.py) | `z0` / `z0-freq` / `z0-3d` / `mismatch` / `loss` / `design` / `sparams` plotting + extraction |
 | [`plot_blc.py`](plot_blc.py) | coupler S-params, imbalance, phase, and cross-design summary |
 | [`plot_wpd.py`](plot_wpd.py) | divider S-params, imbalance, phase, and cross-design summary |
+| [`plot_bpf.py`](plot_bpf.py) | filter S11/S21 over f/f0, summary, curve CSVs in the thesis-figure format (`images/bpf_curves/`) |
 | `SG13G2_nosub.xml` | **active** stackup (no substrate) used by `palace_sim.py` |
 | `SG13G2_200um.xml` | alternative stackup with the 200 µm conductive silicon substrate |
 

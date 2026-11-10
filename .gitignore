@@ -58,5 +58,5 @@ ENV/
 ~$*.xlsx
 *.xlsx#
 
-# evaluation server run logs
-evaluation/logs/
+# keep the evaluation server run logs (overrides *.log above)
+!evaluation/logs/*.log

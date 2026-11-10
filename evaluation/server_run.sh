@@ -12,7 +12,8 @@
 # settings are skipped.
 #
 # Environment overrides (defaults in brackets):
-#   SWEEPS            sweeps to run, in order [blc wpd tline-sparams tline-z0 tline-loss]
+#   SWEEPS            sweeps to run, in order [blc wpd tline-sparams tline-z0 tline-loss];
+#                     SWEEPS=bpf runs only the hairpin BPF of the paper (60/160/300 GHz)
 #   CONDUCTOR_MODEL   surface | solve_inside | solve_inside_skin [solve_inside_skin]
 #   REFINED_CELLSIZE  mesh cell size in the conductors, um [2]
 #   PALACE_NP         MPI processes per Palace run [all physical cores]
@@ -83,8 +84,18 @@ done
 
 # --- plots ---------------------------------------------------------------------
 echo
-echo "=== $(date '+%F %T') plots"
-make --no-print-directory plot || failed+=("plot")
+# only the plots of the sweeps that ran; the tline sweeps share `plot-tline`
+plots=()
+for sweep in $SWEEPS; do
+    case "$sweep" in
+        blc | wpd | bpf) plots+=("plot-$sweep") ;;
+        tline-*) [[ " ${plots[*]} " == *" plot-tline "* ]] || plots+=(plot-tline) ;;
+    esac
+done
+echo "=== $(date '+%F %T') plots: ${plots[*]}"
+for target in "${plots[@]}"; do
+    make --no-print-directory "$target" || failed+=("$target")
+done
 
 # meshes and raw Palace output are large; keep them if something failed, for debugging
 if [ "${#failed[@]}" -eq 0 ]; then
