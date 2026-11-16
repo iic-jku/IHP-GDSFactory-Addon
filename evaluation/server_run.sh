@@ -13,7 +13,7 @@
 #
 # Environment overrides (defaults in brackets):
 #   SWEEPS            sweeps to run, in order [blc wpd tline-sparams tline-z0 tline-loss];
-#                     SWEEPS=bpf runs only the hairpin BPF of the paper (60/160/300 GHz)
+#                     SWEEPS=bpf runs only the hairpin BPF (1 GHz BW, 60/160/300 GHz)
 #   CONDUCTOR_MODEL   surface | solve_inside | solve_inside_skin [solve_inside_skin]
 #   REFINED_CELLSIZE  mesh cell size in the conductors, um [2]
 #   PALACE_NP         MPI processes per Palace run [all physical cores]

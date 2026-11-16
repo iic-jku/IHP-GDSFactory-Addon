@@ -1,9 +1,10 @@
 """Generate the hairpin coupled-line bandpass filter sweep (gds/bpf).
 
-The design of the NorCAS paper / thesis BPF figure (gdsfactory-rf/palace_test/paper_simulations/
-hbpf_sweep/butter_order_3_5bw): Butterworth, order 3, 5 % fractional bandwidth, TopMetal2 over
-Metal5, no feed lines (connection_length=0). Port k of the cell (e<k>) is marked on GDS layer
-200+k. palace_sim.py sweeps 0.5-1.5 f0 in 0.01 f0 steps, the span of the paper runs.
+The filter of the SPARX chip (SG13G2_SPARX160, scripts/six_port_gen.py): Butterworth, order 3,
+fixed 1 GHz bandwidth, TopMetal2 over Metal5. Unlike the chip (connection_length=10), no feed
+lines (connection_length=0), as in the BLC/WPD sweeps. The 5 % fractional-bandwidth design of
+the NorCAS paper, simulated on 2026-11-10, is kept in gds/bpf_5pct. Port k of the cell (e<k>)
+is marked on GDS layer 200+k. palace_sim.py sweeps 0.5-1.5 f0 in 0.01 f0 steps.
 
     python generate_bpf.py                # 60, 160 and 300 GHz (the thesis figure)
     python generate_bpf.py 60 80 100 ...  # other design frequencies (GHz)
@@ -23,7 +24,7 @@ ihp.PDK.activate()
 GDS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gds", "bpf")
 
 ORDER = 3
-FRACTIONAL_BW = 0.05
+BANDWIDTH = 1e9  # absolute bandwidth (Hz), the same for every f0
 FILTER_TYPE = "butter"
 
 freqs_ghz = [int(a) for a in sys.argv[1:]] or [60, 160, 300]
@@ -37,7 +38,7 @@ for f_ghz in freqs_ghz:
         ihp.cells.hairpin_coupled_line_bandpass_filter(
             order=ORDER,
             frequency=f,
-            bandwidth=FRACTIONAL_BW * f,
+            bandwidth=BANDWIDTH,
             connection_length=0.0,
             filter_type=FILTER_TYPE,
         )

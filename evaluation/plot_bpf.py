@@ -8,7 +8,8 @@ phase_deg with unwrapped phase). Across filters: metrics at each design frequenc
     insertion_loss  -|S21| at f0 (dB)
     return_loss     |S11| at f0 (dB)
     peak_s21        max |S21| (dB) and f_peak / f0 (passband centre)
-    bw3db_pct       -3 dB bandwidth below the S21 peak, in % of f0 (design: 5 %)
+    bw3db_pct       -3 dB bandwidth below the S21 peak, in % of f0 (design: 1 GHz / f0;
+                    the 5 % designs in gds/bpf_5pct: 5 %)
 
 Port roles: 1 = input, 2 = output. Prefers the de-embedded files; --raw uses the raw Palace
 results (what the thesis S-parameter figures show).
@@ -171,7 +172,7 @@ def summary(rows):
     axl.legend(fontsize=9)
     axr.plot(f, [r["bw3db_pct"] for r in rows], "-o", color=C_OUT_A, label="-3 dB bandwidth (% of f0)")
     axr.plot(f, [(r["f_peak_rel"] - 1) * 100 for r in rows], "-o", color=C_RETURN, label="centre shift (% of f0)")
-    axr.axhline(5, color=MUTED, ls="--", lw=1)
+    axr.plot(f, [100 / fg for fg in f], "--", color=MUTED, lw=1, label="design: 1 GHz")
     axr.axhline(0, color=MUTED, ls=":", lw=1)
     axr.set_xlabel("design frequency  (GHz)")
     axr.set_ylabel("(%)")

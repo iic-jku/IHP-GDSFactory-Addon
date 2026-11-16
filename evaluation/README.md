@@ -81,7 +81,7 @@ about 1 % between the models (see gds2palace's
 | `tline-sparams` | fixed-50 Ω line, `L = 1000 µm` | raw S-parameters (verification) | 2 | 200 GHz |
 | `blc` | branch-line coupler, one per design freq | coupling / isolation / phase balance | 4 | 60–300 GHz, step 20 |
 | `wpd` | Wilkinson power divider (U-shape), one per design freq | split / match / phase balance | 3 | 60–300 GHz, step 20 |
-| `bpf` | hairpin coupled-line BPF of the NorCAS paper (Butterworth, order 3, 5 % BW, TM2/M5) | S11 / S21, insertion loss, −3 dB bandwidth | 2 | 60, 160, 300 GHz (`BPF_FREQS`) |
+| `bpf` | hairpin coupled-line BPF of the SPARX chip (Butterworth, order 3, 1 GHz BW, TM2/M5; the 5 % BW design of the NorCAS paper is kept in `gds/bpf_5pct`) | S11 / S21, insertion loss, −3 dB bandwidth | 2 | 60, 160, 300 GHz (`BPF_FREQS`) |
 
 Each Palace run sweeps **0.5×–1.5× its design frequency**, so a 200 GHz sim covers
 100–300 GHz and any value in that band can be read back without re-simulating.
@@ -430,7 +430,7 @@ default `black`).
 | [`tline_common.py`](tline_common.py) | shared: metal stack list, `RF_METAL_STACKS`, GDS-writing helper |
 | [`generate_blc.py`](generate_blc.py) | build the branch-line-coupler sweep |
 | [`generate_wpd.py`](generate_wpd.py) | build the Wilkinson-power-divider sweep |
-| [`generate_bpf.py`](generate_bpf.py) | build the hairpin BPF of the paper / thesis BPF figure |
+| [`generate_bpf.py`](generate_bpf.py) | build the hairpin BPF of the SPARX chip / thesis BPF figure |
 | [`generate_tline_z0.py`](generate_tline_z0.py) | build the `Zc(w)` line sweep |
 | [`generate_tline_loss.py`](generate_tline_loss.py) | build the two-length loss sweep |
 | [`generate_tline_sparams.py`](generate_tline_sparams.py) | build the fixed-50 Ω verification sweep |

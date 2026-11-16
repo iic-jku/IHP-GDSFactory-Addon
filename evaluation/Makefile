@@ -33,7 +33,7 @@ generate-wpd: ## Generate the Wilkinson-power-divider GDS sweep (gds/wpd)
 .PHONY: generate-wpd
 
 BPF_FREQS ?= 60 160 300
-generate-bpf: ## Generate the hairpin BPF of the paper (gds/bpf; Butterworth, order 3, 5 % BW; BPF_FREQS in GHz)
+generate-bpf: ## Generate the hairpin BPF of the SPARX chip (gds/bpf; Butterworth, order 3, 1 GHz BW; BPF_FREQS in GHz)
 	cd $(MAKEFILE_DIR) && $(PYTHON) generate_bpf.py $(BPF_FREQS)
 .PHONY: generate-bpf
 
